@@ -1,0 +1,22 @@
+language: python
+addons:
+  apt:
+    sources:
+      - git-core
+    packages:
+      - git
+before_install:
+  - git config user.name travisbuild
+  - git config user.email travisbuild@travis-ci
+  - git config --add remote.origin.fetch "+refs/heads/gh-pages:refs/remotes/origin/gh-pages"
+  - git remote update
+  - git worktree add _build/html -b gh-pages origin/gh-pages
+install:
+  - pip install sphinx
+script:
+  # - make linkcheck
+  - make html
+after_success:
+  - cd _build/html
+  - git add -A
+  - git commit -m build
