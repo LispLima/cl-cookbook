@@ -6,8 +6,12 @@ addons:
     packages:
       - git
 before_install:
+  - openssl aes-256-cbc -K $encrypted_a37343aeb4e3_key -iv $encrypted_a37343aeb4e3_iv -in .travis/github_deploy_key.enc -out $TRAVIS_BUILD_DIR/github_deploy_key -d
+  - chmod 600 $TRAVIS_BUILD_DIR/github_deploy_key
+  - export GIT_SSH_COMMAND="ssh -i $TRAVIS_BUILD_DIR/github_deploy_key"
   - git config user.name travisbuild
   - git config user.email travisbuild@travis-ci
+  - git config url.'git@github.com:'.pushInsteadOf 'https://github.com/'
   - git config --add remote.origin.fetch "+refs/heads/gh-pages:refs/remotes/origin/gh-pages"
   - git remote update
   - git worktree add _build/html -b gh-pages origin/gh-pages
@@ -20,3 +24,4 @@ after_success:
   - cd _build/html
   - git add -A
   - git commit -m build
+  - git push origin gh-pages
