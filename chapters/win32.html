@@ -1,0 +1,998 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Using the Win32 API &#8212; The Common Lisp Cookbook 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="The Common Lisp Cookbook 0.1 documentation" href="../index.html" />
+    <link rel="up" title="Chapters" href="index.html" />
+    <link rel="next" title="Testing" href="testing.html" />
+    <link rel="prev" title="Using Emacs as an IDE" href="emacs-ide.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="using-the-win32-api">
+<h1>Using the Win32 API<a class="headerlink" href="#using-the-win32-api" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction-and-scope">
+<h2>Introduction and Scope<a class="headerlink" href="#introduction-and-scope" title="Permalink to this headline">¶</a></h2>
+<p>This chapter introduces the basics of the Win32 API, demonstrates how it
+can be called from Lisp, and shows how Lisp can be used to create a
+powerful Win32 programming environment optimized for a specific
+application domain. Any such Lisp environment exposing every option in
+the Win32 API must be at least as complex as the Win32 API. However, it
+is hard to imagine a given application domain needing every option of
+every function in the Win32 API. Extending Lisp&#8217;s syntax in a
+domain-specific manner hides those parts of the Win32 API superfluous to
+the domain. (Most likely the majority of the Win32 API will be hidden.)
+The programmer then deals with and thinks about only those pieces of the
+API needed for the task at hand. Pieces of the Win32 API needed later
+are easily exposed at any time.</p>
+<p>A single environment is not easily optimized for both simple and complex
+applications. The methods outlined in this chapter can be used to
+construct environments, from simple to complex, appropriate for a range
+of application domains.</p>
+<p>The beginning sections of the chapter introduce concepts and ideas
+leading to the penultimate section, which concludes with a &#8220;Hello&#8221;
+program:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">require</span> <span class="s2">&quot;win-header&quot;</span><span class="p">)</span>
+<span class="p">(</span><span class="ow">in</span><span class="o">-</span><span class="n">package</span> <span class="p">:</span><span class="n">wh</span><span class="p">)</span>
+<span class="p">(</span><span class="n">export</span> <span class="s1">&#39;(initialize-appendix-b))</span>
+
+<span class="p">(</span><span class="n">DefMsgHandler</span> <span class="n">appendix</span><span class="o">-</span><span class="n">b</span><span class="o">-</span><span class="n">proc</span> <span class="n">MsgMap</span> <span class="p">()</span>
+               <span class="p">(</span><span class="n">WM_PAINT</span>
+                <span class="p">(</span><span class="n">text</span><span class="o">-</span><span class="n">out</span> <span class="s2">&quot;Hello from Lisp!&quot;</span> <span class="mi">0</span> <span class="mi">0</span> <span class="p">:</span><span class="n">color</span> <span class="p">(</span><span class="n">RGB</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">255</span><span class="p">))</span>
+                <span class="mi">0</span><span class="p">))</span>
+
+<span class="p">(</span><span class="n">defun</span> <span class="n">initialize</span><span class="o">-</span><span class="n">appendix</span><span class="o">-</span><span class="n">b</span> <span class="p">()</span>
+  <span class="p">(</span><span class="n">DefActiveTopWindow</span> <span class="s2">&quot;Hello&quot;</span> <span class="s1">&#39;appendix-b-proc</span>
+    <span class="p">:</span><span class="n">style</span> <span class="n">ws_overlappedwindow</span> <span class="p">:</span><span class="n">width</span> <span class="mi">150</span> <span class="p">:</span><span class="n">height</span> <span class="mi">200</span> <span class="p">:</span><span class="n">title</span> <span class="s2">&quot;Hello Program&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Lispworks for Windows version 4.2.7 is used. (The Personal Edition is
+available for free download.) No attempt is made to accomodate other
+Lisps and no thought is given to cross-platform compatibility. These
+ideas were discussed when outlining this document and the current
+approach decided upon because:</p>
+<ul class="simple">
+<li>It is good to publish early and publish often. Reducing the scope
+fits this philosophy. Other Lisps can be included at a later time. I
+know that <a class="reference external" href="http://www.cormanlisp.com">Corman Lisp</a> is one that
+includes a lot of Win32 API capabilities. I don&#8217;t have experience
+with other vendor&#8217;s Lisps, so look at them all.</li>
+<li>The information presented should apply generally to other vendor&#8217;s
+Lisps. The foreign language interface may change but Win32 remains
+the same.</li>
+</ul>
+<p>The Cookbook welcomes contributions broadening coverage in these (and
+other) areas.</p>
+<p>Anyone programming for the Win32 API should be familiar with
+<a class="reference external" href="http://www.charlespetzold.com/pw5/index.html">Programming Windows, The Definitive Guide to the Win32
+API</a> by Charles
+Petzold, or a comparable book.</p>
+<p>The code presented here has been tested only with Lispworks for Windows
+4.2.7 Professional Edition under Windows XP.</p>
+</div>
+<div class="section" id="why-use-lisp-with-win32">
+<h2>Why Use Lisp with Win32?<a class="headerlink" href="#why-use-lisp-with-win32" title="Permalink to this headline">¶</a></h2>
+<p>If a program can be cross-platform, it should be. The <em>Common</em> in Common
+Lisp is a tribute to the cross-platform, and cross-vendor, nature of
+Common Lisp. The advantages of this portability are not ignored lightly.
+However, writing programs which take advantage of the Win32 API in a
+non-portable fashion is not a mandate for doing so without the power of
+Lisp at one&#8217;s fingertips.</p>
+<p>One concern some may have is the perception that Lisp executables are
+large. Microsoft operating systems are written in C and C++. The
+supporting libraries for C/C++ programs come with the operating system.
+Lisp run-time support looks large only because it does not come with the
+OS. It is possible to ship Lisp programs in delivery mode, especially
+with Lispworks for Windows which requires no royalties for this, and it
+is possible to ship the run-time once and then ship small, compiled
+programs as they become available.</p>
+<p>If the requirement is to create small programs suitable for public
+download in large volumes, the fact that Lisp runtime support is not
+loaded on most computers is a limitation. However, Lispworks for Windows
+allows aggressive pruning during the delivery stage and programs can
+sometimes be reduced below two megabytes, which is suitable for many
+download situations. Situations requiring the full Lisp run-time are
+most likely large applications where it makes sense to deliver the
+runtime on CD, or via a large one-time download, and later deliver
+individually-compiled components which are loaded during program or
+component initialization.</p>
+<p>It is my understanding that the lower limit on delivered program size is
+not inherent to Lisp as a language but only a result of current market
+demand. As market demand grows for truly small stand-alone executable
+programs written in Lisp, vendors will have incentive to spend time
+developing better pruners and shakers. (Lisp starts with a lot and
+removes what&#8217;s not needed to produce a deliverable while C/C++ starts
+with a little and adds what&#8217;s needed during the link phase. A
+freshly-run Lisp begins with a REPL, a read-eval-print loop, with the
+full power of Lisp available interactively and ready for use.)</p>
+<p>Seeing the gory details of Lispwork&#8217;s Foreign Language Interface, or
+FLI, may seem strange at first. The OS is written in C/C++, so OS calls
+from C/C++ are not foreign calls, just as Lisp functions called from
+Lisp functions are not foreign calls.</p>
+</div>
+<div class="section" id="a-very-brief-overview-of-a-win32-program-s-life">
+<h2>A (Very) Brief Overview of a Win32 Program&#8217;s Life<a class="headerlink" href="#a-very-brief-overview-of-a-win32-program-s-life" title="Permalink to this headline">¶</a></h2>
+<p>The OS treats a Win32 GUI program as a set of subroutines, or functions.</p>
+<ul class="simple">
+<li>The first of these functions, WinMain, is called when the program is
+initialized.</li>
+<li>WinMain calls the Win32 function RegisterClass to inform the OS of
+the location of a callback function. Serveral calls may be made to
+RegisterClass but only one of these calls, naming one callback
+function, serves the primary window of the application. After
+RegisterClass is called, the OS knows about the newly-defined class.</li>
+<li>The Win32 function CreateWindowEx is called and given the class name
+specified on a previous RegisterClass call. Now the window exists
+and, depending upon the parameters passed to CreateWindowEx, is
+visible.</li>
+<li>The OS begins queueing messages relating to the newly-created window.
+The queue is saved for delivery to WinMain.</li>
+<li>WinMain accesses the message queue in a loop referred to as a
+<em>message pump</em>. The message pump loop calls GetMessage,
+TranslateMessage, and DispatchMessage.</li>
+<li>GetMessage retrieves one message from the queue. There is some method
+or dependability to the sequence in which messages are queued. A
+certain sequence of messages is queued when a window is created, for
+instance. Events, such as mouse movements, cause other messages to be
+queued.</li>
+<li>TranslateMessage translates virtual-key messages to character
+messages. DispatchMessage is a call to the OS requesting the OS to
+handle the message. The OS handles the message by calling another
+subroutine, or function, in the application program. The application
+function which is called is the function specified in a call to
+RegisterClass, which included a class name parameter, where that
+class name was specified in the call to CreateWindowEx. (Phew).</li>
+<li>The application function specified in the RegisterClass call takes
+four parameters:<ol class="arabic">
+<li>a handle to the window associated with the message</li>
+<li>the message id, an integer</li>
+<li>a wParam unsigned long</li>
+<li>an lParam unsigned long</li>
+</ol>
+</li>
+<li>The semantics of wParam and lParam vary depending upon the message
+id.</li>
+<li>The application function contains the equivalent of a case statement,
+switching on the message id. There are many (hundreds of) message
+ids. Common ones include wm_create, sent when a window is created,
+wm_paint, sent when a window&#8217;s contents are to be drawn, and
+wm_destroy, sent when a window is about to go away. Other messages
+are generated in response to events such as key presses, mouse
+movements, and mouse button clicks. There are windows messages
+related to displaying video from attached cameras, capturing or
+playing sound files, dialing telephones, and much more. There are
+thousands of these messages in the OS but any given program normally
+deals with a small subset of them. When a message function receives a
+message with which it does not deal explicitly, the message is passed
+to a Win32 default function.</li>
+<li>When a menu command or other event causes the program to enter code
+which calls the Win32 function PostQuitMessage, the message pump
+returns zero from GetMessage, which is the cue to exit the message
+pump loop. WinMain then exits and the program ends.</li>
+</ul>
+</div>
+<div class="section" id="windows-character-systems-and-lisp">
+<h2>Windows Character Systems and Lisp<a class="headerlink" href="#windows-character-systems-and-lisp" title="Permalink to this headline">¶</a></h2>
+<p>Some Microsoft operating systems use a single-byte, ASCII, character set
+and others use a double-byte, Unicode, character set. Use</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">defun</span> <span class="n">external</span><span class="o">-</span><span class="nb">format</span> <span class="p">()</span>
+  <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="n">string</span><span class="o">=</span> <span class="p">(</span><span class="n">software</span><span class="o">-</span><span class="nb">type</span><span class="p">)</span> <span class="s2">&quot;Windows NT&quot;</span><span class="p">)</span>
+      <span class="p">:</span><span class="n">unicode</span>
+    <span class="p">:</span><span class="n">ascii</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>to determine which format is in use. Win32 functions taking or returning
+characters or strings come in two flavors: 1) those ending in A for
+ASCII characters and 2) those ending in W for wide Unicode characters.
+This external-format function is useful primarily when calling
+<code class="docutils literal"><span class="pre">fli:with-foreign-string</span></code>, part of the Lispworks foreign function
+interface. When defining Win32 functions in the Foreign Function
+Interface, or FLI, the presence of the keyword :dbcs indicates that the
+function has both a single-byte and a double-byte version. When :dbcs is
+present, Lispworks appends an &#8220;A&#8221; to the function name in single-byte
+Windows 95 and a &#8220;W&#8221; in double-byte Windows NT/2000/XP. (I wrote and
+tested the example program (see Appendix A) under Windows XP.) Without
+:dbcs, Lispworks leaves the foreign function name unchanged.</p>
+<p>One FLI definition for the Win32 TextOut function is:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">fli</span><span class="p">:</span><span class="n">define</span><span class="o">-</span><span class="n">foreign</span><span class="o">-</span><span class="n">function</span>
+    <span class="p">(</span><span class="n">TextOut</span> <span class="s2">&quot;TextOut&quot;</span> <span class="p">:</span><span class="n">dbcs</span> <span class="p">:</span><span class="n">calling</span><span class="o">-</span><span class="n">convention</span> <span class="p">:</span><span class="n">stdcall</span><span class="p">)</span>
+    <span class="p">((</span><span class="n">HDC</span> <span class="p">(:</span><span class="n">unsigned</span> <span class="p">:</span><span class="n">long</span><span class="p">))</span> <span class="p">(</span><span class="n">nXStart</span> <span class="p">(:</span><span class="n">unsigned</span> <span class="p">:</span><span class="nb">int</span><span class="p">))</span> <span class="p">(</span><span class="n">nYStart</span> <span class="p">(:</span><span class="n">unsigned</span> <span class="p">:</span><span class="nb">int</span><span class="p">))</span>
+     <span class="p">(</span><span class="n">lpString</span> <span class="p">:</span><span class="n">pointer</span><span class="p">)</span> <span class="p">(</span><span class="n">cbString</span> <span class="p">(:</span><span class="n">unsigned</span> <span class="p">:</span><span class="nb">int</span><span class="p">)))</span>
+  <span class="p">:</span><span class="n">result</span><span class="o">-</span><span class="nb">type</span> <span class="p">(:</span><span class="n">unsigned</span> <span class="p">:</span><span class="n">long</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>which is equivalent to:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">fli</span><span class="p">:</span><span class="n">define</span><span class="o">-</span><span class="n">foreign</span><span class="o">-</span><span class="n">function</span>
+    <span class="p">(</span><span class="n">TextOut</span> <span class="s2">&quot;TextOutW&quot;</span> <span class="p">:</span><span class="n">calling</span><span class="o">-</span><span class="n">convention</span> <span class="p">:</span><span class="n">stdcall</span><span class="p">)</span>
+    <span class="p">((</span><span class="n">HDC</span> <span class="p">(:</span><span class="n">unsigned</span> <span class="p">:</span><span class="n">long</span><span class="p">))</span> <span class="p">(</span><span class="n">nXStart</span> <span class="p">(:</span><span class="n">unsigned</span> <span class="p">:</span><span class="nb">int</span><span class="p">))</span> <span class="p">(</span><span class="n">nYStart</span> <span class="p">(:</span><span class="n">unsigned</span> <span class="p">:</span><span class="nb">int</span><span class="p">))</span>
+     <span class="p">(</span><span class="n">lpString</span> <span class="p">:</span><span class="n">pointer</span><span class="p">)</span> <span class="p">(</span><span class="n">cbString</span> <span class="p">(:</span><span class="n">unsigned</span> <span class="p">:</span><span class="nb">int</span><span class="p">)))</span>
+  <span class="p">:</span><span class="n">result</span><span class="o">-</span><span class="nb">type</span> <span class="p">(:</span><span class="n">unsigned</span> <span class="p">:</span><span class="n">long</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>under NT/2000/XP (the second example would use &#8220;TextOutA&#8221; under 95).</p>
+<p>To demonstrate this, let&#8217;s use a simple FLI definition which is easy to
+call interactively for testing purposes. We are trying only to see if a
+given Win32 function is known to the OS. In the following REPL
+interaction, the return result is important only when the Lisp restart
+handler is invoked. When the restart handler is not invoked, the Win32
+function was found, loaded and called. Trying to call a Win32 function
+which the FLI cannot find results in an invocation of the restart
+handler. (The correct define-foreign-function definition for textout can
+be found in <a class="reference external" href="#appendixa">Appendix A</a></p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">9</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">fli</span><span class="p">:</span><span class="n">define</span><span class="o">-</span><span class="n">foreign</span><span class="o">-</span><span class="n">function</span>
+                <span class="p">(</span><span class="n">TextOut</span><span class="o">-</span><span class="mi">1</span> <span class="s2">&quot;TextOut&quot;</span> <span class="p">:</span><span class="n">dbcs</span> <span class="p">:</span><span class="n">calling</span><span class="o">-</span><span class="n">convention</span> <span class="p">:</span><span class="n">stdcall</span><span class="p">)</span>
+                <span class="p">()</span> <span class="p">:</span><span class="n">result</span><span class="o">-</span><span class="nb">type</span> <span class="p">:</span><span class="nb">int</span><span class="p">)</span>
+<span class="n">TEXTOUT</span><span class="o">-</span><span class="mi">1</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">10</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">textout</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="mi">1</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">11</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">fli</span><span class="p">:</span><span class="n">define</span><span class="o">-</span><span class="n">foreign</span><span class="o">-</span><span class="n">function</span>
+                 <span class="p">(</span><span class="n">TextOut</span><span class="o">-</span><span class="mi">2</span> <span class="s2">&quot;TextOut&quot;</span> <span class="p">:</span><span class="n">dbcs</span> <span class="p">:</span><span class="n">calling</span><span class="o">-</span><span class="n">convention</span> <span class="p">:</span><span class="n">stdcall</span><span class="p">)</span>
+                 <span class="p">()</span> <span class="p">:</span><span class="n">result</span><span class="o">-</span><span class="nb">type</span> <span class="p">:</span><span class="nb">int</span><span class="p">)</span>
+<span class="n">TEXTOUT</span><span class="o">-</span><span class="mi">2</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">12</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">textout</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+<span class="mi">0</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal"><span class="pre">TextOut</span></code> function was found both times. This shows that a given
+Win32 function can be named in more than one FLI definition. This
+technique is sometimes useful when more than one Lisp datatype can
+satisfy the requirements for a parameter of the Win32 function.</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span>CL-USER 13 &gt; (fli:define-foreign-function
+                 (TextOut-3 &quot;TextOutW&quot; :dbcs :calling-convention :stdcall)
+                 () :result-type :int)
+
+TEXTOUT-3
+
+CL-USER 14 &gt; (textout-3)
+
+Error: Foreign function TEXTOUT-3 trying to call to unresolved
+external function &quot;TextOutWW&quot;.
+
+1 (abort) Return to level 0.
+2 Return to top-level loop.
+3 Return from multiprocessing.
+
+Type :b for backtrace, :c  to proceed,  or :? for other
+options
+
+CL-USER 15 : 1 &gt; :top
+
+CL-USER 16 &gt; (fli:define-foreign-function
+                 (TextOut-4 &quot;TextOutW&quot; :calling-convention :stdcall)
+                 () :result-type :int)
+
+TEXTOUT-4
+
+CL-USER 17 &gt; (textout-4)
+1
+
+CL-USER 18 &gt; (fli:define-foreign-function
+                 (TextOut-5 &quot;TextOutA&quot; :calling-convention :stdcall)
+                 () :result-type :int)
+TEXTOUT-5
+
+CL-USER 19 &gt; (textout-5)
+0
+
+CL-USER 20 &gt;
+</pre></div>
+</div>
+<p>I elided a warning Lispworks gives after multiple definitions of a
+foreign function when the previous definition differs in its use of the
+:dbcs keyword from the current definition&#8217;s use. After CL-USER 14,
+Lispworks complains about &#8220;TextOutWW&#8221;, which shows that using the :dbcs
+keyword causes Lispworks to append a &#8216;W&#8217; to the foreign function&#8217;s name,
+although the existence of the foreign function itself is not verified
+until an actual call is made. TextOut-5 verifies the existence of the
+Win32 function TextOutA, which is the ASCII version of TextOut.</p>
+<p>I have seen strange character sets in titles and other places and have
+been able to resolve those problems by ensuring I made consistent use of
+the :dbcs and/or W/A declarations.</p>
+<p>Edi Weitz asked if the :dbcs keyword decides at compile time or at run
+time which function to call, the ...A or the ...W. I wrote the following
+program:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="ow">in</span><span class="o">-</span><span class="n">package</span> <span class="p">:</span><span class="n">cl</span><span class="o">-</span><span class="n">user</span><span class="p">)</span>
+
+<span class="p">(</span><span class="n">fli</span><span class="p">:</span><span class="n">define</span><span class="o">-</span><span class="n">foreign</span><span class="o">-</span><span class="n">function</span>
+    <span class="p">(</span><span class="n">MessageBox</span> <span class="s2">&quot;MessageBox&quot;</span> <span class="p">:</span><span class="n">dbcs</span> <span class="p">:</span><span class="n">calling</span><span class="o">-</span><span class="n">convention</span> <span class="p">:</span><span class="n">stdcall</span><span class="p">)</span>
+    <span class="p">((</span><span class="n">hwnd</span> <span class="p">(:</span><span class="n">unsigned</span> <span class="p">:</span><span class="n">long</span><span class="p">))</span> <span class="p">(</span><span class="n">text</span> <span class="p">(:</span><span class="n">unsigned</span> <span class="p">:</span><span class="n">long</span><span class="p">))</span> <span class="p">(</span><span class="n">title</span> <span class="p">(:</span><span class="n">unsigned</span> <span class="p">:</span><span class="n">long</span><span class="p">))</span> <span class="p">(</span><span class="n">flags</span> <span class="p">(:</span><span class="n">unsigned</span> <span class="p">:</span><span class="n">long</span><span class="p">)))</span>
+  <span class="p">:</span><span class="n">result</span><span class="o">-</span><span class="nb">type</span> <span class="p">(:</span><span class="n">unsigned</span> <span class="p">:</span><span class="n">long</span><span class="p">))</span>
+
+<span class="p">(</span><span class="n">defun</span> <span class="n">external</span><span class="o">-</span><span class="nb">format</span> <span class="p">()</span>
+  <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="n">string</span><span class="o">=</span> <span class="p">(</span><span class="n">software</span><span class="o">-</span><span class="nb">type</span><span class="p">)</span> <span class="s2">&quot;Windows NT&quot;</span><span class="p">)</span>
+      <span class="p">:</span><span class="n">unicode</span>
+      <span class="p">:</span><span class="n">ascii</span><span class="p">))</span>
+
+<span class="p">(</span><span class="n">defun</span> <span class="n">display</span><span class="o">-</span><span class="nb">format</span><span class="o">-</span><span class="n">used</span> <span class="p">()</span>
+  <span class="p">(</span><span class="n">fli</span><span class="p">:</span><span class="k">with</span><span class="o">-</span><span class="n">foreign</span><span class="o">-</span><span class="n">string</span>
+      <span class="p">(</span><span class="n">unicode</span><span class="o">-</span><span class="n">p</span> <span class="n">u</span><span class="o">-</span><span class="n">ec</span> <span class="n">u</span><span class="o">-</span><span class="n">bc</span> <span class="p">:</span><span class="n">external</span><span class="o">-</span><span class="nb">format</span> <span class="p">(</span><span class="n">external</span><span class="o">-</span><span class="nb">format</span><span class="p">))</span> <span class="s2">&quot;Unicode&quot;</span>
+      <span class="p">(</span><span class="n">fli</span><span class="p">:</span><span class="k">with</span><span class="o">-</span><span class="n">foreign</span><span class="o">-</span><span class="n">string</span>
+      <span class="p">(</span><span class="n">ascii</span><span class="o">-</span><span class="n">p</span> <span class="n">a</span><span class="o">-</span><span class="n">ec</span> <span class="n">a</span><span class="o">-</span><span class="n">bc</span> <span class="p">:</span><span class="n">external</span><span class="o">-</span><span class="nb">format</span> <span class="p">(</span><span class="n">external</span><span class="o">-</span><span class="nb">format</span><span class="p">))</span> <span class="s2">&quot;Ascii&quot;</span>
+      <span class="p">(</span><span class="n">fli</span><span class="p">:</span><span class="k">with</span><span class="o">-</span><span class="n">foreign</span><span class="o">-</span><span class="n">string</span>
+              <span class="p">(</span><span class="n">title</span><span class="o">-</span><span class="n">p</span> <span class="n">t</span><span class="o">-</span><span class="n">ec</span> <span class="n">t</span><span class="o">-</span><span class="n">bc</span> <span class="p">:</span><span class="n">external</span><span class="o">-</span><span class="nb">format</span> <span class="p">(</span><span class="n">external</span><span class="o">-</span><span class="nb">format</span><span class="p">))</span> <span class="s2">&quot;External Format&quot;</span>
+              <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="n">eq</span> <span class="p">(</span><span class="n">external</span><span class="o">-</span><span class="nb">format</span><span class="p">)</span> <span class="p">:</span><span class="n">unicode</span><span class="p">)</span>
+                  <span class="p">(</span><span class="n">messagebox</span> <span class="mi">0</span> <span class="p">(</span><span class="n">fli</span><span class="p">:</span><span class="n">pointer</span><span class="o">-</span><span class="n">address</span> <span class="n">unicode</span><span class="o">-</span><span class="n">p</span><span class="p">)</span>
+                              <span class="p">(</span><span class="n">fli</span><span class="p">:</span><span class="n">pointer</span><span class="o">-</span><span class="n">address</span> <span class="n">title</span><span class="o">-</span><span class="n">p</span><span class="p">)</span> <span class="mi">0</span><span class="p">)</span>
+                  <span class="p">(</span><span class="n">messagebox</span> <span class="mi">0</span> <span class="p">(</span><span class="n">fli</span><span class="p">:</span><span class="n">pointer</span><span class="o">-</span><span class="n">address</span> <span class="n">ascii</span><span class="o">-</span><span class="n">p</span><span class="p">)</span>
+                              <span class="p">(</span><span class="n">fli</span><span class="p">:</span><span class="n">pointer</span><span class="o">-</span><span class="n">address</span> <span class="n">title</span><span class="o">-</span><span class="n">p</span><span class="p">)</span> <span class="mi">0</span><span class="p">))))))</span>
+
+<span class="p">(</span><span class="nb">compile</span> <span class="s1">&#39;external-format)</span>
+<span class="p">(</span><span class="nb">compile</span> <span class="s1">&#39;display-format-used)</span>
+
+<span class="p">(</span><span class="n">deliver</span> <span class="s1">&#39;display-format-used &quot;dbcs-run&quot; 5)</span>
+<span class="p">(</span><span class="n">quit</span><span class="p">)</span>
+
+<span class="p">;</span> <span class="n">We</span> <span class="n">then</span> <span class="n">have</span> <span class="n">dbcs</span><span class="o">-</span><span class="n">run</span><span class="o">.</span><span class="n">exe</span><span class="o">.</span>  <span class="n">When</span> <span class="n">run</span> <span class="n">on</span> <span class="n">Windows</span> <span class="n">XP</span><span class="p">,</span> <span class="n">dbcs</span><span class="o">-</span><span class="n">run</span> <span class="n">pops</span> <span class="n">up</span> <span class="n">a</span> <span class="n">messagebox</span>
+<span class="p">;</span> <span class="n">displaying</span> <span class="s2">&quot;Unicode&quot;</span><span class="o">.</span>  <span class="n">The</span> <span class="n">same</span> <span class="n">dbcs</span><span class="o">-</span><span class="n">run</span><span class="o">.</span><span class="n">exe</span> <span class="n">file</span><span class="p">,</span> <span class="n">ftp</span><span class="s1">&#39;d to a Macintosh running OS 9 with</span>
+<span class="p">;</span> <span class="n">Virtual</span> <span class="n">PC</span> <span class="n">running</span> <span class="n">Windows</span> <span class="mi">98</span><span class="p">,</span> <span class="n">pops</span> <span class="n">up</span> <span class="n">a</span> <span class="n">message</span> <span class="n">box</span> <span class="n">displaying</span> <span class="s2">&quot;Ascii&quot;</span><span class="o">.</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="fli-the-foreign-language-interface-translating-c-header-files-to-lisp">
+<h2>FLI - The Foreign Language Interface - Translating C Header Files to Lisp<a class="headerlink" href="#fli-the-foreign-language-interface-translating-c-header-files-to-lisp" title="Permalink to this headline">¶</a></h2>
+<p>When calling the Win32 API from C/C++, header files provided with the
+compiler are <code class="docutils literal"><span class="pre">#include</span></code>d in the program. The header files contain
+the definitions of constants, structures, and functions comprising the
+API. These definitions must be available to the Lisp program. I find it
+most straightforward to do this conversion by hand. Although there are
+automated methods, doing it manually does not take long on a
+per-function basis.</p>
+<p>In C/C++, the <code class="docutils literal"><span class="pre">#define</span></code>s exist in the preprocessor. Only those
+<code class="docutils literal"><span class="pre">define</span></code>s used by the program are included in the object code. With
+Lisp, the <code class="docutils literal"><span class="pre">defconstants</span></code> are all loaded into the Lisp image, whether
+or not they are subsequently used. I do not know a clean solution for
+this issue.</p>
+<p>In the meantime, I make a base, or core, win-header.lisp and use other
+.lisp files, grouped by functionality, for less-frequently-used
+definitions, loading those .lisp files when I need them.</p>
+<div class="section" id="fli-data-types">
+<h3>FLI Data Types<a class="headerlink" href="#fli-data-types" title="Permalink to this headline">¶</a></h3>
+<p>The Win32 C/C++ header files include many typedefs for OS-specific data
+types, including HINSTANCE, HANDLE, HMENU, LPCTSTR, and more. Regarding
+Lisp, these essentially boil down to signed or unsigned, long or char,
+and singleton or array, or C structures composed of those types. (Int
+seems to be the same as long.)</p>
+<p>Lisp does not know or care about the difference between an HINSTANCE and
+an HMENU. They both are simply 32-bit values. Lisp pays attention to
+these values at two different points in time: 1) when moving Lisp data
+to a foreign field and 2) when moving the foreign data to Lisp.
+Lispworks attempts coercion at those points and conditions result when
+incorrect attempts are made to do conversions like stuffing a negative
+value into an unsigned field. If more hints about type are given to
+Lisp, such as declaring a foreign field to be of type :pointer, Lisp
+will complain when trying to stuff zero into the pointer. That is not
+handy if one is trying to pass a null pointer to the OS. Thus, I find it
+easier to call most parameters long, although I bend that rule from time
+to time.</p>
+<p>Lispworks FLI pointers are actually a Lisp structure containing an
+address retrieved, or unboxed, by fli:pointer-address. When passing a
+pointer value to the OS, for example when passing the address of a
+<code class="docutils literal"><span class="pre">RECT</span></code> to <code class="docutils literal"><span class="pre">GetClientRect</span></code>, there are two steps that need to happen:
+1) allocate the foreign structure and 2) pass the address of that
+allocated structure to the OS. Most of the time these allocations are
+best handled with <code class="docutils literal"><span class="pre">fli:with-dynamic-foreign-objects</span></code> enclosing calls
+to <code class="docutils literal"><span class="pre">fli:allocate-dynamic-foreign-object</span></code> because one doesn&#8217;t have to
+worry about deallocations. I pass the address of the allocated structure
+using <code class="docutils literal"><span class="pre">fli:pointer-address</span></code> (unboxing the pointer value) and define
+the field in the foreign function&#8217;s parameter list as an unsigned long.</p>
+<p>The FLI allows things to be defined such that Lispworks will try
+automatic coercion (unboxing). Try defining the parameter type as
+:pointer. However, Lispworks complains when trying to pass a NULL
+pointer, although I did not try creating a FLI pointer with address
+zero. The approach I chose, calling pointers unsigned longs, is clear to
+me and works well in both directions (OS-&gt;Lisp, Lisp-&gt;OS). This may
+simply be a result of my current lack of complete understanding and
+there may be a better way.</p>
+<p>On occasion is it helpful to define C arrays inside C structures, in
+particular in <code class="docutils literal"><span class="pre">sPAINTSTRUCT</span></code>. This works but I don&#8217;t like my current
+method of obtaining the address of structure members or array entries. I
+find myself counting byte offsets by hand and using something like:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">defun</span> <span class="n">interior</span><span class="o">-</span><span class="n">copy</span> <span class="p">(</span><span class="n">to</span><span class="o">-</span><span class="n">struct</span><span class="o">-</span><span class="n">ptr</span> <span class="n">byte</span><span class="o">-</span><span class="n">offset</span> <span class="n">src</span><span class="o">-</span><span class="n">ptr</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">ptr</span> <span class="p">(</span><span class="n">fli</span><span class="p">:</span><span class="n">make</span><span class="o">-</span><span class="n">pointer</span>
+              <span class="p">:</span><span class="n">address</span> <span class="p">(</span><span class="n">fli</span><span class="p">:</span><span class="n">pointer</span><span class="o">-</span><span class="n">address</span> <span class="n">to</span><span class="o">-</span><span class="n">struct</span><span class="o">-</span><span class="n">ptr</span> <span class="p">:</span><span class="nb">type</span> <span class="p">:</span><span class="n">char</span><span class="p">))))</span>
+    <span class="p">(</span><span class="n">fli</span><span class="p">:</span><span class="n">incf</span><span class="o">-</span><span class="n">pointer</span> <span class="n">ptr</span> <span class="n">byte</span><span class="o">-</span><span class="n">offset</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">wcscpy</span> <span class="p">(</span><span class="n">fli</span><span class="p">:</span><span class="n">pointer</span><span class="o">-</span><span class="n">address</span> <span class="n">ptr</span><span class="p">)</span> <span class="p">(</span><span class="n">fli</span><span class="p">:</span><span class="n">pointer</span><span class="o">-</span><span class="n">address</span> <span class="n">src</span><span class="o">-</span><span class="n">ptr</span><span class="p">))))</span>
+</pre></div>
+</div>
+<p>where wcscpy, the wide-character version of strcpy, is defined through
+the FLI. I hope there&#8217;s a better way to do this and that someone quickly
+teaches me. I haven&#8217;t worked enough with different OSes and Lispworks to
+know the best way to choose strcpy vs. wcscpy, other than to use
+(software-type) to decide which to call. (Or use (external-format),
+defined in Appendix A.)</p>
+<p>Although the data types defined to Lisp are kept a minimum, it is very
+useful for documentation purposes to mimic the typedef names used in the
+C/C++ header files. Thus <code class="docutils literal"><span class="pre">fli:define-c-typedef</span></code> is used to define
+BOOL, DWORD, HANDLE, HDC, and other similar Win32 data types.</p>
+<p>Many OS-specific constants must be made available to the Lisp program:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">defconstant</span> <span class="n">CW_USEDEFAULT</span>       <span class="c1">#x80000000)</span>
+<span class="p">(</span><span class="n">defconstant</span> <span class="n">IDC_ARROW</span>                <span class="mi">32512</span><span class="p">)</span>
+<span class="p">(</span><span class="n">defconstant</span> <span class="n">SW_SHOW</span>                      <span class="mi">5</span><span class="p">)</span>
+<span class="p">(</span><span class="n">defconstant</span> <span class="n">WM_CLOSE</span>            <span class="c1">#x00000010)</span>
+<span class="p">(</span><span class="n">defconstant</span> <span class="n">WM_DESTROY</span>          <span class="c1">#x00000002)</span>
+</pre></div>
+</div>
+<p>These constants are given by name, without values, in the MSDN
+documentation. The Lisp program needs not only the name but also the
+value. An easy way to find the necessary values is to grep through the
+VC98/Include directory. Visual Studio contains a &#8220;find in files&#8221;
+function on its toolbar which allows this kind of search. Kenny Tilton
+says, &#8220;What I did was grab any VC++ project that builds (the NeHe OpenGL
+site is full of VC++ projects (see OpenGL tutorials in sidebar to left
+of the page at <a class="reference external" href="http://nehe.gamedev.net">http:///nehe.gamedev.net</a>)
+which built without a problem for me) and then right-click on the symbol
+I was curious about. (Of &gt; course first you have to find a reference .)
+VC++ then offers &#8216;find definition&#8217; and will jump right to a header entry
+for a function or constant or macro or whatever.&#8221;</p>
+</div>
+<div class="section" id="fli-data-structures">
+<h3>FLI Data Structures<a class="headerlink" href="#fli-data-structures" title="Permalink to this headline">¶</a></h3>
+<p>I usually define the structure and a typedef for it:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">;</span> <span class="n">PAINTSTRUCT</span>
+<span class="p">(</span><span class="n">fli</span><span class="p">:</span><span class="n">define</span><span class="o">-</span><span class="n">c</span><span class="o">-</span><span class="n">struct</span> <span class="n">sPAINTSTRUCT</span>
+    <span class="p">(</span><span class="n">HDC</span> <span class="n">hdc</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">fErase</span> <span class="nb">bool</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">rcPaint</span><span class="o">-</span><span class="n">x</span> <span class="n">uint</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">rcPaint</span><span class="o">-</span><span class="n">y</span> <span class="n">uint</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">rcPaint</span><span class="o">-</span><span class="n">width</span> <span class="n">uint</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">rcPaint</span><span class="o">-</span><span class="n">height</span> <span class="n">uint</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">fRestore</span> <span class="nb">bool</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">fIncUpdate</span> <span class="nb">bool</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">rgbReserved</span> <span class="p">(:</span><span class="n">c</span><span class="o">-</span><span class="n">array</span> <span class="n">wBYTE</span> <span class="mi">32</span><span class="p">)))</span>
+<span class="p">(</span><span class="n">fli</span><span class="p">:</span><span class="n">define</span><span class="o">-</span><span class="n">c</span><span class="o">-</span><span class="n">typedef</span> <span class="n">PAINTSTRUCT</span> <span class="n">sPAINTSTRUCT</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>and then can do something like:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">fli</span><span class="p">:</span><span class="k">with</span><span class="o">-</span><span class="n">dynamic</span><span class="o">-</span><span class="n">foreign</span><span class="o">-</span><span class="n">objects</span> <span class="p">()</span>
+  <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">ps</span><span class="o">-</span><span class="n">ptr</span> <span class="p">(</span><span class="n">fli</span><span class="p">:</span><span class="n">allocate</span><span class="o">-</span><span class="n">dynamic</span><span class="o">-</span><span class="n">foreign</span><span class="o">-</span><span class="nb">object</span> <span class="p">:</span><span class="nb">type</span> <span class="s1">&#39;paintstruct)))</span>
+    <span class="p">(</span><span class="nb">format</span> <span class="n">t</span> <span class="s2">&quot;~&amp;Pointer value: ~a&quot;</span> <span class="p">(</span><span class="n">fli</span><span class="p">:</span><span class="n">pointer</span><span class="o">-</span><span class="n">address</span> <span class="n">ps</span><span class="o">-</span><span class="n">ptr</span><span class="p">))))</span>
+</pre></div>
+</div>
+<p>although I&#8217;m not clear on why the typedef is valuable. Lisp is not C and
+in Lisp the typedef does not save me from typing
+<code class="docutils literal"><span class="pre">struct</span> <span class="pre">sPAINTSTRUCT</span></code>, for example. I think the typedefs are
+superfluous and I probably will stop using them.</p>
+</div>
+<div class="section" id="fli-functions">
+<h3>FLI Functions<a class="headerlink" href="#fli-functions" title="Permalink to this headline">¶</a></h3>
+<p>It is very easy to define OS calls in the FLI. I start with the API
+definition in the OS documentation. If Visual C++ is available, the MSDN
+documentation is probably loaded on the machine. The documentation is
+available on the <a class="reference external" href="http://msdn.microsoft.com">MSDN website</a>. I go to
+the Win32 documentation page for the desired function and do a simple
+translation:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">;</span> <span class="n">LoadCursor</span>
+<span class="p">(</span><span class="n">fli</span><span class="p">:</span><span class="n">define</span><span class="o">-</span><span class="n">foreign</span><span class="o">-</span><span class="n">function</span>
+    <span class="p">(</span><span class="n">LoadCursor</span> <span class="s2">&quot;LoadCursor&quot;</span> <span class="p">:</span><span class="n">dbcs</span> <span class="p">:</span><span class="n">calling</span><span class="o">-</span><span class="n">convention</span> <span class="p">:</span><span class="n">stdcall</span><span class="p">)</span>
+    <span class="p">((</span><span class="n">hInstance</span> <span class="n">handle</span><span class="p">)</span> <span class="p">(</span><span class="n">param</span> <span class="n">ulong</span><span class="p">))</span>
+  <span class="p">:</span><span class="n">result</span><span class="o">-</span><span class="nb">type</span> <span class="n">handle</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>All the Win32 calls I&#8217;ve seen so far are
+<code class="docutils literal"><span class="pre">:calling-convention</span> <span class="pre">:stdcall</span></code>. If I know the function includes a text
+parameter, I include the :dbcs keyword. If I don&#8217;t know, I try it
+without :dbcs. The actual function called in this example is
+<code class="docutils literal"><span class="pre">LoadCursorA</span></code> or <code class="docutils literal"><span class="pre">LoadCursorW</span></code>.</p>
+</div>
+</div>
+<div class="section" id="callbacks-from-windows-to-lisp">
+<h2>Callbacks from Windows to Lisp<a class="headerlink" href="#callbacks-from-windows-to-lisp" title="Permalink to this headline">¶</a></h2>
+<p>Once the message pump is up and going, the OS delivers the messages by
+calling a Lisp function repeatedly. Lisp functions callable from the
+foreign environment can be defined in the following manner:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">;</span> <span class="n">WndProc</span> <span class="o">--</span> <span class="n">Window</span> <span class="n">procedure</span> <span class="k">for</span> <span class="n">the</span> <span class="n">window</span> <span class="n">we</span> <span class="n">will</span> <span class="n">create</span>
+<span class="p">(</span><span class="n">fli</span><span class="p">:</span><span class="n">define</span><span class="o">-</span><span class="n">foreign</span><span class="o">-</span><span class="n">callable</span>
+    <span class="p">(</span><span class="n">wndproc</span> <span class="p">:</span><span class="n">result</span><span class="o">-</span><span class="nb">type</span> <span class="p">:</span><span class="n">long</span> <span class="p">:</span><span class="n">calling</span><span class="o">-</span><span class="n">convention</span> <span class="p">:</span><span class="n">stdcall</span><span class="p">)</span>
+    <span class="p">((</span><span class="n">hwnd</span> <span class="n">hwnd</span><span class="p">)</span> <span class="p">(</span><span class="n">msg</span> <span class="n">ulong</span><span class="p">)</span>
+     <span class="p">(</span><span class="n">wparam</span> <span class="n">ulong</span><span class="p">)</span> <span class="p">(</span><span class="n">lparam</span> <span class="n">ulong</span><span class="p">))</span>
+  <span class="p">(</span><span class="n">case</span> <span class="n">msg</span>
+    <span class="p">(</span><span class="c1">#.WM_PAINT (wndproc-paint hwnd msg wparam lparam))</span>
+    <span class="c1">#+console (#.WM_DESTROY (PostQuitMessage 0) 0)</span>
+    <span class="p">(</span><span class="n">t</span> <span class="p">(</span><span class="n">DefWindowProc</span> <span class="n">hwnd</span> <span class="n">msg</span> <span class="n">wparam</span> <span class="n">lparam</span><span class="p">))))</span>
+</pre></div>
+</div>
+<p>This wndproc function is the message dispatcher. The OS calls wndproc
+once for every message sent to the program. Wndproc is responsible for
+understanding the message and calling the appropriate function.</p>
+<p>The #. reader macro returns the value of <code class="docutils literal"><span class="pre">WM_PAINT</span></code> and <code class="docutils literal"><span class="pre">WM_DESTROY</span></code>
+at compile-time, allowing <code class="docutils literal"><span class="pre">case</span></code> to work. #+console means &#8220;include the
+next form only if :console is a member of <em>features</em>&#8221;.</p>
+<p>The example Win32 Lisp program in Appendix A may be run either from the
+Lispworks IDE or from console mode, such as ILISP in Emacs. If
+<code class="docutils literal"><span class="pre">PostQuitMessage</span></code> is called from the IDE, the IDE shuts down. If
+<code class="docutils literal"><span class="pre">PostQuitMessage</span></code> is not called in console mode, the Win32 window does
+not close.</p>
+</div>
+<div class="section" id="starting-the-program">
+<h2>Starting the Program<a class="headerlink" href="#starting-the-program" title="Permalink to this headline">¶</a></h2>
+<p>Multiprocessing is always running under the Lispworks IDE but may or may
+not be running using ILISP under Emacs. Using multiprocessing is great
+because one can peek and poke at the program and its variables, provide
+new or redefined functions which take effect immediately, and even make
+Win32 API calls, all while the program is running and the window is
+visible with all its buttons and menus active.</p>
+<p>Using multiprocessing has not proven so nice for me under ILISP. I love
+the ILISP and Emacs environment. The Lispworks IDE is very nice, and I
+keep a copy of it going for certain tasks such as finding online manuals
+and using debug tools such as the inspector. For editing and most
+running, though, I prefer Emacs and ILISP. However, I have not learned
+how to view multiple processes under ILISP, nor do I know how to switch
+between them. When I use multiprocessing with ILISP, it appears to me
+that any thread with a condition grabs <em>standard-output</em> and
+<em>standard-input</em>. I don&#8217;t know how to switch back to the other thread.
+This is enough of a problem that I don&#8217;t use multiprocessing under ILISP
+and when I need or want the interactive debug capabilities possible with
+multiprocessing, or need multiprocessing in any form, I switch to the
+Lispworks IDE.</p>
+<p>When running under the IDE, Lispworks provides the message pump. When
+running under Emacs/ILISP (or in console mode, as would happen in a
+delivered application), the Lisp program itself must provide the message
+pump.</p>
+<p>Thus in the example program in Appendix A, the function
+<code class="docutils literal"><span class="pre">create-toplevel-window</span></code> ensures multiprocessing is running when in
+console mode. The function <code class="docutils literal"><span class="pre">create-toplevel-window-run</span></code> performs the
+message pump operation in console mode but not otherwise.</p>
+<p>The program in Appendix A makes a call to register-class when the file
+is loaded. The call needs to be made only once and so I make the call at
+the top-level:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">defvar</span> <span class="o">*</span><span class="n">reg</span><span class="o">-</span><span class="n">class</span><span class="o">-</span><span class="n">atom</span><span class="o">*</span> <span class="p">(</span><span class="n">register</span><span class="o">-</span><span class="n">class</span><span class="p">))</span>
+</pre></div>
+</div>
+<p><code class="docutils literal"><span class="pre">create-toplevel-window-run</span></code> then only needs to call
+<code class="docutils literal"><span class="pre">CreateWindowEx</span></code> and optionally start the message pump.</p>
+</div>
+<div class="section" id="the-lisp-repl-and-win32-development">
+<h2>The Lisp REPL and Win32 Development<a class="headerlink" href="#the-lisp-repl-and-win32-development" title="Permalink to this headline">¶</a></h2>
+<p>When a Win32 application is running from within the Lispworks IDE, one
+is able to enter Lisp forms at the IDE&#8217;s REPL prompt. One can view any
+variable, redefine any function, and make calls to <code class="docutils literal"><span class="pre">SendMessage</span></code> or
+any other Win32 function that doesn&#8217;t require context from the OS, such
+as being within a WM_PAINT. If one redefines the function called when a
+button is clicked, the next click of the button gets the new function.
+The Lispworks debug tools are available. Other Lisp programs can be run
+simultaneously. Individual functions within the running Win32 program
+can be called from the REPL. Functions can be traced and untraced,
+advice can be added or removed, and CLOS classes can be redefined on the
+fly with Lisp guaranteeing that the slot additions or deletions happen
+in an orderly fashion within the running program.</p>
+<p>Lisp is designed to allow programs to run for years at a time, with
+careful management, and to allow the programs to be maintained, with
+bugs fixed, new functions defined, and CLOS objects redefined, during
+that time.</p>
+</div>
+<div class="section" id="making-direct-win32-calls-from-capi">
+<h2>Making Direct Win32 Calls from CAPI<a class="headerlink" href="#making-direct-win32-calls-from-capi" title="Permalink to this headline">¶</a></h2>
+<p>Lispworks includes CAPI, a cross-platform API for GUI program
+development. CAPI is powerful and easy to use. For true cross-platform
+capability, it is important to stay with 100%-pure CAPI.</p>
+<p>However, even in a pure Win32 environment it is reasonable to want to
+use CAPI&#8217;s features quickly to generate advanced GUI programs without
+having to recreate every wheel. It is possible to use Win32-specific
+features from within a CAPI program.</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">defclass</span> <span class="n">image</span><span class="o">-</span><span class="n">pane</span> <span class="p">(</span><span class="n">output</span><span class="o">-</span><span class="n">pane</span><span class="p">)</span> <span class="p">()</span>
+  <span class="p">(:</span><span class="n">default</span><span class="o">-</span><span class="n">initargs</span>
+   <span class="p">:</span><span class="n">display</span><span class="o">-</span><span class="n">callback</span> <span class="s1">&#39;draw-image))</span>
+
+<span class="o">...</span>
+
+<span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">pane</span><span class="o">-</span><span class="mi">1</span> <span class="p">(</span><span class="n">make</span><span class="o">-</span><span class="n">instance</span> <span class="s1">&#39;image-pane))</span>
+      <span class="o">...</span>
+      <span class="p">(</span><span class="n">contain</span> <span class="p">(</span><span class="n">make</span><span class="o">-</span><span class="n">instance</span> <span class="s1">&#39;column-layout</span>
+                              <span class="p">:</span><span class="n">description</span> <span class="p">(</span><span class="nb">list</span> <span class="n">pane</span><span class="o">-</span><span class="mi">1</span> <span class="n">other</span><span class="o">-</span><span class="n">pane</span><span class="p">))</span>
+        <span class="p">:</span><span class="n">best</span><span class="o">-</span><span class="n">width</span> <span class="mi">640</span>
+        <span class="p">:</span><span class="n">best</span><span class="o">-</span><span class="n">height</span> <span class="mi">480</span><span class="p">)))</span>
+
+<span class="o">...</span>
+
+<span class="p">(</span><span class="n">defun</span> <span class="n">draw</span><span class="o">-</span><span class="n">image</span> <span class="p">(</span><span class="n">pane</span> <span class="n">x</span> <span class="n">y</span> <span class="n">width</span> <span class="n">height</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">hwnd</span> <span class="p">(</span><span class="n">capi</span><span class="p">:</span><span class="n">simple</span><span class="o">-</span><span class="n">pane</span><span class="o">-</span><span class="n">handle</span> <span class="n">pane</span><span class="p">)))</span>
+    <span class="p">;;</span> <span class="n">This</span> <span class="n">returns</span> <span class="n">the</span> <span class="n">actual</span> <span class="n">Win32</span> <span class="n">window</span> <span class="n">handle</span>
+    <span class="p">;;</span> <span class="n">Now</span> <span class="n">call</span> <span class="n">CreateWindowEx</span> <span class="k">with</span> <span class="n">hwnd</span> <span class="k">as</span> <span class="n">the</span> <span class="n">new</span> <span class="n">window</span><span class="s1">&#39;s parent</span>
+    <span class="p">;;</span> <span class="n">The</span> <span class="n">Win32</span><span class="o">-</span><span class="n">defined</span> <span class="n">window</span> <span class="n">then</span> <span class="n">covers</span> <span class="n">the</span>
+    <span class="p">;;</span> <span class="n">CAPI</span> <span class="n">window</span><span class="o">.</span> <span class="n">After</span> <span class="n">destroying</span> <span class="ow">or</span> <span class="n">hiding</span> <span class="n">the</span> <span class="n">Win32</span> <span class="n">window</span><span class="p">,</span> <span class="n">the</span>
+    <span class="p">;;</span> <span class="n">CAPI</span> <span class="n">window</span> <span class="ow">is</span> <span class="n">revealed</span><span class="o">.</span>
+    <span class="p">;;</span> <span class="n">Be</span> <span class="n">careful</span> <span class="ow">not</span> <span class="n">to</span> <span class="n">create</span> <span class="n">the</span> <span class="n">window</span> <span class="k">if</span> <span class="n">it</span> <span class="n">already</span> <span class="ow">is</span> <span class="n">created</span><span class="o">.</span>
+
+    <span class="o">....</span>
+</pre></div>
+</div>
+<p>Note the connections from image-pane to pane-1 and from image-pane to
+draw-image, and that pane-1 is contained in the CAPI window. Draw-image
+gets called when it is time to ... well, when it is time to draw the
+image!</p>
+<p>Certainly calls to Win32 functions which don&#8217;t require handles to
+windows or other interaction with the CAPI environment work just fine.</p>
+<p>Many good programs use primarily local variables. If one wishes to use
+the multiprocessing environment to operate upon the program from the
+Lispworks IDE while the Windows program is running, it is important to
+have access to symbols and variables for the window handles and other
+Windows resources. If <code class="docutils literal"><span class="pre">SendMessage</span></code> is to be called from the REPL, a
+valid hwnd must be available. A way to have the hwnd available is to do
+a setf from within a function to which the OS passes the hwnd. This may
+be used as a debug-only technique or left as a permanent part of the
+program.</p>
+</div>
+<div class="section" id="interfacing-to-c">
+<h2>Interfacing to C<a class="headerlink" href="#interfacing-to-c" title="Permalink to this headline">¶</a></h2>
+<p>The OS makes many of the Win32 functions available always. Other
+functions, for example the <code class="docutils literal"><span class="pre">avicap32</span></code> video functions, exist in DLLs
+which must be explicitly loaded. Third-party or custom-built DLLs also
+require explicit loading.</p>
+<p>Make a def file, such as avicap32.def, named after the desired DLL:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">exports</span> <span class="n">capCreateCaptureWindow</span><span class="o">=</span><span class="n">capCreateCaptureWindowW</span>
+<span class="n">exports</span> <span class="n">capGetDriverDescription</span><span class="o">=</span><span class="n">capGetDriverDescriptionW</span>
+</pre></div>
+</div>
+<p>and in Lisp</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">;;</span> <span class="n">capCreateCaptureWindow</span>
+<span class="p">(</span><span class="n">fli</span><span class="p">:</span><span class="n">define</span><span class="o">-</span><span class="n">foreign</span><span class="o">-</span><span class="n">function</span>
+    <span class="p">(</span><span class="n">capCreateCaptureWindow</span> <span class="s2">&quot;capCreateCaptureWindowW&quot;</span><span class="p">)</span>
+    <span class="p">((</span><span class="n">lpszWindowName</span> <span class="p">:</span><span class="n">pointer</span><span class="p">)</span> <span class="p">(</span><span class="n">dwStyle</span> <span class="n">fli</span><span class="o">-</span><span class="n">dword</span><span class="p">)</span> <span class="p">(</span><span class="n">x</span> <span class="p">:</span><span class="nb">int</span><span class="p">)</span> <span class="p">(</span><span class="n">y</span> <span class="p">:</span><span class="nb">int</span><span class="p">)</span>
+     <span class="p">(</span><span class="n">nWidth</span> <span class="p">:</span><span class="nb">int</span><span class="p">)</span> <span class="p">(</span><span class="n">nHeight</span> <span class="p">:</span><span class="nb">int</span><span class="p">)</span> <span class="p">(</span><span class="n">HWND</span> <span class="n">fli</span><span class="o">-</span><span class="n">hwnd</span><span class="p">)</span> <span class="p">(</span><span class="n">nID</span> <span class="p">:</span><span class="nb">int</span><span class="p">))</span>
+  <span class="p">:</span><span class="n">result</span><span class="o">-</span><span class="nb">type</span> <span class="p">(:</span><span class="n">unsigned</span> <span class="p">:</span><span class="n">long</span><span class="p">)</span>
+  <span class="p">:</span><span class="n">module</span> <span class="p">:</span><span class="n">avicap32</span>
+  <span class="p">:</span><span class="n">documentation</span> <span class="s2">&quot;Opens a video capture window.&quot;</span><span class="p">)</span>
+
+<span class="p">(</span><span class="n">fli</span><span class="p">:</span><span class="n">register</span><span class="o">-</span><span class="n">module</span> <span class="s2">&quot;avicap32&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Windows created using functions in DLLs can be given a CAPI window as a
+parent, as previously shown. The def file may or may not be required,
+depending upon what functions are desired. Maybe :dbcs should be used
+here, eliminating the need for the hard-coded &#8216;W&#8217; in the foreign
+function name.</p>
+</div>
+<div class="section" id="raii-and-gc">
+<h2>RAII and GC<a class="headerlink" href="#raii-and-gc" title="Permalink to this headline">¶</a></h2>
+<p>A common C++ idiom is &#8220;Resource Acquisition Is Initialization&#8221;, in which
+a C++ object acquires an operating system resource, perhaps an open
+file, in the constructor and releases the resource in the object&#8217;s
+destructor. These objects may have dynamic or indefinite extent.</p>
+<p>Objects with dynamic extent are declared local at the beginning of a C++
+function and the object&#8217;s destructor is called when the function returns
+and the object goes out of scope. The corresponding Lisp idiom is the
+use of a <code class="docutils literal"><span class="pre">with-...</span></code> macro. The macro is responsible for acquiring the
+resource and releasing it under an unwind-protect.</p>
+<p>In C++, objects with indefinite extent must have their destructor called
+explicity, with <code class="docutils literal"><span class="pre">delete</span></code> or <code class="docutils literal"><span class="pre">delete</span> <span class="pre">[]</span></code>. The destructor tears down
+the object, first releasing any acquired resources via
+explicitly-programmed C++ code, then releasing the object&#8217;s memory via
+compiler-generated code as the destructor exits.</p>
+<p>Lisp is garbage collected, which means that Lisp is responsible for
+freeing the object&#8217;s memory. However, that may not happen for a very
+long time after the last reference to the object has disappeared. The
+garbage collector runs only as memory fills or when it is explicity
+called. If an object holds an acquired resource, almost always there is
+a proper time to release the resource and not releasing it at that time
+leads to resource exhaustion.</p>
+<p>Lisp is not responsible for acquired resources, such as window handles,
+which the programmer acquired with explicit Lisp code. The programmer
+must define a function, something like <code class="docutils literal"><span class="pre">(defun</span> <span class="pre">release-resources...</span></code>,
+and call the release function at the point where the destructor would
+have been called in C++. After the release function returns and there
+are no references to the object, Lisp will free the object&#8217;s memory
+during a future garbage collection.</p>
+<p>Another issue with the Win32/Lisp environment concerns the GC, which is
+free to move Lisp data. One cannot give the OS the address of Lisp data
+which may be moved by the GC. Any data given to the OS should be
+allocated through the FLI, which is responsible for making the data
+immovable.</p>
+</div>
+<div class="section" id="com">
+<h2>COM<a class="headerlink" href="#com" title="Permalink to this headline">¶</a></h2>
+<p>COM is widely used in Windows programming. Lispworks for Windows
+includes a <em>COM/Automation User Guide and Reference Manual</em> and the
+associated functions. I have not played with COM under Lisp and only
+note the availability of the manuals and functions. Actually, I did
+require com and automation and called the com:midl form, which loaded a
+huge series of IDL files, amazing in breadth and extent. I didn&#8217;t
+actually make things happen with COM, though.</p>
+</div>
+<div class="section" id="beginning-to-use-the-power-of-lisp">
+<h2>Beginning to Use the Power of Lisp<a class="headerlink" href="#beginning-to-use-the-power-of-lisp" title="Permalink to this headline">¶</a></h2>
+<p>My first thought, when I finally completed my demo program, was &#8220;That
+looks like any other Win32 program.&#8221; There was nothing Lispy about it.
+It was just Win32 code, programmable in any language. Different
+languages are good for different problem sets. When I think of Perl, I
+think of text. I think of numbers along with Fortran. When I think of
+Lisp, I think of defining my own language. Macros are one of the tools
+used to define embedded languages within Lisp and are part of what makes
+Lisp the programmable programming language.</p>
+<p>Win32 API programming cries out for new languages. It is a very powerful
+and flexible API but in a given application context, only certain
+subsets are used and they are used in repetitive fashions. This does not
+mean that the APIs should be redefined, were that possible. What works
+for one application may not work for the next. There probably are some
+language extensions that will be used in nearly all Win32 programs.
+Other extensions will apply only to certain applications.</p>
+<p>One beauty of Lisp is that the programmer can define a new extension at
+any time. See <a class="reference external" href="macros.html">the Common Lisp Cookbook&#8217;s chapter on
+macros</a>. I also recommend Paul Graham&#8217;s <a class="reference external" href="www.paulgraham.com/books.html">On
+Lisp</a> for learning to write macros and
+a whole lot more.</p>
+<p>When writing code, notice when the same pattern is typed over and over.
+Then think, sooner rather than later, &#8220;it&#8217;s time for a macro or a
+function.&#8221; Notice the repetitive coding even when you&#8217;re writing macros.
+Macros can be built upon macros, and macros can generate macros.</p>
+<p>Knowing whether to choose a macro or a function is partly a function of
+code bloat. Macros are evaluated in place and cause new code to be
+created, where functions do not. The advantage of macros is that they
+can create closures, capturing variable values present in the
+environment when the macro is expanded, thus eliminating much of the
+need for simple objects. If the macro creates <code class="docutils literal"><span class="pre">defvar</span></code> or
+<code class="docutils literal"><span class="pre">defparameter</span></code> forms, other functions the macro creates can use those
+vars and parameters, although closures can also be used for that
+purpose. The use of defvars allows reference to those defvars at the
+REPL in a multiprocessing environment while the Win32 program has an
+open window and is executing. Whether defvars or closures are used,
+absolutely zero store-and-retrieve infrastructure is needed.</p>
+<p>If macros are not used in this way, then functions that would have been
+created by the macro must have some form of object look-up code to
+retrieve window handles, captions, and other resources specific to the
+object in question.</p>
+<p>Be aware that functions can be declaimed inline and can be passed as
+parameters, while macros cannot.</p>
+<p>Many of the macros defined in <a class="reference external" href="www.paulgraham.com/books.html">On
+Lisp</a> are very useful in Win32
+programming. I use the symbol creation macros extensively.</p>
+<p>One set of needed macros make using the Foreign Language Interface
+easier, more compact, and more readable. I have a macro
+<code class="docutils literal"><span class="pre">with-foreign-strings</span></code> which takes a list of pointer-name/string pairs
+and creates a nested series of <code class="docutils literal"><span class="pre">(fli:with-foreign-string...</span></code> calls,
+including creation of the element-count and byte-count parameters with
+unique, predictible names for each string. My
+<code class="docutils literal"><span class="pre">setf-foreign-slot-values</span></code>, and <code class="docutils literal"><span class="pre">with-foreign-slot-values</span></code> macros
+also make for more compact and readable code.</p>
+<p>Another set of macros is useful for defining the Windows message handler
+functions. I prefer to create a CLOS class for windows messages and let
+the CLOS method dispatcher find the proper function for each message.
+This allows message handlers to be inherited and more-specific handlers
+defined for selected messages in the derived class. CLOS handles this
+nicely. I have a <code class="docutils literal"><span class="pre">DefMsgHandler</span></code> macro that calls RegisterClass,
+defines the CLOS method for each message to be handled, takes care of
+necessary housekeeping in ubiquitous functions such as <code class="docutils literal"><span class="pre">WM_PAINT</span></code>, and
+allows easy definition of function bodies to be executed for each
+desired type of message. Other macros are useful for defining
+pushbuttons, edit boxes, list views, and other Win32 controls.</p>
+<p>Look at <a class="reference external" href="#appendixb">Appendix B</a>. Compare it to <a class="reference external" href="#appendixa">Appendix
+A</a>. Of course, an extended version of the header-file
+portion of Appendix A is used in Appendix B but not shown there. All but
+a little of the program in Appendix A has been reduced to a library
+which is invoked in Appendix B. All of the application-specific
+information is contained in the very small program in Appendix B.</p>
+<p>The program in <a class="reference external" href="#appendixc">Appendix C</a> uses these macros to define a
+window including radio buttons, pushbuttons, a check box, text drawn on
+the background window, and a listview with columns.</p>
+<div class="section" id="conclusion">
+<h3>Conclusion<a class="headerlink" href="#conclusion" title="Permalink to this headline">¶</a></h3>
+<p>The example code presented in the text and in appendicies A-C places an
+emphasis on staying in Lisp and accessing the Win32 API from there. Paul
+Tarvydas has code in <a class="reference external" href="#appendixd">Appendix D</a> which demonstrates
+cooperation and interaction between C and Lisp. In Paul&#8217;s
+well-documented example, a C dll is used to drive the message loop. The
+Lisp callback function&#8217;s address is placed from within Lisp into a
+variable in the dll.</p>
+<p>Lisp provides an interactive and rich programming environment. The
+judicious use of macros to create language extensions in Lisp
+concentrates application-specific information into small local areas of
+the overall system. This simplifies the effort of understanding the
+application, increases the reliability of the application, reduces
+maintenance time, and increases the reliability of maintenance changes.
+Lisp is designed to make this easy.</p>
+</div>
+</div>
+<hr class="docutils" />
+<div class="section" id="appendix-a-hello-lisp-program-1">
+<h2>Appendix A: &#8220;Hello, Lisp&#8221; Program #1<a class="headerlink" href="#appendix-a-hello-lisp-program-1" title="Permalink to this headline">¶</a></h2>
+<p>Here is a Win32 Lisp program that opens a GUI window displaying &#8220;Hello,
+Lisp!&#8221;. A detailed discussion of program specifics follows the listing.
+The program listing contains necessary lines from the header files which
+are <code class="docutils literal"><span class="pre">#included</span></code> in a C/C++ program.</p>
+<p>It may be advantageous to open a separate window with the program source
+code visible while reading the text.</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span><span class="o">%</span> <span class="n">include</span> <span class="n">code</span><span class="o">/</span><span class="n">w32</span><span class="o">-</span><span class="n">appendix</span><span class="o">-</span><span class="n">a</span><span class="o">.</span><span class="n">lisp</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+</div>
+<p><img alt="image0" src="chapters/AppendixA.jpg" /></p>
+</div>
+<hr class="docutils" />
+<div class="section" id="appendix-b-hello-lisp-program-2">
+<h2>Appendix B: &#8220;Hello, Lisp!&#8221; Program #2<a class="headerlink" href="#appendix-b-hello-lisp-program-2" title="Permalink to this headline">¶</a></h2>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span><span class="o">%</span> <span class="n">include</span> <span class="n">code</span><span class="o">/</span><span class="n">w32</span><span class="o">-</span><span class="n">appendix</span><span class="o">-</span><span class="n">b</span><span class="o">.</span><span class="n">lisp</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+</div>
+<p><img alt="image1" src="chapters/AppendixB.jpg" /></p>
+<hr class="docutils" />
+<div class="section" id="appendix-c-program-3">
+<h3>Appendix C: Program #3<a class="headerlink" href="#appendix-c-program-3" title="Permalink to this headline">¶</a></h3>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span><span class="o">%</span> <span class="n">include</span> <span class="n">code</span><span class="o">/</span><span class="n">w32</span><span class="o">-</span><span class="n">appendix</span><span class="o">-</span><span class="n">c</span><span class="o">.</span><span class="n">lisp</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+</div>
+<p><img alt="image2" src="chapters/AppendixC.jpg" /></p>
+</div>
+<hr class="docutils" />
+<div class="section" id="appendix-d-paul-tarvydas-s-example">
+<h3>Appendix D: Paul Tarvydas&#8217;s Example<a class="headerlink" href="#appendix-d-paul-tarvydas-s-example" title="Permalink to this headline">¶</a></h3>
+<div class="line-block">
+<div class="line">Here&#8217;s an example that creates a windows class (in C) and gets invoked
+and</div>
+<div class="line">handled from LWW. It is similar to the &#8220;Hello&#8221; example in Petzhold,
+except</div>
+<div class="line">that it hooks to the LWW mainloop instead of creating its own.
+Probably it</div>
+<div class="line">ain&#8217;t as pretty as it might be, due to my rustiness with Win32 (and my
+lack</div>
+<div class="line">of patience with it :-).</div>
+</div>
+<p>To use:</p>
+<div class="line-block">
+<div class="line">1) create a DevStudio Win32 DLL project called &#8220;wintest&#8221;</div>
+<div class="line">2) put the wintest.c file into the project</div>
+<div class="line">3) copy the run.lisp file into the project directory (so that the
+Debug</div>
+<div class="line">directory is a subdirectory)</div>
+<div class="line">4) Build the C project.</div>
+<div class="line">5) Set Project&gt;&gt;Settings&gt;&gt;Debug&gt;&gt;Executable for debug session to point</div>
+<div class="line">to the</div>
+<div class="line">lispworksxxx.exe.</div>
+<div class="line">6) Run the project - this should bring up lispworks.</div>
+<div class="line">7) Open run.lisp, compile and load it.</div>
+<div class="line">8) In the listener, type &#8220;(run)&#8221;.</div>
+<div class="line">9) You should then see a window with &#8220;hello&#8221; in the middle of it.</div>
+</div>
+<div class="line-block">
+<div class="line">The example window class is built and initialized in C (called from
+the lisp</div>
+<div class="line">mainline). The windows callbacks to this window are handled in lisp
+(eg. the</div>
+<div class="line">WM_PAINT message) - windows has been given a pointer to a lisp
+function</div>
+<div class="line">(Lisp_WndProc) and has been told to use it for callbacks. The lisp
+code</div>
+<div class="line">makes direct Win32 calls that display the &#8220;hello&#8221; text. Lisp uses FLI</div>
+<div class="line">foreign functions and foreign variables to set this up. [If one were
+doing</div>
+<div class="line">this on a real project, a less contrived flow of control would be
+chosen, but</div>
+<div class="line">this one appears to exercise the FLI calls that you were asking
+about].</div>
+</div>
+<p>[I welcome comments from anyone, re. style, simplification, etc.]</p>
+<div class="line-block">
+<div class="line">Paul Tarvydas</div>
+<div class="line">tarvydas at spamoff-attcanada dotca</div>
+</div>
+<div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span><span class="o">%</span> <span class="n">include</span> <span class="n">code</span><span class="o">/</span><span class="n">w32</span><span class="o">-</span><span class="n">appendix</span><span class="o">-</span><span class="n">d</span><span class="o">.</span><span class="n">c</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span><span class="o">%</span> <span class="n">include</span> <span class="n">code</span><span class="o">/</span><span class="n">w32</span><span class="o">-</span><span class="n">appendix</span><span class="o">-</span><span class="n">d</span><span class="o">.</span><span class="n">lisp</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Using the Win32 API</a><ul>
+<li><a class="reference internal" href="#introduction-and-scope">Introduction and Scope</a></li>
+<li><a class="reference internal" href="#why-use-lisp-with-win32">Why Use Lisp with Win32?</a></li>
+<li><a class="reference internal" href="#a-very-brief-overview-of-a-win32-program-s-life">A (Very) Brief Overview of a Win32 Program&#8217;s Life</a></li>
+<li><a class="reference internal" href="#windows-character-systems-and-lisp">Windows Character Systems and Lisp</a></li>
+<li><a class="reference internal" href="#fli-the-foreign-language-interface-translating-c-header-files-to-lisp">FLI - The Foreign Language Interface - Translating C Header Files to Lisp</a><ul>
+<li><a class="reference internal" href="#fli-data-types">FLI Data Types</a></li>
+<li><a class="reference internal" href="#fli-data-structures">FLI Data Structures</a></li>
+<li><a class="reference internal" href="#fli-functions">FLI Functions</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#callbacks-from-windows-to-lisp">Callbacks from Windows to Lisp</a></li>
+<li><a class="reference internal" href="#starting-the-program">Starting the Program</a></li>
+<li><a class="reference internal" href="#the-lisp-repl-and-win32-development">The Lisp REPL and Win32 Development</a></li>
+<li><a class="reference internal" href="#making-direct-win32-calls-from-capi">Making Direct Win32 Calls from CAPI</a></li>
+<li><a class="reference internal" href="#interfacing-to-c">Interfacing to C</a></li>
+<li><a class="reference internal" href="#raii-and-gc">RAII and GC</a></li>
+<li><a class="reference internal" href="#com">COM</a></li>
+<li><a class="reference internal" href="#beginning-to-use-the-power-of-lisp">Beginning to Use the Power of Lisp</a><ul>
+<li><a class="reference internal" href="#conclusion">Conclusion</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#appendix-a-hello-lisp-program-1">Appendix A: &#8220;Hello, Lisp&#8221; Program #1</a></li>
+<li><a class="reference internal" href="#appendix-b-hello-lisp-program-2">Appendix B: &#8220;Hello, Lisp!&#8221; Program #2</a><ul>
+<li><a class="reference internal" href="#appendix-c-program-3">Appendix C: Program #3</a></li>
+<li><a class="reference internal" href="#appendix-d-paul-tarvydas-s-example">Appendix D: Paul Tarvydas&#8217;s Example</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Chapters</a><ul>
+      <li>Previous: <a href="emacs-ide.html" title="previous chapter">Using Emacs as an IDE</a></li>
+      <li>Next: <a href="testing.html" title="next chapter">Testing</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/chapters/win32.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, cl-cookbook contributors.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="../_sources/chapters/win32.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

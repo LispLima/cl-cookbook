@@ -1,0 +1,326 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Functions &#8212; The Common Lisp Cookbook 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="The Common Lisp Cookbook 0.1 documentation" href="../index.html" />
+    <link rel="up" title="Chapters" href="index.html" />
+    <link rel="next" title="Loop" href="loop.html" />
+    <link rel="prev" title="Pattern Matching &amp; Regular Expressions" href="pattern_matching.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="functions">
+<h1>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="functions-that-return-functions">
+<h2>Functions that return functions<a class="headerlink" href="#functions-that-return-functions" title="Permalink to this headline">¶</a></h2>
+<p>&#8220;How do I write a function that returns a function?&#8221; is a typical
+question asked by people who have learned Scheme before they started
+with Common Lisp. In Scheme, they were accustomed to be able to do
+things like this:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="o">==&gt;</span> <span class="p">(</span><span class="n">define</span> <span class="p">(</span><span class="n">adder</span> <span class="n">n</span><span class="p">)</span> <span class="p">(</span><span class="k">lambda</span> <span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="p">(</span><span class="o">+</span> <span class="n">x</span> <span class="n">n</span><span class="p">)))</span>
+<span class="n">adder</span>
+
+<span class="o">==&gt;</span> <span class="p">((</span><span class="n">adder</span> <span class="mi">3</span><span class="p">)</span> <span class="mi">5</span><span class="p">)</span>
+<span class="mi">8</span>
+
+<span class="o">==&gt;</span> <span class="p">(</span><span class="n">define</span> <span class="p">(</span><span class="n">doubler</span> <span class="n">f</span><span class="p">)</span> <span class="p">(</span><span class="k">lambda</span> <span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="p">(</span><span class="n">f</span> <span class="n">x</span> <span class="n">x</span><span class="p">)))</span>
+<span class="n">doubler</span>
+
+<span class="o">==&gt;</span> <span class="p">((</span><span class="n">doubler</span> <span class="o">+</span><span class="p">)</span> <span class="mi">4</span><span class="p">)</span>
+<span class="mi">8</span>
+</pre></div>
+</div>
+<p>This can of course be done in Common Lisp, but the syntax and the
+semantics are different. The first step, creating a function that
+returns a function, looks very similar apart from minor syntactical
+conventions, but what happens behind the scenes is different:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">defun</span> <span class="n">adder</span> <span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="p">(</span><span class="k">lambda</span> <span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="p">(</span><span class="o">+</span> <span class="n">x</span> <span class="n">n</span><span class="p">)))</span>
+<span class="n">ADDER</span>
+</pre></div>
+</div>
+<p>Here we have defined the function <code class="docutils literal"><span class="pre">adder</span></code> which returns an <em>object</em> of
+<em>type</em>
+<code class="docutils literal"><span class="pre">`function</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/t_fn.htm">http://www.lispworks.com/documentation/HyperSpec/Body/t_fn.htm</a>&gt;`__.
+To create such an object you&#8217;ll have to use the special operator
+<code class="docutils literal"><span class="pre">`function</span></code> &lt;%3Ca%20href=%22http://www.lispworks.com/documentation/HyperSpec/Body/s_fn.htm&gt;`__
+and apply it to a <em>lambda expression</em>. <code class="docutils literal"><span class="pre">(function</span></code> <em>form</em><code class="docutils literal"><span class="pre">)</span></code> may
+be abbreviated as <code class="docutils literal"><span class="pre">#'</span></code><em>form</em>. In our example above we used a
+shorthand notation provided by the macro
+<code class="docutils literal"><span class="pre">`lambda</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/m_lambda.htm">http://www.lispworks.com/documentation/HyperSpec/Body/m_lambda.htm</a>&gt;`__.
+Without this little bit of syntactical sugar we would have to write it
+as</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">defun</span> <span class="n">adder</span> <span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="c1">#&#39;(lambda (x) (+ x n)))</span>
+<span class="n">ADDER</span>
+</pre></div>
+</div>
+<p>or</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">defun</span> <span class="n">adder</span> <span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="p">(</span><span class="n">function</span> <span class="p">(</span><span class="k">lambda</span> <span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="p">(</span><span class="o">+</span> <span class="n">x</span> <span class="n">n</span><span class="p">))))</span>
+<span class="n">ADDER</span>
+</pre></div>
+</div>
+<p>No matter how we write it, <code class="docutils literal"><span class="pre">adder</span></code> will now return a function whenever
+we call it. But we <em>can&#8217;t</em> use it in the same way we would use it in
+Scheme:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">adder</span> <span class="mi">3</span><span class="p">)</span>
+<span class="c1">#&lt;Interpreted Function &quot;LAMBDA (N)&quot; {485FFE81}&gt;</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">((</span><span class="n">adder</span> <span class="mi">3</span><span class="p">)</span> <span class="mi">5</span><span class="p">)</span>
+<span class="n">In</span><span class="p">:</span> <span class="p">(</span><span class="n">ADDER</span> <span class="mi">3</span><span class="p">)</span> <span class="mi">5</span>
+    <span class="p">((</span><span class="n">ADDER</span> <span class="mi">3</span><span class="p">)</span> <span class="mi">5</span><span class="p">)</span>
+<span class="n">Error</span><span class="p">:</span> <span class="n">Illegal</span> <span class="n">function</span> <span class="n">call</span><span class="o">.</span>
+</pre></div>
+</div>
+<p>Here is why: CL has different <em>namespaces</em> for functions and variables,
+i.e. the same <em>name</em> can refer to different things depending on it&#8217;s
+position in a form that&#8217;s evaluated:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">boundp</span> <span class="s1">&#39;foo)</span>
+<span class="n">NIL</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">fboundp</span> <span class="s1">&#39;foo)</span>
+<span class="n">NIL</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">defparameter</span> <span class="n">foo</span> <span class="mi">42</span><span class="p">)</span>
+<span class="n">FOO</span>
+<span class="o">*</span> <span class="n">foo</span>
+<span class="mi">42</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">boundp</span> <span class="s1">&#39;foo)</span>
+<span class="n">T</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">fboundp</span> <span class="s1">&#39;foo)</span>
+<span class="n">NIL</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">defun</span> <span class="n">foo</span> <span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span> <span class="n">x</span> <span class="n">x</span><span class="p">))</span>
+<span class="n">FOO</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">fboundp</span> <span class="s1">&#39;foo)</span>
+<span class="n">T</span>
+<span class="o">*</span> <span class="n">foo</span>            <span class="p">;;;</span> <span class="o">***</span>
+<span class="mi">42</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">foo</span> <span class="mi">3</span><span class="p">)</span>        <span class="p">;;;</span> <span class="o">+++</span>
+<span class="mi">9</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">foo</span> <span class="n">foo</span><span class="p">)</span>
+<span class="mi">1764</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">function</span> <span class="n">foo</span><span class="p">)</span>
+<span class="c1">#&lt;Interpreted Function FOO {48523CC1}&gt;</span>
+<span class="o">*</span> <span class="c1">#&#39;foo</span>
+<span class="c1">#&lt;Interpreted Function FOO {48523CC1}&gt;</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="o">+</span> <span class="mi">3</span><span class="p">))</span> <span class="p">(</span><span class="o">+</span> <span class="o">+</span> <span class="o">+</span><span class="p">))</span>
+<span class="mi">6</span>
+</pre></div>
+</div>
+<p>To simplify a bit, you can think of each symbol in CL having (at least)
+two &#8220;cells&#8221; in which information is stored. One cell - sometimes
+referred to as its <em>value cell</em> - can hold a value that is <em>bound</em> to
+this symbol, and you can use
+<code class="docutils literal"><span class="pre">`boundp</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/f_boundp.htm">http://www.lispworks.com/documentation/HyperSpec/Body/f_boundp.htm</a>&gt;`__
+to test whether the symbol is bound to a value (in the global
+environment). You can access the value cell of a symbol with
+<code class="docutils literal"><span class="pre">`symbol-value</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/f_symb_5.htm">http://www.lispworks.com/documentation/HyperSpec/Body/f_symb_5.htm</a>&gt;`__.</p>
+<p>The other cell - sometimes referred to as its <em>function cell</em> - can hold
+the definition of the symbol&#8217;s (global) function binding. In this case,
+the symbol is said to be <em>fbound</em> to this definition. You can use
+<code class="docutils literal"><span class="pre">`fboundp</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/f_fbound.htm">http://www.lispworks.com/documentation/HyperSpec/Body/f_fbound.htm</a>&gt;`__
+to test whether a symbol is fbound. You can access the function cell of
+a symbol (in the global environment) with
+<code class="docutils literal"><span class="pre">`symbol-function</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/f_symb_1.htm">http://www.lispworks.com/documentation/HyperSpec/Body/f_symb_1.htm</a>&gt;`__.</p>
+<p>Now, if a <em>symbol</em> is evaluated, it is treated as a <em>variable</em> in that
+it&#8217;s value cell is returned - see the line marked with _***_ above.
+If a <em>compound form</em>, i.e. a <em>cons</em>, is evaluated and its <em>car</em> is a
+symbol, then the function cell of this symbol is used - see the line
+marked <em>+++</em> above.</p>
+<p>In Common Lisp, as opposed to Scheme, it is <em>not</em> possible that the car
+of the compound form to be evaluated is an arbitrary form. If it is not
+a symbol, it <em>must</em> be a <em>lambda expression</em>, which looks like</p>
+<p><code class="docutils literal"><span class="pre">(lambda</span></code><em>lambda-list</em> _form*_<code class="docutils literal"><span class="pre">)</span></code></p>
+<p>This explains the error message we got above - <code class="docutils literal"><span class="pre">(adder</span> <span class="pre">3)</span></code> is neither
+a symbol nor a lambda expression. But, you might ask, how <em>do</em> we use
+the function object that is returned by <code class="docutils literal"><span class="pre">adder</span></code>? The answer is: Use
+<code class="docutils literal"><span class="pre">`funcall</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/f_funcal.htm">http://www.lispworks.com/documentation/HyperSpec/Body/f_funcal.htm</a>&gt;`__
+or
+<code class="docutils literal"><span class="pre">`apply</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/f_apply.htm">http://www.lispworks.com/documentation/HyperSpec/Body/f_apply.htm</a>&gt;`__:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">;;;</span> <span class="n">continued</span> <span class="kn">from</span> <span class="nn">above</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">funcall</span> <span class="p">(</span><span class="n">adder</span> <span class="mi">3</span><span class="p">)</span> <span class="mi">5</span><span class="p">)</span>
+<span class="mi">8</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">apply</span> <span class="p">(</span><span class="n">adder</span> <span class="mi">3</span><span class="p">)</span> <span class="s1">&#39;(5))</span>
+<span class="mi">8</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">defparameter</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="n">fun</span><span class="o">*</span> <span class="p">(</span><span class="n">adder</span> <span class="mi">3</span><span class="p">))</span>
+<span class="o">*</span><span class="n">MY</span><span class="o">-</span><span class="n">FUN</span><span class="o">*</span>
+<span class="o">*</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="n">fun</span><span class="o">*</span>
+<span class="c1">#&lt;Interpreted Function &quot;LAMBDA (N)&quot; {486468C9}&gt;</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">funcall</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="n">fun</span><span class="o">*</span> <span class="mi">5</span><span class="p">)</span>
+<span class="mi">8</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="n">fun</span><span class="o">*</span> <span class="mi">5</span><span class="p">)</span>
+<span class="ne">Warning</span><span class="p">:</span> <span class="n">This</span> <span class="n">function</span> <span class="ow">is</span> <span class="n">undefined</span><span class="p">:</span>
+  <span class="o">*</span><span class="n">MY</span><span class="o">-</span><span class="n">FUN</span><span class="o">*</span>
+</pre></div>
+</div>
+<p>Note that in the last example the function object returned by
+<code class="docutils literal"><span class="pre">(adder</span> <span class="pre">3)</span></code> is stored in the <em>value cell</em> of <code class="docutils literal"><span class="pre">*my-fun*</span></code> - thus the
+error message. If we want to be able to use the symbol <code class="docutils literal"><span class="pre">*my-fun*</span></code> in
+the car of a compound form, we have to explicitely store something in
+its <em>function cell</em> (which is normally done for us by the macro
+<code class="docutils literal"><span class="pre">`defun</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/m_defun.htm">http://www.lispworks.com/documentation/HyperSpec/Body/m_defun.htm</a>&gt;`__):</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">;;;</span> <span class="n">continued</span> <span class="kn">from</span> <span class="nn">above</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">fboundp</span> <span class="s1">&#39;*my-fun*)</span>
+<span class="n">NIL</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">setf</span> <span class="p">(</span><span class="n">symbol</span><span class="o">-</span><span class="n">function</span> <span class="s1">&#39;*my-fun*) (adder 3))</span>
+<span class="c1">#&lt;Interpreted Function &quot;LAMBDA (N)&quot; {4869FA19}&gt;</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">fboundp</span> <span class="s1">&#39;*my-fun*)</span>
+<span class="n">T</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="n">fun</span><span class="o">*</span> <span class="mi">5</span><span class="p">)</span>
+<span class="mi">8</span>
+</pre></div>
+</div>
+<p>Now we are ready do define <code class="docutils literal"><span class="pre">doubler</span></code> as well:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">defun</span> <span class="n">doubler</span> <span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="p">(</span><span class="k">lambda</span> <span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="p">(</span><span class="n">funcall</span> <span class="n">f</span> <span class="n">x</span> <span class="n">x</span><span class="p">)))</span>
+<span class="n">DOUBLER</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">doubler</span> <span class="c1">#&#39;+)</span>
+<span class="c1">#&lt;Interpreted Function &quot;LAMBDA (F)&quot; {48675791}&gt;</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">doubler</span> <span class="s1">&#39;+)</span>
+<span class="c1">#&lt;Interpreted Function &quot;LAMBDA (F)&quot; {486761B1}&gt;</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">funcall</span> <span class="p">(</span><span class="n">doubler</span> <span class="c1">#&#39;+) 4)</span>
+<span class="mi">8</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">funcall</span> <span class="p">(</span><span class="n">doubler</span> <span class="s1">&#39;+) 4)</span>
+<span class="mi">8</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">defparameter</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="n">plus</span><span class="o">*</span> <span class="s1">&#39;+)</span>
+<span class="o">*</span><span class="n">MY</span><span class="o">-</span><span class="n">PLUS</span><span class="o">*</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">funcall</span> <span class="p">(</span><span class="n">doubler</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="n">plus</span><span class="o">*</span><span class="p">)</span> <span class="mi">4</span><span class="p">)</span>
+<span class="mi">8</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">defparameter</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="n">fun</span><span class="o">*</span> <span class="p">(</span><span class="n">doubler</span> <span class="s1">&#39;+))</span>
+<span class="o">*</span><span class="n">MY</span><span class="o">-</span><span class="n">FUN</span><span class="o">*</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">funcall</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="n">fun</span><span class="o">*</span> <span class="mi">4</span><span class="p">)</span>
+<span class="mi">8</span>
+</pre></div>
+</div>
+<p>Note that the argument to <code class="docutils literal"><span class="pre">funcall</span></code> (and <code class="docutils literal"><span class="pre">apply</span></code>) can either be the
+function itself, i.e. <code class="docutils literal"><span class="pre">#'+</span></code>, or a symbol which has the function in its
+function cell (is fbound to the function), i.e. <code class="docutils literal"><span class="pre">'+</span></code>.</p>
+<p>All of the above is <em>extremely simplified</em> - we haven&#8217;t even mentioned
+macros, special forms, symbol macros, self-evaluating objects, and
+lexical environments. Read the CLHS section about <a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/03_aba.htm">form
+evaluation</a>
+for the real deal.</p>
+</div>
+<div class="section" id="currying-functions">
+<h2>Currying functions<a class="headerlink" href="#currying-functions" title="Permalink to this headline">¶</a></h2>
+<p>A related concept is that of
+<em>`currying &lt;%3Ca%20href=%22http://www.cs.jhu.edu/~scott/pl/lectures/caml-intro.html#higherorder&gt;`__</em>
+which you might be familiar with if you&#8217;re coming from a functional
+language. After we&#8217;ve read the last section that&#8217;s rather easy to
+implement:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">declaim</span> <span class="p">(</span><span class="n">ftype</span> <span class="p">(</span><span class="n">function</span> <span class="p">(</span><span class="n">function</span> <span class="o">&amp;</span><span class="n">rest</span> <span class="n">t</span><span class="p">)</span> <span class="n">function</span><span class="p">)</span> <span class="n">curry</span><span class="p">)</span> <span class="p">(</span><span class="n">inline</span> <span class="n">curry</span><span class="p">))</span>
+<span class="n">NIL</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">defun</span> <span class="n">curry</span> <span class="p">(</span><span class="n">function</span> <span class="o">&amp;</span><span class="n">rest</span> <span class="n">args</span><span class="p">)</span>
+           <span class="p">(</span><span class="k">lambda</span> <span class="p">(</span><span class="o">&amp;</span><span class="n">rest</span> <span class="n">more</span><span class="o">-</span><span class="n">args</span><span class="p">)</span>
+               <span class="p">(</span><span class="n">apply</span> <span class="n">function</span> <span class="p">(</span><span class="n">append</span> <span class="n">args</span> <span class="n">more</span><span class="o">-</span><span class="n">args</span><span class="p">))))</span>
+<span class="n">CURRY</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">funcall</span> <span class="p">(</span><span class="n">curry</span> <span class="c1">#&#39;+ 3) 5)</span>
+<span class="mi">8</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">funcall</span> <span class="p">(</span><span class="n">curry</span> <span class="c1">#&#39;+ 3) 6)</span>
+<span class="mi">9</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">setf</span> <span class="p">(</span><span class="n">symbol</span><span class="o">-</span><span class="n">function</span> <span class="s1">&#39;power-of-ten) (curry #&#39;</span><span class="n">expt</span> <span class="mi">10</span><span class="p">))</span>
+<span class="c1">#&lt;Interpreted Function &quot;LAMBDA (FUNCTION &amp;REST ARGS)&quot; {482DB969}&gt;</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">power</span><span class="o">-</span><span class="n">of</span><span class="o">-</span><span class="n">ten</span> <span class="mi">3</span><span class="p">)</span>
+<span class="mi">1000</span>
+</pre></div>
+</div>
+<p>Note that the
+<code class="docutils literal"><span class="pre">`declaim</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/m_declai.htm">http://www.lispworks.com/documentation/HyperSpec/Body/m_declai.htm</a>&gt;`__
+statement above is just a hint for the compiler so it can produce more
+efficient code if it so wishes. Leaving it out won&#8217;t change the
+semantics of the function.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Functions</a><ul>
+<li><a class="reference internal" href="#functions-that-return-functions">Functions that return functions</a></li>
+<li><a class="reference internal" href="#currying-functions">Currying functions</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Chapters</a><ul>
+      <li>Previous: <a href="pattern_matching.html" title="previous chapter">Pattern Matching &amp; Regular Expressions</a></li>
+      <li>Next: <a href="loop.html" title="next chapter">Loop</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/chapters/functions.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, cl-cookbook contributors.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="../_sources/chapters/functions.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

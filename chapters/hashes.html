@@ -1,0 +1,493 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Hash Tables &#8212; The Common Lisp Cookbook 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="The Common Lisp Cookbook 0.1 documentation" href="../index.html" />
+    <link rel="up" title="Chapters" href="index.html" />
+    <link rel="next" title="Pattern Matching &amp; Regular Expressions" href="pattern_matching.html" />
+    <link rel="prev" title="Dates and Times" href="dates_and_times.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="hash-tables">
+<h1>Hash Tables<a class="headerlink" href="#hash-tables" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>Hash Tables are a powerful data structure, associating keys with values
+in a very efficient way. Hash Tables are often preferred over
+association lists whenever performance is an issue, but they introduce a
+little overhead that makes assoc lists better if there are only a few
+key-value pairs to maintain.</p>
+</div>
+<div class="section" id="creating-a-hash-table">
+<h2>Creating a Hash Table<a class="headerlink" href="#creating-a-hash-table" title="Permalink to this headline">¶</a></h2>
+<p>Hash Tables are created using the function
+<code class="docutils literal"><span class="pre">`make-hash-table</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/f_mk_has.htm">http://www.lispworks.com/documentation/HyperSpec/Body/f_mk_has.htm</a>&gt;`__.
+It has no required argument. Its most used optional keyword argument is
+<code class="docutils literal"><span class="pre">:test</span></code>, specifying the function used to test the equality of keys.</p>
+</div>
+<div class="section" id="getting-a-value-from-a-hash-table">
+<h2>Getting a value from a Hash Table<a class="headerlink" href="#getting-a-value-from-a-hash-table" title="Permalink to this headline">¶</a></h2>
+<p>The function
+<code class="docutils literal"><span class="pre">`gethash</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/f_gethas.htm">http://www.lispworks.com/documentation/HyperSpec/Body/f_gethas.htm</a>&gt;`__
+takes two required arguments: a key and a hash table. It returns two
+values: the value corresponding to the key in the hash table (or <code class="docutils literal"><span class="pre">nil</span></code>
+if not found), and a boolean indicating whether the key was found in the
+table. That second value is necessary since <code class="docutils literal"><span class="pre">nil</span></code> is a valid value in
+a key-value pair, so getting <code class="docutils literal"><span class="pre">nil</span></code> as first value from <code class="docutils literal"><span class="pre">gethash</span></code>
+does not necessarily mean that the key was not found in the table.</p>
+</div>
+<div class="section" id="adding-an-element-to-a-hash-table">
+<h2>Adding an Element to a Hash Table<a class="headerlink" href="#adding-an-element-to-a-hash-table" title="Permalink to this headline">¶</a></h2>
+<p>If you want to add an element to a hash table, you can use <code class="docutils literal"><span class="pre">gethash</span></code>,
+the function to retrieve elements from the hash table, in conjunction
+with
+<code class="docutils literal"><span class="pre">`setf</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/">http://www.lispworks.com/documentation/HyperSpec/Body/</a><a href="#id1"><span class="problematic" id="id2">m_setf_</span></a>.htm&gt;`__.</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">defparameter</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="nb">hash</span><span class="o">*</span> <span class="p">(</span><span class="n">make</span><span class="o">-</span><span class="nb">hash</span><span class="o">-</span><span class="n">table</span><span class="p">))</span>
+<span class="o">*</span><span class="n">MY</span><span class="o">-</span><span class="n">HASH</span><span class="o">*</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">setf</span> <span class="p">(</span><span class="n">gethash</span> <span class="s1">&#39;one-entry *my-hash*) &quot;one&quot;)</span>
+<span class="s2">&quot;one&quot;</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">setf</span> <span class="p">(</span><span class="n">gethash</span> <span class="s1">&#39;another-entry *my-hash*) 2/4)</span>
+<span class="mi">1</span><span class="o">/</span><span class="mi">2</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">gethash</span> <span class="s1">&#39;one-entry *my-hash*)</span>
+<span class="s2">&quot;one&quot;</span>
+<span class="n">T</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">gethash</span> <span class="s1">&#39;another-entry *my-hash*)</span>
+<span class="mi">1</span><span class="o">/</span><span class="mi">2</span>
+<span class="n">T</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="testing-for-the-presence-of-a-key-in-a-hash-table">
+<h2>Testing for the Presence of a Key in a Hash Table<a class="headerlink" href="#testing-for-the-presence-of-a-key-in-a-hash-table" title="Permalink to this headline">¶</a></h2>
+<p>The first value returned by <code class="docutils literal"><span class="pre">gethash</span></code> is the object in the hash table
+that&#8217;s associated with the key you provided as an argument to
+<code class="docutils literal"><span class="pre">gethash</span></code> or <code class="docutils literal"><span class="pre">nil</span></code> if no value exists for this key. This value can
+act as a <a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_g.htm#generalized_boolean%22%3Egeneralized%20boolean">generalized
+boolean</a>
+if you want to test for the presence of keys.</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">defparameter</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="nb">hash</span><span class="o">*</span> <span class="p">(</span><span class="n">make</span><span class="o">-</span><span class="nb">hash</span><span class="o">-</span><span class="n">table</span><span class="p">))</span>
+<span class="o">*</span><span class="n">MY</span><span class="o">-</span><span class="n">HASH</span><span class="o">*</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">setf</span> <span class="p">(</span><span class="n">gethash</span> <span class="s1">&#39;one-entry *my-hash*) &quot;one&quot;)</span>
+<span class="s2">&quot;one&quot;</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="n">gethash</span> <span class="s1">&#39;one-entry *my-hash*)</span>
+           <span class="s2">&quot;Key exists&quot;</span>
+           <span class="s2">&quot;Key does not exist&quot;</span><span class="p">)</span>
+<span class="s2">&quot;Key exists&quot;</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="n">gethash</span> <span class="s1">&#39;another-entry *my-hash*)</span>
+           <span class="s2">&quot;Key exists&quot;</span>
+           <span class="s2">&quot;Key does not exist&quot;</span><span class="p">)</span>
+<span class="s2">&quot;Key does not exist&quot;</span>
+</pre></div>
+</div>
+<p>But note that this does <em>not</em> work if <code class="docutils literal"><span class="pre">nil</span></code> is amongst the values that
+you want to store in the hash.</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">setf</span> <span class="p">(</span><span class="n">gethash</span> <span class="s1">&#39;another-entry *my-hash*) nil)</span>
+<span class="n">NIL</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="n">gethash</span> <span class="s1">&#39;another-entry *my-hash*)</span>
+           <span class="s2">&quot;Key exists&quot;</span>
+           <span class="s2">&quot;Key does not exist&quot;</span><span class="p">)</span>
+<span class="s2">&quot;Key does not exist&quot;</span>
+</pre></div>
+</div>
+<p>In this case you&#8217;ll have to check the <em>second</em> return value of
+<code class="docutils literal"><span class="pre">gethash</span></code> which will always return <code class="docutils literal"><span class="pre">nil</span></code> if no value is found and T
+otherwise.</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="n">nth</span><span class="o">-</span><span class="n">value</span> <span class="mi">1</span> <span class="p">(</span><span class="n">gethash</span> <span class="s1">&#39;another-entry *my-hash*))</span>
+           <span class="s2">&quot;Key exists&quot;</span>
+           <span class="s2">&quot;Key does not exist&quot;</span><span class="p">)</span>
+<span class="s2">&quot;Key exists&quot;</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="n">nth</span><span class="o">-</span><span class="n">value</span> <span class="mi">1</span> <span class="p">(</span><span class="n">gethash</span> <span class="s1">&#39;no-entry *my-hash*))</span>
+           <span class="s2">&quot;Key exists&quot;</span>
+           <span class="s2">&quot;Key does not exist&quot;</span><span class="p">)</span>
+<span class="s2">&quot;Key does not exist&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="deleting-from-a-hash-table">
+<h2>Deleting from a Hash Table<a class="headerlink" href="#deleting-from-a-hash-table" title="Permalink to this headline">¶</a></h2>
+<p>Use
+<code class="docutils literal"><span class="pre">`remhash</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/f_remhas.htm">http://www.lispworks.com/documentation/HyperSpec/Body/f_remhas.htm</a>&gt;`__
+to delete a hash entry. Both the key and its associated value will be
+removed from the hash table. <code class="docutils literal"><span class="pre">remhash</span></code> returns T if there was such an
+entry, <code class="docutils literal"><span class="pre">nil</span></code> otherwise.</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">defparameter</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="nb">hash</span><span class="o">*</span> <span class="p">(</span><span class="n">make</span><span class="o">-</span><span class="nb">hash</span><span class="o">-</span><span class="n">table</span><span class="p">))</span>
+<span class="o">*</span><span class="n">MY</span><span class="o">-</span><span class="n">HASH</span><span class="o">*</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">setf</span> <span class="p">(</span><span class="n">gethash</span> <span class="s1">&#39;first-key *my-hash*) &#39;</span><span class="n">one</span><span class="p">)</span>
+<span class="n">ONE</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">gethash</span> <span class="s1">&#39;first-key *my-hash*)</span>
+<span class="n">ONE</span>
+<span class="n">T</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">remhash</span> <span class="s1">&#39;first-key *my-hash*)</span>
+<span class="n">T</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">gethash</span> <span class="s1">&#39;first-key *my-hash*)</span>
+<span class="n">NIL</span>
+<span class="n">NIL</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">gethash</span> <span class="s1">&#39;no-entry *my-hash*)</span>
+<span class="n">NIL</span>
+<span class="n">NIL</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">remhash</span> <span class="s1">&#39;no-entry *my-hash*)</span>
+<span class="n">NIL</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">gethash</span> <span class="s1">&#39;no-entry *my-hash*)</span>
+<span class="n">NIL</span>
+<span class="n">NIL</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="traversing-a-hash-table">
+<h2>Traversing a Hash Table<a class="headerlink" href="#traversing-a-hash-table" title="Permalink to this headline">¶</a></h2>
+<p>If you want to perform an action on each entry (i.e., each key-value
+pair) in a hash table, you have several options:</p>
+<p>You can use
+<code class="docutils literal"><span class="pre">`maphash</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/f_maphas.htm">http://www.lispworks.com/documentation/HyperSpec/Body/f_maphas.htm</a>&gt;`__
+which iterates over all entries in the hash table. Its first argument
+must be a function which accepts <em>two</em> arguments, the key and the value
+of each entry. Note that due to the nature of hash tables you <em>can&#8217;t</em>
+control the order in which the entries are provided by <code class="docutils literal"><span class="pre">maphash</span></code> (or
+other traversing constructs). <code class="docutils literal"><span class="pre">maphash</span></code> always returns <code class="docutils literal"><span class="pre">nil</span></code>.</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">defparameter</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="nb">hash</span><span class="o">*</span> <span class="p">(</span><span class="n">make</span><span class="o">-</span><span class="nb">hash</span><span class="o">-</span><span class="n">table</span><span class="p">))</span>
+<span class="o">*</span><span class="n">MY</span><span class="o">-</span><span class="n">HASH</span><span class="o">*</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">setf</span> <span class="p">(</span><span class="n">gethash</span> <span class="s1">&#39;first-key *my-hash*) &#39;</span><span class="n">one</span><span class="p">)</span>
+<span class="n">ONE</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">setf</span> <span class="p">(</span><span class="n">gethash</span> <span class="s1">&#39;second-key *my-hash*) &#39;</span><span class="n">two</span><span class="p">)</span>
+<span class="n">TWO</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">setf</span> <span class="p">(</span><span class="n">gethash</span> <span class="s1">&#39;third-key *my-hash*) nil)</span>
+<span class="n">NIL</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">setf</span> <span class="p">(</span><span class="n">gethash</span> <span class="n">nil</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="nb">hash</span><span class="o">*</span><span class="p">)</span> <span class="s1">&#39;nil-value)</span>
+<span class="n">NIL</span><span class="o">-</span><span class="n">VALUE</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">defun</span> <span class="nb">print</span><span class="o">-</span><span class="nb">hash</span><span class="o">-</span><span class="n">entry</span> <span class="p">(</span><span class="n">key</span> <span class="n">value</span><span class="p">)</span>
+    <span class="p">(</span><span class="nb">format</span> <span class="n">t</span> <span class="s2">&quot;The value associated with the key ~S is ~S~%&quot;</span> <span class="n">key</span> <span class="n">value</span><span class="p">))</span>
+<span class="n">PRINT</span><span class="o">-</span><span class="n">HASH</span><span class="o">-</span><span class="n">ENTRY</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">maphash</span> <span class="c1">#&#39;print-hash-entry *my-hash*)</span>
+<span class="n">The</span> <span class="n">value</span> <span class="n">associated</span> <span class="k">with</span> <span class="n">the</span> <span class="n">key</span> <span class="n">FIRST</span><span class="o">-</span><span class="n">KEY</span> <span class="ow">is</span> <span class="n">ONE</span>
+<span class="n">The</span> <span class="n">value</span> <span class="n">associated</span> <span class="k">with</span> <span class="n">the</span> <span class="n">key</span> <span class="n">SECOND</span><span class="o">-</span><span class="n">KEY</span> <span class="ow">is</span> <span class="n">TWO</span>
+<span class="n">The</span> <span class="n">value</span> <span class="n">associated</span> <span class="k">with</span> <span class="n">the</span> <span class="n">key</span> <span class="n">THIRD</span><span class="o">-</span><span class="n">KEY</span> <span class="ow">is</span> <span class="n">NIL</span>
+<span class="n">The</span> <span class="n">value</span> <span class="n">associated</span> <span class="k">with</span> <span class="n">the</span> <span class="n">key</span> <span class="n">NIL</span> <span class="ow">is</span> <span class="n">NIL</span><span class="o">-</span><span class="n">VALUE</span>
+</pre></div>
+</div>
+<p>You can also use
+<code class="docutils literal"><span class="pre">`with-hash-table-iterator</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/m_w_hash.htm">http://www.lispworks.com/documentation/HyperSpec/Body/m_w_hash.htm</a>&gt;`__,
+a macro which turns (via
+<code class="docutils literal"><span class="pre">`macrolet</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/">http://www.lispworks.com/documentation/HyperSpec/Body/</a><a href="#id3"><span class="problematic" id="id4">s_flet_</span></a>.htm&gt;`__)
+its first argument into an iterator that on each invocation returns
+three values per hash table entry - a generalized boolean that&#8217;s true if
+an entry is returned, the key of the entry, and the value of the entry.
+If there are no more entries, only one value is returned - <code class="docutils literal"><span class="pre">nil</span></code>.</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">;;;</span> <span class="n">same</span> <span class="nb">hash</span><span class="o">-</span><span class="n">table</span> <span class="k">as</span> <span class="n">above</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="k">with</span><span class="o">-</span><span class="nb">hash</span><span class="o">-</span><span class="n">table</span><span class="o">-</span><span class="n">iterator</span> <span class="p">(</span><span class="n">my</span><span class="o">-</span><span class="n">iterator</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="nb">hash</span><span class="o">*</span><span class="p">)</span>
+           <span class="p">(</span><span class="n">loop</span>
+              <span class="p">(</span><span class="n">multiple</span><span class="o">-</span><span class="n">value</span><span class="o">-</span><span class="n">bind</span> <span class="p">(</span><span class="n">entry</span><span class="o">-</span><span class="n">p</span> <span class="n">key</span> <span class="n">value</span><span class="p">)</span>
+                  <span class="p">(</span><span class="n">my</span><span class="o">-</span><span class="n">iterator</span><span class="p">)</span>
+                <span class="p">(</span><span class="k">if</span> <span class="n">entry</span><span class="o">-</span><span class="n">p</span>
+                    <span class="p">(</span><span class="nb">print</span><span class="o">-</span><span class="nb">hash</span><span class="o">-</span><span class="n">entry</span> <span class="n">key</span> <span class="n">value</span><span class="p">)</span>
+                    <span class="p">(</span><span class="k">return</span><span class="p">)))))</span>
+<span class="n">The</span> <span class="n">value</span> <span class="n">associated</span> <span class="k">with</span> <span class="n">the</span> <span class="n">key</span> <span class="n">FIRST</span><span class="o">-</span><span class="n">KEY</span> <span class="ow">is</span> <span class="n">ONE</span>
+<span class="n">The</span> <span class="n">value</span> <span class="n">associated</span> <span class="k">with</span> <span class="n">the</span> <span class="n">key</span> <span class="n">SECOND</span><span class="o">-</span><span class="n">KEY</span> <span class="ow">is</span> <span class="n">TWO</span>
+<span class="n">The</span> <span class="n">value</span> <span class="n">associated</span> <span class="k">with</span> <span class="n">the</span> <span class="n">key</span> <span class="n">THIRD</span><span class="o">-</span><span class="n">KEY</span> <span class="ow">is</span> <span class="n">NIL</span>
+<span class="n">The</span> <span class="n">value</span> <span class="n">associated</span> <span class="k">with</span> <span class="n">the</span> <span class="n">key</span> <span class="n">NIL</span> <span class="ow">is</span> <span class="n">NIL</span><span class="o">-</span><span class="n">VALUE</span>
+<span class="n">NIL</span>
+</pre></div>
+</div>
+<p>Note the following caveat from the HyperSpec: &#8220;It is unspecified what
+happens if any of the implicit interior state of an iteration is
+returned outside the dynamic extent of the <code class="docutils literal"><span class="pre">with-hash-table-iterator</span></code>
+form such as by returning some closure over the invocation form.&#8221;</p>
+<p>And there&#8217;s always
+<code class="docutils literal"><span class="pre">`loop</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/06_a.htm">http://www.lispworks.com/documentation/HyperSpec/Body/06_a.htm</a>&gt;`__:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">;;;</span> <span class="n">same</span> <span class="nb">hash</span><span class="o">-</span><span class="n">table</span> <span class="k">as</span> <span class="n">above</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">loop</span> <span class="k">for</span> <span class="n">key</span> <span class="n">being</span> <span class="n">the</span> <span class="nb">hash</span><span class="o">-</span><span class="n">keys</span> <span class="n">of</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="nb">hash</span><span class="o">*</span>
+           <span class="n">do</span> <span class="p">(</span><span class="nb">print</span> <span class="n">key</span><span class="p">))</span>
+<span class="n">FIRST</span><span class="o">-</span><span class="n">KEY</span>
+<span class="n">SECOND</span><span class="o">-</span><span class="n">KEY</span>
+<span class="n">THIRD</span><span class="o">-</span><span class="n">KEY</span>
+<span class="n">NIL</span>
+<span class="n">NIL</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">loop</span> <span class="k">for</span> <span class="n">key</span> <span class="n">being</span> <span class="n">the</span> <span class="nb">hash</span><span class="o">-</span><span class="n">keys</span> <span class="n">of</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="nb">hash</span><span class="o">*</span>
+           <span class="n">using</span> <span class="p">(</span><span class="nb">hash</span><span class="o">-</span><span class="n">value</span> <span class="n">value</span><span class="p">)</span>
+           <span class="n">do</span> <span class="p">(</span><span class="nb">format</span> <span class="n">t</span> <span class="s2">&quot;The value associated with the key ~S is ~S~%&quot;</span> <span class="n">key</span> <span class="n">value</span><span class="p">))</span>
+<span class="n">The</span> <span class="n">value</span> <span class="n">associated</span> <span class="k">with</span> <span class="n">the</span> <span class="n">key</span> <span class="n">FIRST</span><span class="o">-</span><span class="n">KEY</span> <span class="ow">is</span> <span class="n">ONE</span>
+<span class="n">The</span> <span class="n">value</span> <span class="n">associated</span> <span class="k">with</span> <span class="n">the</span> <span class="n">key</span> <span class="n">SECOND</span><span class="o">-</span><span class="n">KEY</span> <span class="ow">is</span> <span class="n">TWO</span>
+<span class="n">The</span> <span class="n">value</span> <span class="n">associated</span> <span class="k">with</span> <span class="n">the</span> <span class="n">key</span> <span class="n">THIRD</span><span class="o">-</span><span class="n">KEY</span> <span class="ow">is</span> <span class="n">NIL</span>
+<span class="n">The</span> <span class="n">value</span> <span class="n">associated</span> <span class="k">with</span> <span class="n">the</span> <span class="n">key</span> <span class="n">NIL</span> <span class="ow">is</span> <span class="n">NIL</span><span class="o">-</span><span class="n">VALUE</span>
+<span class="n">NIL</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">loop</span> <span class="k">for</span> <span class="n">value</span> <span class="n">being</span> <span class="n">the</span> <span class="nb">hash</span><span class="o">-</span><span class="n">values</span> <span class="n">of</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="nb">hash</span><span class="o">*</span>
+           <span class="n">do</span> <span class="p">(</span><span class="nb">print</span> <span class="n">value</span><span class="p">))</span>
+<span class="n">ONE</span>
+<span class="n">TWO</span>
+<span class="n">NIL</span>
+<span class="n">NIL</span><span class="o">-</span><span class="n">VALUE</span>
+<span class="n">NIL</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">loop</span> <span class="k">for</span> <span class="n">value</span> <span class="n">being</span> <span class="n">the</span> <span class="nb">hash</span><span class="o">-</span><span class="n">values</span> <span class="n">of</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="nb">hash</span><span class="o">*</span>
+           <span class="n">using</span> <span class="p">(</span><span class="nb">hash</span><span class="o">-</span><span class="n">key</span> <span class="n">key</span><span class="p">)</span>
+           <span class="n">do</span> <span class="p">(</span><span class="nb">format</span> <span class="n">t</span> <span class="s2">&quot;~&amp;~A -&gt; ~A&quot;</span> <span class="n">key</span> <span class="n">value</span><span class="p">))</span>
+<span class="n">FIRST</span><span class="o">-</span><span class="n">KEY</span> <span class="o">-&gt;</span> <span class="n">ONE</span>
+<span class="n">SECOND</span><span class="o">-</span><span class="n">KEY</span> <span class="o">-&gt;</span> <span class="n">TWO</span>
+<span class="n">THIRD</span><span class="o">-</span><span class="n">KEY</span> <span class="o">-&gt;</span> <span class="n">NIL</span>
+<span class="n">NIL</span> <span class="o">-&gt;</span> <span class="n">NIL</span><span class="o">-</span><span class="n">VALUE</span>
+<span class="n">NIL</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="counting-the-entries-in-a-hash-table">
+<h2>Counting the Entries in a Hash Table<a class="headerlink" href="#counting-the-entries-in-a-hash-table" title="Permalink to this headline">¶</a></h2>
+<p>No need to use your fingers - Common Lisp has a built-in function to do
+it for you:
+<code class="docutils literal"><span class="pre">`hash-table-count</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/f_hash_1.htm">http://www.lispworks.com/documentation/HyperSpec/Body/f_hash_1.htm</a>&gt;`__.</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">defparameter</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="nb">hash</span><span class="o">*</span> <span class="p">(</span><span class="n">make</span><span class="o">-</span><span class="nb">hash</span><span class="o">-</span><span class="n">table</span><span class="p">))</span>
+<span class="o">*</span><span class="n">MY</span><span class="o">-</span><span class="n">HASH</span><span class="o">*</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="nb">hash</span><span class="o">-</span><span class="n">table</span><span class="o">-</span><span class="n">count</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="nb">hash</span><span class="o">*</span><span class="p">)</span>
+<span class="mi">0</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">setf</span> <span class="p">(</span><span class="n">gethash</span> <span class="s1">&#39;first *my-hash*) 1)</span>
+<span class="mi">1</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">setf</span> <span class="p">(</span><span class="n">gethash</span> <span class="s1">&#39;second *my-hash*) 2)</span>
+<span class="mi">2</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">setf</span> <span class="p">(</span><span class="n">gethash</span> <span class="s1">&#39;third *my-hash*) 3)</span>
+<span class="mi">3</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="nb">hash</span><span class="o">-</span><span class="n">table</span><span class="o">-</span><span class="n">count</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="nb">hash</span><span class="o">*</span><span class="p">)</span>
+<span class="mi">3</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">setf</span> <span class="p">(</span><span class="n">gethash</span> <span class="s1">&#39;second *my-hash*) &#39;</span><span class="n">two</span><span class="p">)</span>
+<span class="n">TWO</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="nb">hash</span><span class="o">-</span><span class="n">table</span><span class="o">-</span><span class="n">count</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="nb">hash</span><span class="o">*</span><span class="p">)</span>
+<span class="mi">3</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">clrhash</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="nb">hash</span><span class="o">*</span><span class="p">)</span>
+<span class="c1">#&lt;EQL hash table, 0 entries {48205F35}&gt;</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="nb">hash</span><span class="o">-</span><span class="n">table</span><span class="o">-</span><span class="n">count</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="nb">hash</span><span class="o">*</span><span class="p">)</span>
+<span class="mi">0</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="performance-issues-the-size-of-your-hash-table">
+<h2>Performance Issues: The Size of your Hash Table<a class="headerlink" href="#performance-issues-the-size-of-your-hash-table" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal"><span class="pre">make-hash-table</span></code> function has a couple of optional parameters
+which control the initial size of your hash table and how it&#8217;ll grow if
+it needs to grow. This can be an important performance issue if you&#8217;re
+working with large hash tables. Here&#8217;s an (admittedly not very
+scientific) example with <a class="reference external" href="http://www.cons.org/cmucl">CMUCL</a> pre-18d
+on Linux:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">defparameter</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="nb">hash</span><span class="o">*</span> <span class="p">(</span><span class="n">make</span><span class="o">-</span><span class="nb">hash</span><span class="o">-</span><span class="n">table</span><span class="p">))</span>
+<span class="o">*</span><span class="n">MY</span><span class="o">-</span><span class="n">HASH</span><span class="o">*</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="nb">hash</span><span class="o">-</span><span class="n">table</span><span class="o">-</span><span class="n">size</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="nb">hash</span><span class="o">*</span><span class="p">)</span>
+<span class="mi">65</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="nb">hash</span><span class="o">-</span><span class="n">table</span><span class="o">-</span><span class="n">rehash</span><span class="o">-</span><span class="n">size</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="nb">hash</span><span class="o">*</span><span class="p">)</span>
+<span class="mf">1.5</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">time</span> <span class="p">(</span><span class="n">dotimes</span> <span class="p">(</span><span class="n">n</span> <span class="mi">100000</span><span class="p">)</span> <span class="p">(</span><span class="n">setf</span> <span class="p">(</span><span class="n">gethash</span> <span class="n">n</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="nb">hash</span><span class="o">*</span><span class="p">)</span> <span class="n">n</span><span class="p">)))</span>
+<span class="n">Compiling</span> <span class="n">LAMBDA</span> <span class="n">NIL</span><span class="p">:</span>
+<span class="n">Compiling</span> <span class="n">Top</span><span class="o">-</span><span class="n">Level</span> <span class="n">Form</span><span class="p">:</span>
+
+<span class="n">Evaluation</span> <span class="n">took</span><span class="p">:</span>
+  <span class="mf">0.27</span> <span class="n">seconds</span> <span class="n">of</span> <span class="n">real</span> <span class="n">time</span>
+  <span class="mf">0.25</span> <span class="n">seconds</span> <span class="n">of</span> <span class="n">user</span> <span class="n">run</span> <span class="n">time</span>
+  <span class="mf">0.02</span> <span class="n">seconds</span> <span class="n">of</span> <span class="n">system</span> <span class="n">run</span> <span class="n">time</span>
+  <span class="mi">0</span> <span class="n">page</span> <span class="n">faults</span> <span class="ow">and</span>
+  <span class="mi">8754768</span> <span class="nb">bytes</span> <span class="n">consed</span><span class="o">.</span>
+<span class="n">NIL</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">time</span> <span class="p">(</span><span class="n">dotimes</span> <span class="p">(</span><span class="n">n</span> <span class="mi">100000</span><span class="p">)</span> <span class="p">(</span><span class="n">setf</span> <span class="p">(</span><span class="n">gethash</span> <span class="n">n</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="nb">hash</span><span class="o">*</span><span class="p">)</span> <span class="n">n</span><span class="p">)))</span>
+<span class="n">Compiling</span> <span class="n">LAMBDA</span> <span class="n">NIL</span><span class="p">:</span>
+<span class="n">Compiling</span> <span class="n">Top</span><span class="o">-</span><span class="n">Level</span> <span class="n">Form</span><span class="p">:</span>
+
+<span class="n">Evaluation</span> <span class="n">took</span><span class="p">:</span>
+  <span class="mf">0.05</span> <span class="n">seconds</span> <span class="n">of</span> <span class="n">real</span> <span class="n">time</span>
+  <span class="mf">0.05</span> <span class="n">seconds</span> <span class="n">of</span> <span class="n">user</span> <span class="n">run</span> <span class="n">time</span>
+  <span class="mf">0.0</span> <span class="n">seconds</span> <span class="n">of</span> <span class="n">system</span> <span class="n">run</span> <span class="n">time</span>
+  <span class="mi">0</span> <span class="n">page</span> <span class="n">faults</span> <span class="ow">and</span>
+  <span class="mi">0</span> <span class="nb">bytes</span> <span class="n">consed</span><span class="o">.</span>
+<span class="n">NIL</span>
+</pre></div>
+</div>
+<p>The values for
+<code class="docutils literal"><span class="pre">`hash-table-size</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/f_hash_4.htm">http://www.lispworks.com/documentation/HyperSpec/Body/f_hash_4.htm</a>&gt;`__
+and
+<code class="docutils literal"><span class="pre">`hash-table-rehash-size</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/f_hash_2.htm">http://www.lispworks.com/documentation/HyperSpec/Body/f_hash_2.htm</a>&gt;`__
+are implementation-dependent. In our case, CMUCL chooses and initial
+size of 65, and it will increase the size of the hash by 50 percent
+whenever it needs to grow. Let&#8217;s see how often we have to re-size the
+hash until we reach the final size...</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">log</span> <span class="p">(</span><span class="o">/</span> <span class="mi">100000</span> <span class="mi">65</span><span class="p">)</span> <span class="mf">1.5</span><span class="p">)</span>
+<span class="mf">18.099062</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">size</span> <span class="mi">65</span><span class="p">))</span> <span class="p">(</span><span class="n">dotimes</span> <span class="p">(</span><span class="n">n</span> <span class="mi">20</span><span class="p">)</span> <span class="p">(</span><span class="nb">print</span> <span class="p">(</span><span class="nb">list</span> <span class="n">n</span> <span class="n">size</span><span class="p">))</span> <span class="p">(</span><span class="n">setq</span> <span class="n">size</span> <span class="p">(</span><span class="o">*</span> <span class="mf">1.5</span> <span class="n">size</span><span class="p">))))</span>
+<span class="p">(</span><span class="mi">0</span> <span class="mi">65</span><span class="p">)</span>
+<span class="p">(</span><span class="mi">1</span> <span class="mf">97.5</span><span class="p">)</span>
+<span class="p">(</span><span class="mi">2</span> <span class="mf">146.25</span><span class="p">)</span>
+<span class="p">(</span><span class="mi">3</span> <span class="mf">219.375</span><span class="p">)</span>
+<span class="p">(</span><span class="mi">4</span> <span class="mf">329.0625</span><span class="p">)</span>
+<span class="p">(</span><span class="mi">5</span> <span class="mf">493.59375</span><span class="p">)</span>
+<span class="p">(</span><span class="mi">6</span> <span class="mf">740.3906</span><span class="p">)</span>
+<span class="p">(</span><span class="mi">7</span> <span class="mf">1110.5859</span><span class="p">)</span>
+<span class="p">(</span><span class="mi">8</span> <span class="mf">1665.8789</span><span class="p">)</span>
+<span class="p">(</span><span class="mi">9</span> <span class="mf">2498.8184</span><span class="p">)</span>
+<span class="p">(</span><span class="mi">10</span> <span class="mf">3748.2275</span><span class="p">)</span>
+<span class="p">(</span><span class="mi">11</span> <span class="mf">5622.3413</span><span class="p">)</span>
+<span class="p">(</span><span class="mi">12</span> <span class="mf">8433.512</span><span class="p">)</span>
+<span class="p">(</span><span class="mi">13</span> <span class="mf">12650.268</span><span class="p">)</span>
+<span class="p">(</span><span class="mi">14</span> <span class="mf">18975.402</span><span class="p">)</span>
+<span class="p">(</span><span class="mi">15</span> <span class="mf">28463.104</span><span class="p">)</span>
+<span class="p">(</span><span class="mi">16</span> <span class="mf">42694.656</span><span class="p">)</span>
+<span class="p">(</span><span class="mi">17</span> <span class="mf">64041.984</span><span class="p">)</span>
+<span class="p">(</span><span class="mi">18</span> <span class="mf">96062.98</span><span class="p">)</span>
+<span class="p">(</span><span class="mi">19</span> <span class="mf">144094.47</span><span class="p">)</span>
+<span class="n">NIL</span>
+</pre></div>
+</div>
+<p>The hash has to be re-sized 19 times until it&#8217;s big enough to hold
+100,000 entries. That explains why we saw a lot of consing and why it
+took rather long to fill the hash table. It also explains why the second
+run was much faster - the hash table already had the correct size.</p>
+<div class="line-block">
+<div class="line">Here&#8217;s a faster way to do it:</div>
+<div class="line">If we know in advance how big our hash will be, we can start with the
+right size:</div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">defparameter</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="nb">hash</span><span class="o">*</span> <span class="p">(</span><span class="n">make</span><span class="o">-</span><span class="nb">hash</span><span class="o">-</span><span class="n">table</span> <span class="p">:</span><span class="n">size</span> <span class="mi">100000</span><span class="p">))</span>
+<span class="o">*</span><span class="n">MY</span><span class="o">-</span><span class="n">HASH</span><span class="o">*</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="nb">hash</span><span class="o">-</span><span class="n">table</span><span class="o">-</span><span class="n">size</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="nb">hash</span><span class="o">*</span><span class="p">)</span>
+<span class="mi">100000</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">time</span> <span class="p">(</span><span class="n">dotimes</span> <span class="p">(</span><span class="n">n</span> <span class="mi">100000</span><span class="p">)</span> <span class="p">(</span><span class="n">setf</span> <span class="p">(</span><span class="n">gethash</span> <span class="n">n</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="nb">hash</span><span class="o">*</span><span class="p">)</span> <span class="n">n</span><span class="p">)))</span>
+<span class="n">Compiling</span> <span class="n">LAMBDA</span> <span class="n">NIL</span><span class="p">:</span>
+<span class="n">Compiling</span> <span class="n">Top</span><span class="o">-</span><span class="n">Level</span> <span class="n">Form</span><span class="p">:</span>
+
+<span class="n">Evaluation</span> <span class="n">took</span><span class="p">:</span>
+  <span class="mf">0.04</span> <span class="n">seconds</span> <span class="n">of</span> <span class="n">real</span> <span class="n">time</span>
+  <span class="mf">0.04</span> <span class="n">seconds</span> <span class="n">of</span> <span class="n">user</span> <span class="n">run</span> <span class="n">time</span>
+  <span class="mf">0.0</span> <span class="n">seconds</span> <span class="n">of</span> <span class="n">system</span> <span class="n">run</span> <span class="n">time</span>
+  <span class="mi">0</span> <span class="n">page</span> <span class="n">faults</span> <span class="ow">and</span>
+  <span class="mi">0</span> <span class="nb">bytes</span> <span class="n">consed</span><span class="o">.</span>
+<span class="n">NIL</span>
+</pre></div>
+</div>
+<p>That&#8217;s obviously much faster. And there was no consing involved because
+we didn&#8217;t have to re-size at all. If we don&#8217;t know the final size in
+advance but can guess the growth behaviour of our hash table we can also
+provide this value to <code class="docutils literal"><span class="pre">make-hash-table</span></code>. We can provide an integer to
+specify absolute growth or a float to specify relative growth.</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">defparameter</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="nb">hash</span><span class="o">*</span> <span class="p">(</span><span class="n">make</span><span class="o">-</span><span class="nb">hash</span><span class="o">-</span><span class="n">table</span> <span class="p">:</span><span class="n">rehash</span><span class="o">-</span><span class="n">size</span> <span class="mi">100000</span><span class="p">))</span>
+<span class="o">*</span><span class="n">MY</span><span class="o">-</span><span class="n">HASH</span><span class="o">*</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="nb">hash</span><span class="o">-</span><span class="n">table</span><span class="o">-</span><span class="n">size</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="nb">hash</span><span class="o">*</span><span class="p">)</span>
+<span class="mi">65</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="nb">hash</span><span class="o">-</span><span class="n">table</span><span class="o">-</span><span class="n">rehash</span><span class="o">-</span><span class="n">size</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="nb">hash</span><span class="o">*</span><span class="p">)</span>
+<span class="mi">100000</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">time</span> <span class="p">(</span><span class="n">dotimes</span> <span class="p">(</span><span class="n">n</span> <span class="mi">100000</span><span class="p">)</span> <span class="p">(</span><span class="n">setf</span> <span class="p">(</span><span class="n">gethash</span> <span class="n">n</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="nb">hash</span><span class="o">*</span><span class="p">)</span> <span class="n">n</span><span class="p">)))</span>
+<span class="n">Compiling</span> <span class="n">LAMBDA</span> <span class="n">NIL</span><span class="p">:</span>
+<span class="n">Compiling</span> <span class="n">Top</span><span class="o">-</span><span class="n">Level</span> <span class="n">Form</span><span class="p">:</span>
+
+<span class="n">Evaluation</span> <span class="n">took</span><span class="p">:</span>
+  <span class="mf">0.07</span> <span class="n">seconds</span> <span class="n">of</span> <span class="n">real</span> <span class="n">time</span>
+  <span class="mf">0.05</span> <span class="n">seconds</span> <span class="n">of</span> <span class="n">user</span> <span class="n">run</span> <span class="n">time</span>
+  <span class="mf">0.01</span> <span class="n">seconds</span> <span class="n">of</span> <span class="n">system</span> <span class="n">run</span> <span class="n">time</span>
+  <span class="mi">0</span> <span class="n">page</span> <span class="n">faults</span> <span class="ow">and</span>
+  <span class="mi">2001360</span> <span class="nb">bytes</span> <span class="n">consed</span><span class="o">.</span>
+<span class="n">NIL</span>
+</pre></div>
+</div>
+<p>Also rather fast (we only needed one re-size) but much more consing
+because almost the whole hash table (minus 65 initial elements) had to
+be built during the loop.</p>
+<p>Note that you can also specify the <code class="docutils literal"><span class="pre">rehash-threshold</span></code> while creating a
+new hash table. One final remark: Your implementation is allowed to
+<em>completely ignore</em> the values provided for <code class="docutils literal"><span class="pre">rehash-size</span></code> and
+<code class="docutils literal"><span class="pre">rehash-threshold</span></code>...</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Hash Tables</a><ul>
+<li><a class="reference internal" href="#introduction">Introduction</a></li>
+<li><a class="reference internal" href="#creating-a-hash-table">Creating a Hash Table</a></li>
+<li><a class="reference internal" href="#getting-a-value-from-a-hash-table">Getting a value from a Hash Table</a></li>
+<li><a class="reference internal" href="#adding-an-element-to-a-hash-table">Adding an Element to a Hash Table</a></li>
+<li><a class="reference internal" href="#testing-for-the-presence-of-a-key-in-a-hash-table">Testing for the Presence of a Key in a Hash Table</a></li>
+<li><a class="reference internal" href="#deleting-from-a-hash-table">Deleting from a Hash Table</a></li>
+<li><a class="reference internal" href="#traversing-a-hash-table">Traversing a Hash Table</a></li>
+<li><a class="reference internal" href="#counting-the-entries-in-a-hash-table">Counting the Entries in a Hash Table</a></li>
+<li><a class="reference internal" href="#performance-issues-the-size-of-your-hash-table">Performance Issues: The Size of your Hash Table</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Chapters</a><ul>
+      <li>Previous: <a href="dates_and_times.html" title="previous chapter">Dates and Times</a></li>
+      <li>Next: <a href="pattern_matching.html" title="next chapter">Pattern Matching &amp; Regular Expressions</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/chapters/hashes.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, cl-cookbook contributors.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="../_sources/chapters/hashes.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

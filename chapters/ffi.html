@@ -1,0 +1,255 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Foreign Function Interfaces &#8212; The Common Lisp Cookbook 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="The Common Lisp Cookbook 0.1 documentation" href="../index.html" />
+    <link rel="up" title="Chapters" href="index.html" />
+    <link rel="next" title="Threads" href="process.html" />
+    <link rel="prev" title="Interfacing with your OS" href="os.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="foreign-function-interfaces">
+<h1>Foreign Function Interfaces<a class="headerlink" href="#foreign-function-interfaces" title="Permalink to this headline">¶</a></h1>
+<p>The ANSI Common Lisp standard doesn&#8217;t mention this topic. So almost
+everything that can be said here depends on your OS and your
+implementation.### Example: Calling &#8216;gethostname&#8217; from CLISP</p>
+<p>Note: You should read the <a class="reference external" href="http://clisp.sourceforge.net/impnotes.html#dffi">relevant
+chapter</a> from the
+CLISP implementation notes before you proceed.</p>
+<p><code class="docutils literal"><span class="pre">int</span> <span class="pre">gethostname(char</span> <span class="pre">*name,</span> <span class="pre">int</span> <span class="pre">len)</span></code> follows a typical pattern of C
+&#8220;out&#8221;-parameter convention - it expects a pointer to a buffer it&#8217;s going
+to fill. So you must view this parameter as either <code class="docutils literal"><span class="pre">:OUT</span></code> or
+<code class="docutils literal"><span class="pre">:IN-OUT</span></code>. Additionaly, one must tell the function the size of the
+buffer. Here <code class="docutils literal"><span class="pre">len</span></code> is just an <code class="docutils literal"><span class="pre">:IN</span></code> parameter. Sometimes this will
+be an <code class="docutils literal"><span class="pre">:IN-OUT</span></code> parameter, returning the number of bytes actually
+filled in.</p>
+<p>So <code class="docutils literal"><span class="pre">name</span></code> is actually a pointer to an array of up to <code class="docutils literal"><span class="pre">len</span></code>
+characters, regardless of what the poor &#8220;<code class="docutils literal"><span class="pre">char</span> <span class="pre">*</span></code>&#8221; C prototype says,
+to be used like a C string (0-termination). How many elements are in the
+array? Luckily, in our case, you can find it out without calculating the
+<code class="docutils literal"><span class="pre">sizeof()</span></code> a C structure. It&#8217;s a hostname that will be returned. The
+Solaris 2.x manpage says &#8220;Host names are limited to MAXHOSTNAMELEN
+characters, currently 256.&#8221;</p>
+<p>Also, in the present example, you can use allocation <code class="docutils literal"><span class="pre">:ALLOCA</span></code>, like
+you&#8217;d do in C: stack-allocate a temporary. Why make things worse when
+using Lisp than when using C?</p>
+<p>This yields the following useful signature for your foreign function:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">ffi</span><span class="p">:</span><span class="n">def</span><span class="o">-</span><span class="n">c</span><span class="o">-</span><span class="n">call</span><span class="o">-</span><span class="n">out</span> <span class="n">gethostname</span>
+     <span class="p">(:</span><span class="n">arguments</span> <span class="p">(</span><span class="n">name</span> <span class="p">(</span><span class="n">ffi</span><span class="p">:</span><span class="n">c</span><span class="o">-</span><span class="n">ptr</span> <span class="p">(</span><span class="n">ffi</span><span class="p">:</span><span class="n">c</span><span class="o">-</span><span class="n">array</span><span class="o">-</span><span class="nb">max</span> <span class="n">ffi</span><span class="p">:</span><span class="n">char</span> <span class="mi">256</span><span class="p">))</span>
+     <span class="p">:</span><span class="n">out</span> <span class="p">:</span><span class="n">alloca</span><span class="p">)</span>
+     <span class="p">(</span><span class="nb">len</span> <span class="n">ffi</span><span class="p">:</span><span class="nb">int</span><span class="p">))</span>
+     <span class="p">;;</span> <span class="p">(:</span><span class="k">return</span><span class="o">-</span><span class="nb">type</span> <span class="n">BOOLEAN</span><span class="p">)</span> <span class="n">could</span> <span class="n">have</span> <span class="n">been</span> <span class="n">used</span> <span class="n">here</span>
+     <span class="p">;;</span> <span class="p">(</span><span class="n">Solaris</span> <span class="n">says</span> <span class="n">it</span><span class="s1">&#39;s either 0 or -1).</span>
+     <span class="p">(:</span><span class="k">return</span><span class="o">-</span><span class="nb">type</span> <span class="n">ffi</span><span class="p">:</span><span class="nb">int</span><span class="p">))</span>
+
+     <span class="p">(</span><span class="n">defun</span> <span class="n">myhostname</span> <span class="p">()</span>
+     <span class="p">(</span><span class="n">multiple</span><span class="o">-</span><span class="n">value</span><span class="o">-</span><span class="n">bind</span> <span class="p">(</span><span class="n">success</span> <span class="n">name</span><span class="p">)</span>
+     <span class="p">;;</span> <span class="p">:</span><span class="n">OUT</span> <span class="ow">or</span> <span class="p">:</span><span class="n">IN</span><span class="o">-</span><span class="n">OUT</span> <span class="n">parameters</span> <span class="n">are</span> <span class="n">returned</span> <span class="n">via</span> <span class="n">multiple</span> <span class="n">values</span>
+     <span class="p">(</span><span class="n">gethostname</span> <span class="mi">256</span><span class="p">)</span>
+     <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="n">zerop</span> <span class="n">success</span><span class="p">)</span>
+     <span class="p">(</span><span class="n">subseq</span> <span class="n">name</span> <span class="mi">0</span> <span class="p">(</span><span class="n">position</span> <span class="c1">#\null name))</span>
+     <span class="p">(</span><span class="n">error</span> <span class="o">...</span> <span class="p">;</span> <span class="n">errno</span> <span class="n">may</span> <span class="n">be</span> <span class="nb">set</span>
+     <span class="o">...</span><span class="p">))))</span>
+     <span class="p">(</span><span class="n">defvar</span> <span class="n">hostname</span> <span class="p">(</span><span class="n">myhostname</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Possibly <code class="docutils literal"><span class="pre">SUBSEQ</span></code> and <code class="docutils literal"><span class="pre">POSITION</span></code> are superfluous, thanks to
+<code class="docutils literal"><span class="pre">C-ARRAY-MAX</span></code> as opposed to <code class="docutils literal"><span class="pre">C-ARRAY</span></code>:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">defun</span> <span class="n">myhostname</span> <span class="p">()</span>
+     <span class="p">(</span><span class="n">multiple</span><span class="o">-</span><span class="n">value</span><span class="o">-</span><span class="n">bind</span> <span class="p">(</span><span class="n">success</span> <span class="n">name</span><span class="p">)</span>
+     <span class="p">;;</span> <span class="p">:</span><span class="n">out</span> <span class="ow">or</span> <span class="p">:</span><span class="ow">in</span><span class="o">-</span><span class="n">out</span> <span class="n">parameters</span> <span class="n">are</span> <span class="n">returned</span> <span class="n">via</span> <span class="n">multiple</span> <span class="n">values</span>
+     <span class="p">(</span><span class="n">gethostname</span> <span class="mi">256</span><span class="p">)</span>
+     <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="n">zerop</span> <span class="n">success</span><span class="p">)</span> <span class="n">name</span>
+     <span class="p">(</span><span class="n">error</span> <span class="o">...</span> <span class="p">;</span> <span class="n">errno</span> <span class="n">may</span> <span class="n">be</span> <span class="nb">set</span>
+     <span class="o">...</span><span class="p">))))</span>
+</pre></div>
+</div>
+<div class="section" id="example-calling-gethostname-from-allegro-cl">
+<h2>Example: Calling &#8216;gethostname&#8217; from Allegro CL<a class="headerlink" href="#example-calling-gethostname-from-allegro-cl" title="Permalink to this headline">¶</a></h2>
+<p>This is how the same example above would be written in Allegro Common
+Lisp version 6 and above. ACL doesn&#8217;t explicitely distinguish between
+<code class="docutils literal"><span class="pre">input</span></code> and <code class="docutils literal"><span class="pre">output</span></code> arguments. The way to declare an argument as
+<code class="docutils literal"><span class="pre">output</span></code> (i.e., modifiable by C) is to use an array, since arrays are
+passed by reference and C therefore receives a pointer to a memory
+location (which is what it expects). In this case things are made even
+easier by the fact that <code class="docutils literal"><span class="pre">gethostname()</span></code> expects an array of char, and
+a <code class="docutils literal"><span class="pre">SIMPLE-ARRAY</span></code> of <code class="docutils literal"><span class="pre">CHARACTER</span></code> represents essentially the same
+thing in Lisp. The foreign function definition is therefore the
+following:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">def</span><span class="o">-</span><span class="n">foreign</span><span class="o">-</span><span class="n">call</span> <span class="p">(</span><span class="n">c</span><span class="o">-</span><span class="n">get</span><span class="o">-</span><span class="n">hostname</span> <span class="s2">&quot;gethostname&quot;</span><span class="p">)</span>
+     <span class="p">((</span><span class="n">name</span> <span class="p">(</span><span class="o">*</span> <span class="p">:</span><span class="n">char</span><span class="p">)</span> <span class="p">(</span><span class="n">simple</span><span class="o">-</span><span class="n">array</span> <span class="s1">&#39;character (*)))</span>
+     <span class="p">(</span><span class="nb">len</span> <span class="p">:</span><span class="nb">int</span> <span class="n">integer</span><span class="p">))</span>
+     <span class="p">:</span><span class="n">returning</span> <span class="p">:</span><span class="nb">int</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Let&#8217;s read this line by line: this form defines a Lisp function called
+<code class="docutils literal"><span class="pre">C-GET-HOSTNAME</span></code> that calls the C function <code class="docutils literal"><span class="pre">gethostname()</span></code>. It takes
+two arguments: the first one, called <code class="docutils literal"><span class="pre">NAME</span></code>, is a pointer to a char
+(<code class="docutils literal"><span class="pre">*char</span></code> in C), and a <code class="docutils literal"><span class="pre">SIMPLE-ARRAY</span></code> of characters in Lisp; the
+second one is called <code class="docutils literal"><span class="pre">LEN</span></code>, and is an integer. The function returns an
+integer value.</p>
+<p>And now the Lisp side:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">defun</span> <span class="n">get</span><span class="o">-</span><span class="n">hostname</span> <span class="p">()</span>
+     <span class="p">(</span><span class="n">let</span><span class="o">*</span> <span class="p">((</span><span class="n">name</span> <span class="p">(</span><span class="n">make</span><span class="o">-</span><span class="n">array</span> <span class="mi">256</span> <span class="p">:</span><span class="n">element</span><span class="o">-</span><span class="nb">type</span> <span class="s1">&#39;character))</span>
+     <span class="p">(</span><span class="n">result</span> <span class="p">(</span><span class="n">c</span><span class="o">-</span><span class="n">get</span><span class="o">-</span><span class="n">hostname</span> <span class="n">name</span> <span class="mi">256</span><span class="p">)))</span>
+     <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="n">zerop</span> <span class="n">result</span><span class="p">)</span>
+     <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">pos</span> <span class="p">(</span><span class="n">position</span> <span class="c1">#\null name)))</span>
+     <span class="p">(</span><span class="n">subseq</span> <span class="n">name</span> <span class="mi">0</span> <span class="n">pos</span><span class="p">))</span>
+     <span class="p">(</span><span class="n">error</span> <span class="s2">&quot;gethostname() failed.&quot;</span><span class="p">))))</span>
+</pre></div>
+</div>
+<p>This function creates the <code class="docutils literal"><span class="pre">NAME</span></code> array, calls <code class="docutils literal"><span class="pre">C-GET-HOSTNAME</span></code> to
+fill it and then checks the returned value. If the value is zero, then
+the call was successful, and we return the contents of <code class="docutils literal"><span class="pre">NAME</span></code> up to
+the first 0 character (the string terminator in C), otherwise we signal
+an error. Note that, unlike the previous example, we allocate the string
+in Lisp, and we rely on the Lisp garbage collector to get rid of it
+after the function terminates. Here is a usage example:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="p">(</span><span class="n">get</span><span class="o">-</span><span class="n">hostname</span><span class="p">)</span>
+     <span class="s2">&quot;terminus&quot;</span>
+</pre></div>
+</div>
+<p>Working with strings is, in general, easier than the previous example
+showed. Let&#8217;s say you want to call <code class="docutils literal"><span class="pre">getenv()</span></code> from Lisp to access the
+value of an environment variable. <code class="docutils literal"><span class="pre">getenv()</span></code> takes a string argument
+(the variable name) and returns another string (the variable value). To
+be more precise, the argument is a <em>pointer</em> to a sequence of characters
+that should have been allocated by the caller, and the return value is a
+pointer to an already-existing sequence of chars (in the environment).
+Here is the definition of <code class="docutils literal"><span class="pre">C-GETENV</span></code>:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">def</span><span class="o">-</span><span class="n">foreign</span><span class="o">-</span><span class="n">call</span> <span class="p">(</span><span class="n">c</span><span class="o">-</span><span class="n">getenv</span> <span class="s2">&quot;getenv&quot;</span><span class="p">)</span>
+     <span class="p">((</span><span class="n">var</span> <span class="p">(</span><span class="o">*</span> <span class="p">:</span><span class="n">char</span><span class="p">)</span> <span class="n">string</span><span class="p">))</span>
+     <span class="p">:</span><span class="n">returning</span> <span class="p">:</span><span class="nb">int</span>
+     <span class="p">:</span><span class="n">strings</span><span class="o">-</span><span class="n">convert</span> <span class="n">t</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The argument in this case is still a pointer to char in C, but we can
+declare it a <code class="docutils literal"><span class="pre">STRING</span></code> to Lisp. The return value is a pointer, so we
+declare it as integer. Finally, the <code class="docutils literal"><span class="pre">:STRINGS-CONVERT</span></code> keyword
+argument specifies that ACL should automatically translate the Lisp
+string passed as the first argument into a C string. Here is how it&#8217;s
+used:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="p">(</span><span class="n">c</span><span class="o">-</span><span class="n">getenv</span> <span class="s2">&quot;SHELL&quot;</span><span class="p">)</span>
+     <span class="o">-</span><span class="mi">1073742215</span>
+</pre></div>
+</div>
+<p>If you are surprised by the return value, just remember that
+<code class="docutils literal"><span class="pre">C-GETENV</span></code> returns a pointer, and we must tell Lisp how to interpret
+the contents of the memory location pointed to by it. Since in this case
+we know that it will point to a C string, we can use the
+<code class="docutils literal"><span class="pre">FF:NATIVE-TO-STRING</span></code> function to convert it to a Lisp string:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="p">(</span><span class="n">native</span><span class="o">-</span><span class="n">to</span><span class="o">-</span><span class="n">string</span> <span class="p">(</span><span class="n">c</span><span class="o">-</span><span class="n">getenv</span> <span class="s2">&quot;SHELL&quot;</span><span class="p">))</span>
+     <span class="s2">&quot;/bin/tcsh&quot;</span>
+     <span class="mi">9</span>
+     <span class="mi">9</span>
+</pre></div>
+</div>
+<p>(The second and third values are the number of characters and bytes
+copied, respectively). One caveat: if you ask for the value of a
+non-existent variable, <code class="docutils literal"><span class="pre">C-GETENV</span></code> will return 0, and
+<code class="docutils literal"><span class="pre">NATIVE-TO-STRING</span></code> will fail. So a safer example would be:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">ptr</span> <span class="p">(</span><span class="n">c</span><span class="o">-</span><span class="n">getenv</span> <span class="s2">&quot;NOSUCHVAR&quot;</span><span class="p">)))</span>
+     <span class="p">(</span><span class="n">unless</span> <span class="p">(</span><span class="n">zerop</span> <span class="n">ptr</span><span class="p">)</span>
+     <span class="p">(</span><span class="n">native</span><span class="o">-</span><span class="n">to</span><span class="o">-</span><span class="n">string</span> <span class="n">ptr</span><span class="p">)))</span>
+     <span class="n">NIL</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Foreign Function Interfaces</a><ul>
+<li><a class="reference internal" href="#example-calling-gethostname-from-allegro-cl">Example: Calling &#8216;gethostname&#8217; from Allegro CL</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Chapters</a><ul>
+      <li>Previous: <a href="os.html" title="previous chapter">Interfacing with your OS</a></li>
+      <li>Next: <a href="process.html" title="next chapter">Threads</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/chapters/ffi.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, cl-cookbook contributors.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="../_sources/chapters/ffi.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

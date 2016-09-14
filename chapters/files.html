@@ -1,0 +1,481 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Files and Directories &#8212; The Common Lisp Cookbook 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="The Common Lisp Cookbook 0.1 documentation" href="../index.html" />
+    <link rel="up" title="Chapters" href="index.html" />
+    <link rel="next" title="Packages" href="packages.html" />
+    <link rel="prev" title="Input/Output" href="io.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="files-and-directories">
+<h1>Files and Directories<a class="headerlink" href="#files-and-directories" title="Permalink to this headline">¶</a></h1>
+<div class="line-block">
+<div class="line">Note: In this chapter, we use mainly</div>
+<div class="line"><a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/19_aa.htm">namestrings</a></div>
+<div class="line">to</div>
+<div class="line"><a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/19_.htm">specify
+filenames</a>.
+The</div>
+<div class="line">issue of</div>
+<div class="line"><a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/19_ab.htm">pathnames</a></div>
+<div class="line">will be the topic of separate chapter</div>
+<div class="line"><a class="reference external" href="http://www.tuxedo.org/~esr/jargon/html/entry/Real-Soon-Now.html">REAL SOON
+NOW</a>.</div>
+</div>
+<div class="section" id="testing-whether-a-file-exists">
+<h2>Testing whether a File Exists<a class="headerlink" href="#testing-whether-a-file-exists" title="Permalink to this headline">¶</a></h2>
+<div class="line-block">
+<div class="line">Use the function</div>
+<div class="line"><code class="docutils literal"><span class="pre">`PROBE-FILE</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/">http://www.lispworks.com/documentation/HyperSpec/Body/</a><a href="#id1"><span class="problematic" id="id2">f_probe_</span></a>.htm&gt;`__</div>
+<div class="line">which will return a</div>
+<div class="line"><a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_g.htm#generalized_boolean">generalized
+boolean</a>
+-</div>
+<div class="line">either <code class="docutils literal"><span class="pre">NIL</span></code> if the file doesn&#8217;t exists, or its</div>
+<div class="line"><a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/20_ac.htm">truename</a></div>
+<div class="line">(which might be different from the argument you supplied).</div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">edi</span><span class="nd">@bird</span><span class="p">:</span><span class="o">/</span><span class="n">tmp</span><span class="o">&gt;</span> <span class="n">ln</span> <span class="o">-</span><span class="n">s</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">passwd</span> <span class="n">foo</span>
+<span class="n">edi</span><span class="nd">@bird</span><span class="p">:</span><span class="o">/</span><span class="n">tmp</span><span class="o">&gt;</span> <span class="n">cmucl</span>
+<span class="p">;</span> <span class="n">Loading</span> <span class="c1">#p&quot;/home/edi/.cmucl-init&quot;.</span>
+<span class="n">CMU</span> <span class="n">Common</span> <span class="n">Lisp</span> <span class="mi">18</span><span class="n">d</span><span class="o">-</span><span class="n">pre</span><span class="p">,</span> <span class="n">level</span><span class="o">-</span><span class="mi">1</span> <span class="n">built</span> <span class="mi">2002</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">15</span> <span class="n">on</span> <span class="n">maftia1</span><span class="p">,</span> <span class="n">running</span> <span class="n">on</span> <span class="n">bird</span>
+<span class="n">Send</span> <span class="n">questions</span> <span class="n">to</span> <span class="n">cmucl</span><span class="o">-</span><span class="n">help</span><span class="nd">@cons</span><span class="o">.</span><span class="n">org</span><span class="o">.</span> <span class="ow">and</span> <span class="n">bug</span> <span class="n">reports</span> <span class="n">to</span> <span class="n">cmucl</span><span class="o">-</span><span class="n">imp</span><span class="nd">@cons</span><span class="o">.</span><span class="n">org</span><span class="o">.</span>
+<span class="n">Loaded</span> <span class="n">subsystems</span><span class="p">:</span>
+<span class="n">Python</span> <span class="n">native</span> <span class="n">code</span> <span class="n">compiler</span><span class="p">,</span> <span class="n">target</span> <span class="n">Intel</span> <span class="n">x86</span>
+<span class="n">CLOS</span> <span class="n">based</span> <span class="n">on</span> <span class="n">PCL</span> <span class="n">version</span><span class="p">:</span>  <span class="n">September</span> <span class="mi">16</span> <span class="mi">92</span> <span class="n">PCL</span> <span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="n">Gray</span> <span class="n">Streams</span> <span class="n">Protocol</span> <span class="n">Support</span>
+<span class="n">CLX</span> <span class="n">X</span> <span class="n">Library</span> <span class="n">MIT</span> <span class="n">R5</span><span class="o">.</span><span class="mi">02</span>
+<span class="o">*</span> <span class="p">(</span><span class="n">probe</span><span class="o">-</span><span class="n">file</span> <span class="s2">&quot;/etc/passwd&quot;</span><span class="p">)</span>
+
+<span class="c1">#p&quot;/etc/passwd&quot;</span>
+<span class="o">*</span> <span class="p">(</span><span class="n">probe</span><span class="o">-</span><span class="n">file</span> <span class="s2">&quot;foo&quot;</span><span class="p">)</span>
+
+<span class="c1">#p&quot;/etc/passwd&quot;</span>
+<span class="o">*</span> <span class="p">(</span><span class="n">probe</span><span class="o">-</span><span class="n">file</span> <span class="s2">&quot;bar&quot;</span><span class="p">)</span>
+
+<span class="n">NIL</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="opening-a-file">
+<h2>Opening a File<a class="headerlink" href="#opening-a-file" title="Permalink to this headline">¶</a></h2>
+<div class="line-block">
+<div class="line">Common Lisp has</div>
+<div class="line"><code class="docutils literal"><span class="pre">`OPEN</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/f_open.htm">http://www.lispworks.com/documentation/HyperSpec/Body/f_open.htm</a>&gt;`__
+and</div>
+<div class="line"><code class="docutils literal"><span class="pre">`CLOSE</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/f_close.htm">http://www.lispworks.com/documentation/HyperSpec/Body/f_close.htm</a>&gt;`__</div>
+<div class="line">functions which resemble the functions of the same denominator from
+other</div>
+<div class="line">programming languages you&#8217;re probably familiar with. However, it is
+almost</div>
+<div class="line">always recommendable to use the macro</div>
+<div class="line"><code class="docutils literal"><span class="pre">`WITH-OPEN-FILE</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/m_w_open.htm">http://www.lispworks.com/documentation/HyperSpec/Body/m_w_open.htm</a>&gt;`__</div>
+<div class="line">instead. Not only will this macro open the file for you and close it
+when you&#8217;re</div>
+<div class="line">done, it&#8217;ll also take care of it if your code leaves the body
+abnormally (such</div>
+<div class="line">as by a use of</div>
+<div class="line"><a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/s_throw.htm">THROW</a>).
+A</div>
+<div class="line">typical use of WITH-OPEN-FILE looks like this:</div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="k">with</span><span class="o">-</span><span class="nb">open</span><span class="o">-</span><span class="n">file</span> <span class="p">(</span><span class="nb">str</span> <span class="o">&lt;</span><span class="n">_file</span><span class="o">-</span><span class="n">spec_</span><span class="o">&gt;</span>
+<span class="p">:</span><span class="n">direction</span> <span class="o">&lt;</span><span class="n">_direction_</span><span class="o">&gt;</span>
+<span class="p">:</span><span class="k">if</span><span class="o">-</span><span class="n">exists</span> <span class="o">&lt;</span><span class="n">_if</span><span class="o">-</span><span class="n">exists_</span><span class="o">&gt;</span>
+<span class="p">:</span><span class="k">if</span><span class="o">-</span><span class="n">does</span><span class="o">-</span><span class="ow">not</span><span class="o">-</span><span class="n">exist</span> <span class="o">&lt;</span><span class="n">_if</span><span class="o">-</span><span class="n">does</span><span class="o">-</span><span class="ow">not</span><span class="o">-</span><span class="n">exist_</span><span class="o">&gt;</span><span class="p">)</span>
+<span class="o">&lt;</span><span class="n">_your</span> <span class="n">code</span> <span class="n">here_</span><span class="o">&gt;</span><span class="p">)</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">STR</span></code> is a variable which&#8217;ll be bound to the stream which is
+created by
+opening the file.</li>
+<li>&lt;<em>file-spec</em>&gt; will be a truename or a pathname.</li>
+<li>&lt;<em>direction</em>&gt; is usually <code class="docutils literal"><span class="pre">:INPUT</span></code> (meaning you want to read from
+the file),
+<code class="docutils literal"><span class="pre">:OUTPUT</span></code> (meaning you want to write to the file) or <code class="docutils literal"><span class="pre">:IO</span></code> (which
+is for
+reading <em>and</em> writing at the same time) - the default is <code class="docutils literal"><span class="pre">:INPUT</span></code>.</li>
+<li>&lt;<em>if-exists</em>&gt; specifies what to do if you want to open a file for
+writing
+and a file with that name already exists - this option is ignored if
+you
+just want to read from the file. The default is <code class="docutils literal"><span class="pre">:ERROR</span></code> which
+means that an
+error is signalled. Other useful options are <code class="docutils literal"><span class="pre">:SUPERSEDE</span></code> (meaning
+that the
+new file will replace the old one), <code class="docutils literal"><span class="pre">NIL</span></code> (the stream variable will
+be bound
+to <code class="docutils literal"><span class="pre">NIL</span></code>), and <code class="docutils literal"><span class="pre">:RENAME</span></code> (i.e. the old file is renamed).</li>
+<li>&lt;<em>if-does-not-exist</em>&gt; specifies what to do if the file you want to
+open does
+not exist. It is one of <code class="docutils literal"><span class="pre">:ERROR</span></code> for signalling an error,
+<code class="docutils literal"><span class="pre">:CREATE</span></code> for
+creating an empty file, or <code class="docutils literal"><span class="pre">NIL</span></code> for binding the stream variable to
+<code class="docutils literal"><span class="pre">NIL</span></code>. The default is, to be brief, to do the right thing depending
+on the
+other options you provided. See the CLHS for details.</li>
+</ul>
+<div class="line-block">
+<div class="line">Note that there are a lot more options to WITH-OPEN-FILE. See</div>
+<div class="line"><cite>the CLHS entry for
+``OPEN`</cite> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/f_open.htm">http://www.lispworks.com/documentation/HyperSpec/Body/f_open.htm</a>&gt;`__</div>
+<div class="line">for all the details. You&#8217;ll find some examples on how to use
+WITH-OPEN-FILE</div>
+<div class="line">below. Also note that you usually don&#8217;t need to provide any keyword
+arguments if</div>
+<div class="line">you just want to open an existing file for reading.</div>
+</div>
+</div>
+<div class="section" id="using-strings-instead-of-files">
+<h2>Using Strings instead of Files<a class="headerlink" href="#using-strings-instead-of-files" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="reading-a-file-one-line-at-a-time">
+<h2>Reading a File one Line at a Time<a class="headerlink" href="#reading-a-file-one-line-at-a-time" title="Permalink to this headline">¶</a></h2>
+<div class="line-block">
+<div class="line"><code class="docutils literal"><span class="pre">`READ-LINE</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/f_rd_lin.htm">http://www.lispworks.com/documentation/HyperSpec/Body/f_rd_lin.htm</a>&gt;`__</div>
+<div class="line">will read one line from a stream (which defaults to</div>
+<div class="line"><a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_s.htm#standard_input">*standard
+input*</a>)</div>
+<div class="line">the end of which is determined by either a newline character or the
+end of the</div>
+<div class="line">file. It will return this line as a string <em>without</em> the trailing
+newline</div>
+<div class="line">character. (Note that READ-LINE has a second return value which is
+true if there</div>
+<div class="line">was no trailing newline, i.e. if the line was terminated by the end of
+the</div>
+<div class="line">file.) READ-LINE will by default signal an error if the end of the
+file is</div>
+<div class="line">reached. You can inhibit this by supplying NIL as the second argument.
+If you do</div>
+<div class="line">this, READ-LINE will return NIL if it reaches the end of the file.</div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="k">with</span><span class="o">-</span><span class="nb">open</span><span class="o">-</span><span class="n">file</span> <span class="p">(</span><span class="n">stream</span> <span class="s2">&quot;/etc/passwd&quot;</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">do</span> <span class="p">((</span><span class="n">line</span> <span class="p">(</span><span class="n">read</span><span class="o">-</span><span class="n">line</span> <span class="n">stream</span> <span class="n">nil</span><span class="p">)</span>
+       <span class="p">(</span><span class="n">read</span><span class="o">-</span><span class="n">line</span> <span class="n">stream</span> <span class="n">nil</span><span class="p">)))</span>
+       <span class="p">((</span><span class="n">null</span> <span class="n">line</span><span class="p">))</span>
+       <span class="p">(</span><span class="nb">print</span> <span class="n">line</span><span class="p">)))</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line">You can also supply a third argument which will be used instead of NIL
+to signal</div>
+<div class="line">the end of the file:</div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="k">with</span><span class="o">-</span><span class="nb">open</span><span class="o">-</span><span class="n">file</span> <span class="p">(</span><span class="n">stream</span> <span class="s2">&quot;/etc/passwd&quot;</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">loop</span> <span class="k">for</span> <span class="n">line</span> <span class="o">=</span> <span class="p">(</span><span class="n">read</span><span class="o">-</span><span class="n">line</span> <span class="n">stream</span> <span class="n">nil</span> <span class="s1">&#39;foo)</span>
+   <span class="n">until</span> <span class="p">(</span><span class="n">eq</span> <span class="n">line</span> <span class="s1">&#39;foo)</span>
+   <span class="n">do</span> <span class="p">(</span><span class="nb">print</span> <span class="n">line</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="reading-a-file-one-character-at-a-time">
+<h2>Reading a File one Character at a Time<a class="headerlink" href="#reading-a-file-one-character-at-a-time" title="Permalink to this headline">¶</a></h2>
+<div class="line-block">
+<div class="line"><code class="docutils literal"><span class="pre">`READ-CHAR</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/f_rd_cha.htm">http://www.lispworks.com/documentation/HyperSpec/Body/f_rd_cha.htm</a>&gt;`__</div>
+<div class="line">is similar to READ-LINE, but it only reads one character as opposed to
+one</div>
+<div class="line">line. Of course, newline characters aren&#8217;t treated differently from
+other</div>
+<div class="line">characters by this function.</div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="k">with</span><span class="o">-</span><span class="nb">open</span><span class="o">-</span><span class="n">file</span> <span class="p">(</span><span class="n">stream</span> <span class="s2">&quot;/etc/passwd&quot;</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">do</span> <span class="p">((</span><span class="n">char</span> <span class="p">(</span><span class="n">read</span><span class="o">-</span><span class="n">char</span> <span class="n">stream</span> <span class="n">nil</span><span class="p">)</span>
+       <span class="p">(</span><span class="n">read</span><span class="o">-</span><span class="n">char</span> <span class="n">stream</span> <span class="n">nil</span><span class="p">)))</span>
+       <span class="p">((</span><span class="n">null</span> <span class="n">char</span><span class="p">))</span>
+       <span class="p">(</span><span class="nb">print</span> <span class="n">char</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="reading-a-file-into-string">
+<h2>Reading a File into String<a class="headerlink" href="#reading-a-file-into-string" title="Permalink to this headline">¶</a></h2>
+<div class="line-block">
+<div class="line">It&#8217;s quite common to need to access the contents of a file in string</div>
+<div class="line">form. While this can be achieved by using <code class="docutils literal"><span class="pre">READ-LINE</span></code> or
+<code class="docutils literal"><span class="pre">READ-CHAR</span></code> functions,</div>
+<div class="line">that probably won&#8217;t be the best solution. File might not be divided
+into</div>
+<div class="line">multiple lines or reading one character at a time might bring
+significant</div>
+<div class="line">performance problems. To solve this problems, you can read files using
+buckets</div>
+<div class="line">of specific sizes.</div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="k">with</span><span class="o">-</span><span class="n">output</span><span class="o">-</span><span class="n">to</span><span class="o">-</span><span class="n">string</span> <span class="p">(</span><span class="n">out</span><span class="p">)</span>
+  <span class="p">(</span><span class="k">with</span><span class="o">-</span><span class="nb">open</span><span class="o">-</span><span class="n">file</span> <span class="p">(</span><span class="ow">in</span> <span class="s2">&quot;/path/to/big/file&quot;</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">loop</span> <span class="k">with</span> <span class="n">buffer</span> <span class="o">=</span> <span class="p">(</span><span class="n">make</span><span class="o">-</span><span class="n">array</span> <span class="mi">8192</span> <span class="p">:</span><span class="n">element</span><span class="o">-</span><span class="nb">type</span> <span class="s1">&#39;character)</span>
+          <span class="k">for</span> <span class="n">n</span><span class="o">-</span><span class="n">characters</span> <span class="o">=</span> <span class="p">(</span><span class="n">read</span><span class="o">-</span><span class="n">sequence</span> <span class="n">buffer</span> <span class="ow">in</span><span class="p">)</span>
+          <span class="k">while</span> <span class="p">(</span><span class="o">&lt;</span> <span class="mi">0</span> <span class="n">n</span><span class="o">-</span><span class="n">characters</span><span class="p">)</span>
+          <span class="n">do</span> <span class="p">(</span><span class="n">write</span><span class="o">-</span><span class="n">sequence</span> <span class="n">buffer</span> <span class="n">out</span> <span class="p">:</span><span class="n">start</span> <span class="mi">0</span> <span class="p">:</span><span class="n">end</span> <span class="n">n</span><span class="o">-</span><span class="n">characters</span><span class="p">)))))</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line">Furthermore, you&#8217;re free to change the format of the read/written
+data, instead</div>
+<div class="line">of using elements of type character everytime. For instance, you can
+set</div>
+<div class="line"><code class="docutils literal"><span class="pre">:ELEMENT-TYPE</span></code> type argument of <code class="docutils literal"><span class="pre">WITH-OUTPUT-TO-STRING</span></code>,
+<code class="docutils literal"><span class="pre">WITH-OPEN-FILE</span></code> and</div>
+<div class="line"><code class="docutils literal"><span class="pre">MAKE-ARRAY</span></code> functions to <code class="docutils literal"><span class="pre">'(UNSIGNED-BYTE</span> <span class="pre">8)</span></code> to read data in
+octets.</div>
+</div>
+</div>
+<div class="section" id="looking-one-character-ahead">
+<h2>Looking one Character ahead<a class="headerlink" href="#looking-one-character-ahead" title="Permalink to this headline">¶</a></h2>
+<div class="line-block">
+<div class="line">You can &#8216;look at&#8217; the next character of a stream without actually
+removing it</div>
+<div class="line">from there - this is what the function</div>
+<div class="line"><code class="docutils literal"><span class="pre">`PEEK-CHAR</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/f_peek_c.htm">http://www.lispworks.com/documentation/HyperSpec/Body/f_peek_c.htm</a>&gt;`__</div>
+<div class="line">is for. It can be used for three different purposes depending on its
+first</div>
+<div class="line">(optional) argument (the second one being the stream it reads from):
+If the</div>
+<div class="line">first argument is <code class="docutils literal"><span class="pre">NIL</span></code>, PEEK-CHAR will just return the next
+character that&#8217;s</div>
+<div class="line">waiting on the stream:</div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="k">with</span><span class="o">-</span><span class="nb">input</span><span class="o">-</span><span class="n">from</span><span class="o">-</span><span class="n">string</span> <span class="p">(</span><span class="n">stream</span> <span class="s2">&quot;I&#39;m not amused&quot;</span><span class="p">)</span>
+           <span class="p">(</span><span class="nb">print</span> <span class="p">(</span><span class="n">read</span><span class="o">-</span><span class="n">char</span> <span class="n">stream</span><span class="p">))</span>
+           <span class="p">(</span><span class="nb">print</span> <span class="p">(</span><span class="n">peek</span><span class="o">-</span><span class="n">char</span> <span class="n">nil</span> <span class="n">stream</span><span class="p">))</span>
+           <span class="p">(</span><span class="nb">print</span> <span class="p">(</span><span class="n">read</span><span class="o">-</span><span class="n">char</span> <span class="n">stream</span><span class="p">))</span>
+           <span class="p">(</span><span class="n">values</span><span class="p">))</span>
+
+<span class="c1">#\I</span>
+<span class="c1">#\&#39;</span>
+<span class="c1">#\&#39;</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line">If the first argument is <code class="docutils literal"><span class="pre">T</span></code>, PEEK-CHAR will skip</div>
+<div class="line"><a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_w.htm#whitespace">whitespace</a></div>
+<div class="line">characters, i.e. it will return the next non-whitespace character
+that&#8217;s waiting</div>
+<div class="line">on the stream. The whitespace characters will vanish from the stream
+as if they</div>
+<div class="line">had been read by READ-CHAR:</div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="k">with</span><span class="o">-</span><span class="nb">input</span><span class="o">-</span><span class="n">from</span><span class="o">-</span><span class="n">string</span> <span class="p">(</span><span class="n">stream</span> <span class="s2">&quot;I&#39;m not amused&quot;</span><span class="p">)</span>
+           <span class="p">(</span><span class="nb">print</span> <span class="p">(</span><span class="n">read</span><span class="o">-</span><span class="n">char</span> <span class="n">stream</span><span class="p">))</span>
+           <span class="p">(</span><span class="nb">print</span> <span class="p">(</span><span class="n">read</span><span class="o">-</span><span class="n">char</span> <span class="n">stream</span><span class="p">))</span>
+           <span class="p">(</span><span class="nb">print</span> <span class="p">(</span><span class="n">read</span><span class="o">-</span><span class="n">char</span> <span class="n">stream</span><span class="p">))</span>
+           <span class="p">(</span><span class="nb">print</span> <span class="p">(</span><span class="n">peek</span><span class="o">-</span><span class="n">char</span> <span class="n">t</span> <span class="n">stream</span><span class="p">))</span>
+           <span class="p">(</span><span class="nb">print</span> <span class="p">(</span><span class="n">read</span><span class="o">-</span><span class="n">char</span> <span class="n">stream</span><span class="p">))</span>
+           <span class="p">(</span><span class="nb">print</span> <span class="p">(</span><span class="n">read</span><span class="o">-</span><span class="n">char</span> <span class="n">stream</span><span class="p">))</span>
+           <span class="p">(</span><span class="n">values</span><span class="p">))</span>
+
+<span class="c1">#\I</span>
+<span class="c1">#\&#39;</span>
+<span class="c1">#\m</span>
+<span class="c1">#\n</span>
+<span class="c1">#\n</span>
+<span class="c1">#\o</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line">If the first argument to PEEK-CHAR is a character, the function will
+skip all</div>
+<div class="line">characters until that particular character is found:</div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="k">with</span><span class="o">-</span><span class="nb">input</span><span class="o">-</span><span class="n">from</span><span class="o">-</span><span class="n">string</span> <span class="p">(</span><span class="n">stream</span> <span class="s2">&quot;I&#39;m not amused&quot;</span><span class="p">)</span>
+           <span class="p">(</span><span class="nb">print</span> <span class="p">(</span><span class="n">read</span><span class="o">-</span><span class="n">char</span> <span class="n">stream</span><span class="p">))</span>
+           <span class="p">(</span><span class="nb">print</span> <span class="p">(</span><span class="n">peek</span><span class="o">-</span><span class="n">char</span> <span class="c1">#\a stream))</span>
+           <span class="p">(</span><span class="nb">print</span> <span class="p">(</span><span class="n">read</span><span class="o">-</span><span class="n">char</span> <span class="n">stream</span><span class="p">))</span>
+           <span class="p">(</span><span class="nb">print</span> <span class="p">(</span><span class="n">read</span><span class="o">-</span><span class="n">char</span> <span class="n">stream</span><span class="p">))</span>
+           <span class="p">(</span><span class="n">values</span><span class="p">))</span>
+
+<span class="c1">#\I</span>
+<span class="c1">#\a</span>
+<span class="c1">#\a</span>
+<span class="c1">#\m</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line">Note that PEEK-CHAR has further optional arguments to control its
+behaviour on</div>
+<div class="line">end-of-file similar to those for READ-LINE and READ-CHAR (and it will
+signal an</div>
+<div class="line">error by default):</div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="k">with</span><span class="o">-</span><span class="nb">input</span><span class="o">-</span><span class="n">from</span><span class="o">-</span><span class="n">string</span> <span class="p">(</span><span class="n">stream</span> <span class="s2">&quot;I&#39;m not amused&quot;</span><span class="p">)</span>
+           <span class="p">(</span><span class="nb">print</span> <span class="p">(</span><span class="n">read</span><span class="o">-</span><span class="n">char</span> <span class="n">stream</span><span class="p">))</span>
+           <span class="p">(</span><span class="nb">print</span> <span class="p">(</span><span class="n">peek</span><span class="o">-</span><span class="n">char</span> <span class="c1">#\d stream))</span>
+           <span class="p">(</span><span class="nb">print</span> <span class="p">(</span><span class="n">read</span><span class="o">-</span><span class="n">char</span> <span class="n">stream</span><span class="p">))</span>
+           <span class="p">(</span><span class="nb">print</span> <span class="p">(</span><span class="n">peek</span><span class="o">-</span><span class="n">char</span> <span class="n">nil</span> <span class="n">stream</span> <span class="n">nil</span> <span class="s1">&#39;the-end))</span>
+           <span class="p">(</span><span class="n">values</span><span class="p">))</span>
+
+<span class="c1">#\I</span>
+<span class="c1">#\d</span>
+<span class="c1">#\d</span>
+<span class="n">THE</span><span class="o">-</span><span class="n">END</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line">You can also put one character back onto the stream with the function</div>
+<div class="line"><code class="docutils literal"><span class="pre">`UNREAD-CHAR</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/f_unrd_c.htm">http://www.lispworks.com/documentation/HyperSpec/Body/f_unrd_c.htm</a>&gt;`__.
+You</div>
+<div class="line">can use it as if, <em>after</em> you have read a character, you decide that
+you&#8217;d</div>
+<div class="line">better used PEEK-CHAR instead of READ-CHAR:</div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="k">with</span><span class="o">-</span><span class="nb">input</span><span class="o">-</span><span class="n">from</span><span class="o">-</span><span class="n">string</span> <span class="p">(</span><span class="n">stream</span> <span class="s2">&quot;I&#39;m not amused&quot;</span><span class="p">)</span>
+           <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">c</span> <span class="p">(</span><span class="n">read</span><span class="o">-</span><span class="n">char</span> <span class="n">stream</span><span class="p">)))</span>
+             <span class="p">(</span><span class="nb">print</span> <span class="n">c</span><span class="p">)</span>
+             <span class="p">(</span><span class="n">unread</span><span class="o">-</span><span class="n">char</span> <span class="n">c</span> <span class="n">stream</span><span class="p">)</span>
+             <span class="p">(</span><span class="nb">print</span> <span class="p">(</span><span class="n">read</span><span class="o">-</span><span class="n">char</span> <span class="n">stream</span><span class="p">))</span>
+             <span class="p">(</span><span class="n">values</span><span class="p">)))</span>
+
+<span class="c1">#\I</span>
+<span class="c1">#\I</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line">Note that the front of a stream doesn&#8217;t behave like a stack: You can
+only put</div>
+<div class="line">back exactly <em>one</em> character onto the stream. Also, you <em>must</em> put
+back the same</div>
+<div class="line">character that has been read previously, and you can&#8217;t unread a
+character if</div>
+<div class="line">none has been read before.</div>
+</div>
+</div>
+<div class="section" id="random-access-to-a-file">
+<h2>Random Access to a File<a class="headerlink" href="#random-access-to-a-file" title="Permalink to this headline">¶</a></h2>
+<div class="line-block">
+<div class="line">Use the function</div>
+<div class="line"><code class="docutils literal"><span class="pre">`FILE-POSITION</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/f_file_p.htm">http://www.lispworks.com/documentation/HyperSpec/Body/f_file_p.htm</a>&gt;`__</div>
+<div class="line">for random access to a file. If this function is used with one
+argument (a</div>
+<div class="line">stream), it will return the current position within the stream. If
+it&#8217;s used</div>
+<div class="line">with two arguments (see below), it will actually change the</div>
+<div class="line"><a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_f.htm#file_position">file
+position</a></div>
+<div class="line">in the stream.</div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="k">with</span><span class="o">-</span><span class="nb">input</span><span class="o">-</span><span class="n">from</span><span class="o">-</span><span class="n">string</span> <span class="p">(</span><span class="n">stream</span> <span class="s2">&quot;I&#39;m not amused&quot;</span><span class="p">)</span>
+           <span class="p">(</span><span class="nb">print</span> <span class="p">(</span><span class="n">file</span><span class="o">-</span><span class="n">position</span> <span class="n">stream</span><span class="p">))</span>
+           <span class="p">(</span><span class="nb">print</span> <span class="p">(</span><span class="n">read</span><span class="o">-</span><span class="n">char</span> <span class="n">stream</span><span class="p">))</span>
+           <span class="p">(</span><span class="nb">print</span> <span class="p">(</span><span class="n">file</span><span class="o">-</span><span class="n">position</span> <span class="n">stream</span><span class="p">))</span>
+           <span class="p">(</span><span class="n">file</span><span class="o">-</span><span class="n">position</span> <span class="n">stream</span> <span class="mi">4</span><span class="p">)</span>
+           <span class="p">(</span><span class="nb">print</span> <span class="p">(</span><span class="n">file</span><span class="o">-</span><span class="n">position</span> <span class="n">stream</span><span class="p">))</span>
+           <span class="p">(</span><span class="nb">print</span> <span class="p">(</span><span class="n">read</span><span class="o">-</span><span class="n">char</span> <span class="n">stream</span><span class="p">))</span>
+           <span class="p">(</span><span class="nb">print</span> <span class="p">(</span><span class="n">file</span><span class="o">-</span><span class="n">position</span> <span class="n">stream</span><span class="p">))</span>
+           <span class="p">(</span><span class="n">values</span><span class="p">))</span>
+
+<span class="mi">0</span>
+<span class="c1">#\I</span>
+<span class="mi">1</span>
+<span class="mi">4</span>
+<span class="c1">#\n</span>
+<span class="mi">5</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Files and Directories</a><ul>
+<li><a class="reference internal" href="#testing-whether-a-file-exists">Testing whether a File Exists</a></li>
+<li><a class="reference internal" href="#opening-a-file">Opening a File</a></li>
+<li><a class="reference internal" href="#using-strings-instead-of-files">Using Strings instead of Files</a></li>
+<li><a class="reference internal" href="#reading-a-file-one-line-at-a-time">Reading a File one Line at a Time</a></li>
+<li><a class="reference internal" href="#reading-a-file-one-character-at-a-time">Reading a File one Character at a Time</a></li>
+<li><a class="reference internal" href="#reading-a-file-into-string">Reading a File into String</a></li>
+<li><a class="reference internal" href="#looking-one-character-ahead">Looking one Character ahead</a></li>
+<li><a class="reference internal" href="#random-access-to-a-file">Random Access to a File</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Chapters</a><ul>
+      <li>Previous: <a href="io.html" title="previous chapter">Input/Output</a></li>
+      <li>Next: <a href="packages.html" title="next chapter">Packages</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/chapters/files.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, cl-cookbook contributors.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="../_sources/chapters/files.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

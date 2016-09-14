@@ -1,0 +1,213 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Miscellaneous &#8212; The Common Lisp Cookbook 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="The Common Lisp Cookbook 0.1 documentation" href="../index.html" />
+    <link rel="up" title="Chapters" href="index.html" />
+    <link rel="next" title="CLOS (the Common Lisp Object System)" href="../clos-tutorial/index.html" />
+    <link rel="prev" title="Testing" href="testing.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="miscellaneous">
+<h1>Miscellaneous<a class="headerlink" href="#miscellaneous" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="re-using-complex-data-structures">
+<h2>Re-using complex data structures<a class="headerlink" href="#re-using-complex-data-structures" title="Permalink to this headline">¶</a></h2>
+<p>Sometimes you want your functions to behave in a &#8216;functional&#8217; way, i.e.
+return
+<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_f.htm#fresh">fresh</a>
+results without side effects, sometimes you want them to re-use and
+modify existing data in a destructive way - consider the difference
+between
+<code class="docutils literal"><span class="pre">`append</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/f_append.htm">http://www.lispworks.com/documentation/HyperSpec/Body/f_append.htm</a>&gt;`__
+and
+<code class="docutils literal"><span class="pre">`nconc</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/f_nconc.htm">http://www.lispworks.com/documentation/HyperSpec/Body/f_nconc.htm</a>&gt;`__
+for an example.</p>
+<p>Well, you can have your cake and eat it too, by using optional (or
+keyword) parameters. Here&#8217;s an example: Let&#8217;s assume you&#8217;re writing a
+function <code class="docutils literal"><span class="pre">complex-matrix-stuff</span></code> which takes two matrices <code class="docutils literal"><span class="pre">m1</span></code> and
+<code class="docutils literal"><span class="pre">m2</span></code> as its arguments and computes and returns a resulting matrix the
+size of which depends on <code class="docutils literal"><span class="pre">m1</span></code> and <code class="docutils literal"><span class="pre">m2</span></code>, i.e. for a fresh result
+you&#8217;ll need an empty matrix which&#8217;ll be created by, say,
+<code class="docutils literal"><span class="pre">(make-appropriate-result-matrix-for</span> <span class="pre">m1</span> <span class="pre">m2)</span></code>.</p>
+<p>The classical textbook way to implement this function will more or less
+look like this:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">defun</span> <span class="nb">complex</span><span class="o">-</span><span class="n">matrix</span><span class="o">-</span><span class="n">stuff</span> <span class="p">(</span><span class="n">m1</span> <span class="n">m2</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">result</span> <span class="p">(</span><span class="n">make</span><span class="o">-</span><span class="n">appropriate</span><span class="o">-</span><span class="n">result</span><span class="o">-</span><span class="n">matrix</span><span class="o">-</span><span class="k">for</span> <span class="n">m1</span> <span class="n">m2</span><span class="p">)))</span>
+    <span class="p">;;</span> <span class="o">...</span> <span class="n">compute</span> <span class="n">storing</span> <span class="n">the</span> <span class="n">results</span> <span class="ow">in</span> <span class="n">RESULT</span>
+    <span class="n">result</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>And you&#8217;ll use it like this:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">setq</span> <span class="n">some</span><span class="o">-</span><span class="n">matrix</span> <span class="p">(</span><span class="nb">complex</span><span class="o">-</span><span class="n">matrix</span><span class="o">-</span><span class="n">stuff</span> <span class="n">A</span> <span class="n">B</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>But why not write it like so:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">defun</span> <span class="nb">complex</span><span class="o">-</span><span class="n">matrix</span><span class="o">-</span><span class="n">stuff</span> <span class="p">(</span><span class="n">m1</span> <span class="n">m2</span>
+                             <span class="o">&amp;</span><span class="n">optional</span>
+                             <span class="p">(</span><span class="n">result</span>
+                              <span class="p">(</span><span class="n">make</span><span class="o">-</span><span class="n">appropriate</span><span class="o">-</span><span class="n">result</span><span class="o">-</span><span class="n">matrix</span><span class="o">-</span><span class="k">for</span> <span class="n">m1</span> <span class="n">m2</span><span class="p">)))</span>
+  <span class="p">;;</span> <span class="o">...</span> <span class="n">compute</span> <span class="n">storing</span> <span class="n">the</span> <span class="n">results</span> <span class="ow">in</span> <span class="n">RESULT</span>
+  <span class="n">result</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now you have it both ways. You can still &#8220;make up results&#8221; on the fly as
+in:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">setq</span> <span class="n">some</span><span class="o">-</span><span class="n">matrix</span> <span class="p">(</span><span class="nb">complex</span><span class="o">-</span><span class="n">matrix</span><span class="o">-</span><span class="n">stuff</span> <span class="n">A</span> <span class="n">B</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>But you can also (destructively) re-use previously allocated matrices:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="nb">complex</span><span class="o">-</span><span class="n">matrix</span><span class="o">-</span><span class="n">stuff</span> <span class="n">A</span> <span class="n">B</span> <span class="n">some</span><span class="o">-</span><span class="n">appropriate</span><span class="o">-</span><span class="n">matrix</span><span class="o">-</span><span class="n">I</span><span class="o">-</span><span class="n">built</span><span class="o">-</span><span class="n">before</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Or use your function like this:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">setq</span> <span class="n">some</span><span class="o">-</span><span class="n">other</span><span class="o">-</span><span class="n">matrix</span>
+      <span class="p">(</span><span class="nb">complex</span><span class="o">-</span><span class="n">matrix</span><span class="o">-</span><span class="n">stuff</span> <span class="n">A</span> <span class="n">B</span> <span class="n">some</span><span class="o">-</span><span class="n">appropriate</span><span class="o">-</span><span class="n">matrix</span><span class="o">-</span><span class="n">I</span><span class="o">-</span><span class="n">built</span><span class="o">-</span><span class="n">before</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>in which case you&#8217;ll end up with:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="p">(</span><span class="n">eq</span> <span class="n">some</span><span class="o">-</span><span class="n">other</span><span class="o">-</span><span class="n">matrix</span> <span class="n">some</span><span class="o">-</span><span class="n">appropriate</span><span class="o">-</span><span class="n">matrix</span><span class="o">-</span><span class="n">I</span><span class="o">-</span><span class="n">built</span><span class="o">-</span><span class="n">before</span><span class="p">)</span>
+
+<span class="n">T</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="using-adjust-array-instead-of-consing-up-new-sequences-with-subseq">
+<h2>Using <code class="docutils literal"><span class="pre">ADJUST-ARRAY</span></code> instead of consing up new sequences with <code class="docutils literal"><span class="pre">SUBSEQ</span></code><a class="headerlink" href="#using-adjust-array-instead-of-consing-up-new-sequences-with-subseq" title="Permalink to this headline">¶</a></h2>
+<p>Most CL functions operating on sequences will accept <code class="docutils literal"><span class="pre">start</span></code> and
+<code class="docutils literal"><span class="pre">end</span></code> keywords so you can make them operate on a sub-sequence without
+actually creating it, i.e. instead of</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">count</span> <span class="c1">#\a (subseq long-string from to))</span>
+</pre></div>
+</div>
+<p>you should of course use</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">count</span> <span class="c1">#\a long-string :start from :end to)</span>
+</pre></div>
+</div>
+<p>which&#8217;ll yield the same result but not create an unnecessary
+intermediate sub-sequence.</p>
+<p>However, sometimes it looks like you can&#8217;t avoid creating new data.
+Consider a hash table the keys of which are strings. If the key you&#8217;re
+looking for is a sub-string of another string you&#8217;ll most likely end up
+with</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">gethash</span> <span class="p">(</span><span class="n">subseq</span> <span class="n">original</span><span class="o">-</span><span class="n">string</span> <span class="kn">from</span> <span class="nn">to</span><span class="p">)</span>
+         <span class="n">has</span><span class="o">-</span><span class="n">table</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>But you don&#8217;t have to. You can create <em>one</em>
+<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_d.htm#displaced_array">displaced</a>
+string and reuse it multiple times with
+<code class="docutils literal"><span class="pre">`adjust-array</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/f_adjust.htm">http://www.lispworks.com/documentation/HyperSpec/Body/f_adjust.htm</a>&gt;`__:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">substring</span> <span class="p">(</span><span class="n">make</span><span class="o">-</span><span class="n">array</span> <span class="mi">0</span>
+                             <span class="p">:</span><span class="n">element</span><span class="o">-</span><span class="nb">type</span> <span class="s1">&#39;character</span>
+                             <span class="p">:</span><span class="n">displaced</span><span class="o">-</span><span class="n">to</span> <span class="s2">&quot;&quot;</span>
+                             <span class="p">:</span><span class="n">displaced</span><span class="o">-</span><span class="n">index</span><span class="o">-</span><span class="n">offset</span> <span class="mi">0</span><span class="p">)))</span>
+  <span class="p">;;</span> <span class="n">more</span> <span class="n">code</span>
+  <span class="p">(</span><span class="n">gethash</span>
+   <span class="p">(</span><span class="n">adjust</span><span class="o">-</span><span class="n">array</span> <span class="n">substring</span> <span class="p">(</span><span class="o">-</span> <span class="n">to</span> <span class="n">from</span><span class="p">)</span>
+                 <span class="p">:</span><span class="n">displaced</span><span class="o">-</span><span class="n">to</span> <span class="n">original</span><span class="o">-</span><span class="n">string</span>
+                 <span class="p">:</span><span class="n">displaced</span><span class="o">-</span><span class="n">index</span><span class="o">-</span><span class="n">offset</span> <span class="n">from</span><span class="p">)</span>
+   <span class="nb">hash</span><span class="o">-</span><span class="n">table</span><span class="p">)</span>
+  <span class="p">;;</span> <span class="n">even</span> <span class="n">more</span> <span class="n">code</span>
+  <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Miscellaneous</a><ul>
+<li><a class="reference internal" href="#re-using-complex-data-structures">Re-using complex data structures</a></li>
+<li><a class="reference internal" href="#using-adjust-array-instead-of-consing-up-new-sequences-with-subseq">Using <code class="docutils literal"><span class="pre">ADJUST-ARRAY</span></code> instead of consing up new sequences with <code class="docutils literal"><span class="pre">SUBSEQ</span></code></a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Chapters</a><ul>
+      <li>Previous: <a href="testing.html" title="previous chapter">Testing</a></li>
+      <li>Next: <a href="../clos-tutorial/index.html" title="next chapter">CLOS (the Common Lisp Object System)</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/chapters/misc.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, cl-cookbook contributors.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="../_sources/chapters/misc.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

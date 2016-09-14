@@ -1,0 +1,333 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Input/Output &#8212; The Common Lisp Cookbook 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="The Common Lisp Cookbook 0.1 documentation" href="../index.html" />
+    <link rel="up" title="Chapters" href="index.html" />
+    <link rel="next" title="Files and Directories" href="files.html" />
+    <link rel="prev" title="Loop" href="loop.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="input-output">
+<h1>Input/Output<a class="headerlink" href="#input-output" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="redirecting-the-standard-output-of-your-program">
+<h2>Redirecting the Standard Output of your Program<a class="headerlink" href="#redirecting-the-standard-output-of-your-program" title="Permalink to this headline">¶</a></h2>
+<p>You do it like this:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="o">*</span><span class="n">standard</span><span class="o">-</span><span class="n">output</span><span class="o">*</span> <span class="o">&lt;</span><span class="n">some</span> <span class="n">form</span> <span class="n">generating</span> <span class="n">a</span> <span class="n">stream</span><span class="o">&gt;</span><span class="p">))</span>
+  <span class="o">...</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line">Because</div>
+<div class="line"><code class="docutils literal"><span class="pre">`*STANDARD-OUTPUT*</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/">http://www.lispworks.com/documentation/HyperSpec/Body/</a><a href="#id1"><span class="problematic" id="id2">v_debug_</span></a>.htm&gt;`__</div>
+<div class="line">is a dynamic variable, all references to it during execution of the
+body of the</div>
+<div class="line"><code class="docutils literal"><span class="pre">LET</span></code> form refer to the stream that you bound it to. After exiting
+the <code class="docutils literal"><span class="pre">LET</span></code></div>
+<div class="line">form, the old value of <code class="docutils literal"><span class="pre">*STANDARD-OUTPUT*</span></code> is restored, no matter if
+the exit</div>
+<div class="line">was by normal execution, a <code class="docutils literal"><span class="pre">RETURN-FROM</span></code> leaving the whole function,
+an</div>
+<div class="line">exception, or what-have-you. (This is, incidentally, why global
+variables lose</div>
+<div class="line">much of their brokenness in Common Lisp compared to other languages:
+since they</div>
+<div class="line">can be bound for the execution of a specific form without the risk of
+losing</div>
+<div class="line">their former value after the form has finished, their use is quite
+safe; they</div>
+<div class="line">act much like additional parameters that are passed to every
+function.)</div>
+</div>
+<p>If the output of the program should go to a file, you can do the
+following:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="k">with</span><span class="o">-</span><span class="nb">open</span><span class="o">-</span><span class="n">file</span> <span class="p">(</span><span class="o">*</span><span class="n">standard</span><span class="o">-</span><span class="n">output</span><span class="o">*</span> <span class="s2">&quot;somefile.dat&quot;</span> <span class="p">:</span><span class="n">direction</span> <span class="p">:</span><span class="n">output</span>
+                                   <span class="p">:</span><span class="k">if</span><span class="o">-</span><span class="n">exists</span> <span class="p">:</span><span class="n">supersede</span><span class="p">)</span>
+  <span class="o">...</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><code class="docutils literal"><span class="pre">`WITH-OPEN-FILE</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/m_w_open.htm">http://www.lispworks.com/documentation/HyperSpec/Body/m_w_open.htm</a>&gt;`__</div>
+<div class="line">opens the file - creating it if necessary - binds
+<code class="docutils literal"><span class="pre">*STANDARD-OUTPUT*</span></code>, executes</div>
+<div class="line">its body, closes the file, and restores <code class="docutils literal"><span class="pre">*STANDARD-OUTPUT*</span></code> to its
+former</div>
+<div class="line">value. It doesn&#8217;t get more comfortable than this!</div>
+</div>
+</div>
+<div class="section" id="faithful-output-with-character-streams">
+<h2>Faithful Output with Character Streams<a class="headerlink" href="#faithful-output-with-character-streams" title="Permalink to this headline">¶</a></h2>
+<div class="line-block">
+<div class="line">By <em>faithful output</em> I mean that characters with codes between 0 and
+255 will be</div>
+<div class="line">written out as is. It means, that I can
+<code class="docutils literal"><span class="pre">(PRINC</span> <span class="pre">(CODE-CHAR</span> <span class="pre">0..255)</span> <span class="pre">s)</span></code> to a</div>
+<div class="line">stream and expect 8-bit bytes to be written out, which is not obvious
+in the</div>
+<div class="line">times of Unicode and 16 or 32 bit character representations. It does
+<em>not</em></div>
+<div class="line">require that the characters ä, ß, or þ must have their</div>
+<div class="line"><code class="docutils literal"><span class="pre">`CHAR-CODE</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/f_char_c.htm">http://www.lispworks.com/documentation/HyperSpec/Body/f_char_c.htm</a>&gt;`__</div>
+<div class="line">in the range 0..255 - the implementation is free to use any code. But
+it does</div>
+<div class="line">require that no <code class="docutils literal"><span class="pre">#\Newline</span></code> to CRLF translation takes place, among
+others.</div>
+</div>
+<div class="line-block">
+<div class="line">Common Lisp has a long tradition of distinguishing character from byte
+(binary)</div>
+<div class="line">I/O,</div>
+<div class="line">e.g.
+<code class="docutils literal"><span class="pre">`READ-BYTE</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/f_rd_by.htm">http://www.lispworks.com/documentation/HyperSpec/Body/f_rd_by.htm</a>&gt;`__</div>
+<div class="line">and</div>
+<div class="line"><code class="docutils literal"><span class="pre">`READ-CHAR</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/f_rd_cha.htm">http://www.lispworks.com/documentation/HyperSpec/Body/f_rd_cha.htm</a>&gt;`__</div>
+<div class="line">are in the standard. Some implementations let both functions be called</div>
+<div class="line">interchangeably. Others allow either one or the other. (The</div>
+<div class="line"><a class="reference external" href="http://ww.telent.net/cliki/simple-stream">simple stream proposal</a>
+defines the</div>
+<div class="line">notion of a <em>bivalent stream</em> where both are possible.)</div>
+</div>
+<div class="line-block">
+<div class="line">Varying element-types are useful as some protocols rely on the ability
+to send</div>
+<div class="line">8-Bit output on a channel. E.g. with HTTP, the header is normally
+ASCII and</div>
+<div class="line">ought to use CRLF as line terminators, whereas the body can have the
+MIME type</div>
+<div class="line">application/octet-stream, where CRLF translation would destroy the
+data. (This</div>
+<div class="line">is how the Netscape browser on MS-Windows destroys data sent by
+incorrectly</div>
+<div class="line">configured Webservers which declare unknown files as having MIME type</div>
+<div class="line">text/plain - the default in most Apache configurations).</div>
+</div>
+<p>What follows is a list of implementation dependent choices and
+behaviours and some code to experiment.</p>
+<div class="section" id="clisp">
+<h3>CLISP<a class="headerlink" href="#clisp" title="Permalink to this headline">¶</a></h3>
+<p>On CLISP, faithful output is possible using</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">:</span><span class="n">external</span><span class="o">-</span><span class="nb">format</span>
+<span class="p">(</span><span class="n">ext</span><span class="p">:</span><span class="n">make</span><span class="o">-</span><span class="n">encoding</span> <span class="p">:</span><span class="n">charset</span> <span class="s1">&#39;charset:iso-8859-1 :line-terminator :unix)</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line">You can also use
+<code class="docutils literal"><span class="pre">(SETF</span> <span class="pre">(STREAM-ELEMENT-TYPE</span> <span class="pre">F)</span> <span class="pre">'(UNSIGNED-BYTE</span> <span class="pre">8))</span></code>, where the</div>
+<div class="line">ability to <code class="docutils literal"><span class="pre">SETF</span></code> is a CLISP-specific extension. Using
+<code class="docutils literal"><span class="pre">:EXTERNAL-FORMAT</span> <span class="pre">:UNIX</span></code></div>
+<div class="line">will cause portability problems, since the default character set on
+MS-Windows</div>
+<div class="line">is <code class="docutils literal"><span class="pre">CHARSET:CP1252</span></code>. <code class="docutils literal"><span class="pre">CHARSET:CP1252</span></code> doesn&#8217;t allow output of e.g.
+<code class="docutils literal"><span class="pre">(CODE-CHAR</span> <span class="pre">#x81)</span></code>:</div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">;</span><span class="o">***</span> <span class="o">-</span> <span class="n">Character</span> <span class="c1">#\u0080 cannot be represented in the character set CHARSET:CP1252</span>
+</pre></div>
+</div>
+<p>Characters with code &gt; 127 cannot be represented in ASCII:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">;</span><span class="o">***</span> <span class="o">-</span> <span class="n">Character</span> <span class="c1">#\u0080 cannot be represented in the character set CHARSET:ASCII</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="cmucl">
+<h3>CMUCL<a class="headerlink" href="#cmucl" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal"><span class="pre">:EXTERNAL-FORMAT</span> <span class="pre">:DEFAULT</span></code> (untested) - no unicode, so probably no
+problems.</p>
+</div>
+<div class="section" id="allegrocl">
+<h3>AllegroCL<a class="headerlink" href="#allegrocl" title="Permalink to this headline">¶</a></h3>
+<div class="line-block">
+<div class="line"><code class="docutils literal"><span class="pre">#+(AND</span> <span class="pre">ALLEGRO</span> <span class="pre">UNIX)</span> <span class="pre">:DEFAULT</span></code> (untested) - seems enough on UNIX,
+but would not</div>
+<div class="line">work on the MS-Windows port of AllegroCL.</div>
+</div>
+</div>
+<div class="section" id="lispworks">
+<h3>LispWorks<a class="headerlink" href="#lispworks" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal"><span class="pre">:EXTERNAL-FORMAT</span> <span class="pre">'(:LATIN-1</span> <span class="pre">:EOL-STYLE</span> <span class="pre">:LF)</span></code> (confirmed by Marc
+Battyani)</p>
+</div>
+<div class="section" id="example">
+<h3>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h3>
+<p>Here&#8217;s some sample code to play with:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">defvar</span> <span class="o">*</span><span class="n">unicode</span><span class="o">-</span><span class="n">test</span><span class="o">-</span><span class="n">file</span><span class="o">*</span> <span class="s2">&quot;faithtest-out.txt&quot;</span><span class="p">)</span>
+
+<span class="p">(</span><span class="n">defun</span> <span class="n">generate</span><span class="o">-</span><span class="mi">256</span> <span class="p">(</span><span class="o">&amp;</span><span class="n">key</span> <span class="p">(</span><span class="n">filename</span> <span class="o">*</span><span class="n">unicode</span><span class="o">-</span><span class="n">test</span><span class="o">-</span><span class="n">file</span><span class="o">*</span><span class="p">)</span>
+              <span class="c1">#+CLISP (charset &#39;charset:iso-8859-1)</span>
+                          <span class="n">external</span><span class="o">-</span><span class="nb">format</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">e</span> <span class="p">(</span><span class="ow">or</span> <span class="n">external</span><span class="o">-</span><span class="nb">format</span>
+           <span class="c1">#+CLISP (ext:make-encoding :charset charset :line-terminator :unix))))</span>
+    <span class="p">(</span><span class="n">describe</span> <span class="n">e</span><span class="p">)</span>
+    <span class="p">(</span><span class="k">with</span><span class="o">-</span><span class="nb">open</span><span class="o">-</span><span class="n">file</span> <span class="p">(</span><span class="n">f</span> <span class="n">filename</span> <span class="p">:</span><span class="n">direction</span> <span class="p">:</span><span class="n">output</span>
+             <span class="p">:</span><span class="n">external</span><span class="o">-</span><span class="nb">format</span> <span class="n">e</span><span class="p">)</span>
+      <span class="p">(</span><span class="n">write</span><span class="o">-</span><span class="n">sequence</span>
+        <span class="p">(</span><span class="n">loop</span> <span class="k">with</span> <span class="n">s</span> <span class="o">=</span> <span class="p">(</span><span class="n">make</span><span class="o">-</span><span class="n">string</span> <span class="mi">256</span><span class="p">)</span>
+          <span class="k">for</span> <span class="n">i</span> <span class="kn">from</span> <span class="mi">0</span> <span class="n">to</span> <span class="mi">255</span>
+          <span class="n">do</span> <span class="p">(</span><span class="n">setf</span> <span class="p">(</span><span class="n">char</span> <span class="n">s</span> <span class="n">i</span><span class="p">)</span> <span class="p">(</span><span class="n">code</span><span class="o">-</span><span class="n">char</span> <span class="n">i</span><span class="p">))</span>
+          <span class="k">finally</span> <span class="p">(</span><span class="k">return</span> <span class="n">s</span><span class="p">))</span>
+       <span class="n">f</span><span class="p">)</span>
+      <span class="p">(</span><span class="n">file</span><span class="o">-</span><span class="n">position</span> <span class="n">f</span><span class="p">))))</span>
+
+<span class="p">;(</span><span class="n">generate</span><span class="o">-</span><span class="mi">256</span> <span class="p">:</span><span class="n">external</span><span class="o">-</span><span class="nb">format</span> <span class="p">:</span><span class="n">default</span><span class="p">)</span>
+<span class="p">;</span><span class="c1">#+CLISP (generate-256 :external-format :unix)</span>
+<span class="p">;</span><span class="c1">#+CLISP (generate-256 :external-format &#39;charset:ascii)</span>
+<span class="p">;(</span><span class="n">generate</span><span class="o">-</span><span class="mi">256</span><span class="p">)</span>
+
+<span class="p">(</span><span class="n">defun</span> <span class="n">check</span><span class="o">-</span><span class="mi">256</span> <span class="p">(</span><span class="o">&amp;</span><span class="n">optional</span> <span class="p">(</span><span class="n">filename</span> <span class="o">*</span><span class="n">unicode</span><span class="o">-</span><span class="n">test</span><span class="o">-</span><span class="n">file</span><span class="o">*</span><span class="p">))</span>
+  <span class="p">(</span><span class="k">with</span><span class="o">-</span><span class="nb">open</span><span class="o">-</span><span class="n">file</span> <span class="p">(</span><span class="n">f</span> <span class="n">filename</span> <span class="p">:</span><span class="n">direction</span> <span class="p">:</span><span class="nb">input</span>
+             <span class="p">:</span><span class="n">element</span><span class="o">-</span><span class="nb">type</span> <span class="s1">&#39;(unsigned-byte 8))</span>
+    <span class="p">(</span><span class="n">loop</span> <span class="k">for</span> <span class="n">i</span> <span class="kn">from</span> <span class="mi">0</span>
+      <span class="k">for</span> <span class="n">c</span> <span class="o">=</span> <span class="p">(</span><span class="n">read</span><span class="o">-</span><span class="n">byte</span> <span class="n">f</span> <span class="n">nil</span> <span class="n">nil</span><span class="p">)</span>
+      <span class="k">while</span> <span class="n">c</span>
+      <span class="n">unless</span> <span class="p">(</span><span class="o">=</span> <span class="n">c</span> <span class="n">i</span><span class="p">)</span>
+      <span class="n">do</span> <span class="p">(</span><span class="nb">format</span> <span class="n">t</span> <span class="s2">&quot;~&amp;Position ~D found ~D(#x~X).&quot;</span> <span class="n">i</span> <span class="n">c</span> <span class="n">c</span><span class="p">)</span>
+      <span class="n">when</span> <span class="p">(</span><span class="ow">and</span> <span class="p">(</span><span class="o">=</span> <span class="n">i</span> <span class="mi">33</span><span class="p">)</span> <span class="p">(</span><span class="o">=</span> <span class="n">c</span> <span class="mi">32</span><span class="p">))</span>
+      <span class="n">do</span> <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">c</span> <span class="p">(</span><span class="n">read</span><span class="o">-</span><span class="n">byte</span> <span class="n">f</span><span class="p">)))</span>
+           <span class="p">(</span><span class="nb">format</span> <span class="n">t</span> <span class="s2">&quot;~&amp;Resync back 1 byte ~D(#x~X) - cause CRLF?.&quot;</span> <span class="n">c</span> <span class="n">c</span><span class="p">)</span> <span class="p">))</span>
+    <span class="p">(</span><span class="n">file</span><span class="o">-</span><span class="n">length</span> <span class="n">f</span><span class="p">)))</span>
+
+<span class="c1">#| CLISP</span>
+<span class="p">(</span><span class="n">check</span><span class="o">-</span><span class="mi">256</span> <span class="o">*</span><span class="n">unicode</span><span class="o">-</span><span class="n">test</span><span class="o">-</span><span class="n">file</span><span class="o">*</span><span class="p">)</span>
+<span class="p">(</span><span class="n">progn</span> <span class="p">(</span><span class="n">generate</span><span class="o">-</span><span class="mi">256</span> <span class="p">:</span><span class="n">external</span><span class="o">-</span><span class="nb">format</span> <span class="p">:</span><span class="n">unix</span><span class="p">)</span> <span class="p">(</span><span class="n">check</span><span class="o">-</span><span class="mi">256</span><span class="p">))</span>
+<span class="p">;</span> <span class="n">uses</span> <span class="n">UTF</span><span class="o">-</span><span class="mi">8</span> <span class="o">-&gt;</span> <span class="mi">385</span> <span class="nb">bytes</span>
+
+<span class="p">(</span><span class="n">progn</span> <span class="p">(</span><span class="n">generate</span><span class="o">-</span><span class="mi">256</span> <span class="p">:</span><span class="n">charset</span> <span class="s1">&#39;charset:iso-8859-1) (check-256))</span>
+
+<span class="p">(</span><span class="n">progn</span> <span class="p">(</span><span class="n">generate</span><span class="o">-</span><span class="mi">256</span> <span class="p">:</span><span class="n">external</span><span class="o">-</span><span class="nb">format</span> <span class="p">:</span><span class="n">default</span><span class="p">)</span> <span class="p">(</span><span class="n">check</span><span class="o">-</span><span class="mi">256</span><span class="p">))</span>
+<span class="p">;</span> <span class="n">uses</span> <span class="n">UTF</span><span class="o">-</span><span class="mi">8</span> <span class="o">+</span> <span class="n">CRLF</span><span class="p">(</span><span class="n">on</span> <span class="n">MS</span><span class="o">-</span><span class="n">Windows</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="mi">387</span> <span class="nb">bytes</span>
+
+<span class="p">(</span><span class="n">progn</span> <span class="p">(</span><span class="n">generate</span><span class="o">-</span><span class="mi">256</span> <span class="p">:</span><span class="n">external</span><span class="o">-</span><span class="nb">format</span>
+  <span class="p">(</span><span class="n">ext</span><span class="p">:</span><span class="n">make</span><span class="o">-</span><span class="n">encoding</span> <span class="p">:</span><span class="n">charset</span> <span class="s1">&#39;charset:iso-8859-1 :line-terminator :mac)) (check-256))</span>
+<span class="p">(</span><span class="n">progn</span> <span class="p">(</span><span class="n">generate</span><span class="o">-</span><span class="mi">256</span> <span class="p">:</span><span class="n">external</span><span class="o">-</span><span class="nb">format</span>
+  <span class="p">(</span><span class="n">ext</span><span class="p">:</span><span class="n">make</span><span class="o">-</span><span class="n">encoding</span> <span class="p">:</span><span class="n">charset</span> <span class="s1">&#39;charset:iso-8859-1 :line-terminator :dos)) (check-256))</span>
+<span class="o">|</span><span class="c1">#</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="fast-bulk-i-o">
+<h2>Fast Bulk I/O<a class="headerlink" href="#fast-bulk-i-o" title="Permalink to this headline">¶</a></h2>
+<div class="line-block">
+<div class="line">If you need to copy a lot of data and the source and destination are
+both</div>
+<div class="line">streams (of the same</div>
+<div class="line"><a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_e.htm#element_type">element
+type</a>),</div>
+<div class="line">it&#8217;s very fast to use</div>
+<div class="line"><code class="docutils literal"><span class="pre">`READ-SEQUENCE</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/f_rd_seq.htm">http://www.lispworks.com/documentation/HyperSpec/Body/f_rd_seq.htm</a>&gt;`__</div>
+<div class="line">and</div>
+<div class="line"><code class="docutils literal"><span class="pre">`WRITE-SEQUENCE</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/f_wr_seq.htm">http://www.lispworks.com/documentation/HyperSpec/Body/f_wr_seq.htm</a>&gt;`__:</div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">buf</span> <span class="p">(</span><span class="n">make</span><span class="o">-</span><span class="n">array</span> <span class="mi">4096</span> <span class="p">:</span><span class="n">element</span><span class="o">-</span><span class="nb">type</span> <span class="p">(</span><span class="n">stream</span><span class="o">-</span><span class="n">element</span><span class="o">-</span><span class="nb">type</span> <span class="nb">input</span><span class="o">-</span><span class="n">stream</span><span class="p">)))</span>
+  <span class="p">(</span><span class="n">loop</span> <span class="k">for</span> <span class="n">pos</span> <span class="o">=</span> <span class="p">(</span><span class="n">read</span><span class="o">-</span><span class="n">sequence</span> <span class="nb">input</span><span class="o">-</span><span class="n">stream</span><span class="p">)</span>
+        <span class="k">while</span> <span class="p">(</span><span class="n">plusp</span> <span class="n">pos</span><span class="p">)</span>
+        <span class="n">do</span> <span class="p">(</span><span class="n">write</span><span class="o">-</span><span class="n">sequence</span> <span class="n">buf</span> <span class="n">output</span><span class="o">-</span><span class="n">stream</span> <span class="p">:</span><span class="n">end</span> <span class="n">pos</span><span class="p">))))</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Input/Output</a><ul>
+<li><a class="reference internal" href="#redirecting-the-standard-output-of-your-program">Redirecting the Standard Output of your Program</a></li>
+<li><a class="reference internal" href="#faithful-output-with-character-streams">Faithful Output with Character Streams</a><ul>
+<li><a class="reference internal" href="#clisp">CLISP</a></li>
+<li><a class="reference internal" href="#cmucl">CMUCL</a></li>
+<li><a class="reference internal" href="#allegrocl">AllegroCL</a></li>
+<li><a class="reference internal" href="#lispworks">LispWorks</a></li>
+<li><a class="reference internal" href="#example">Example</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#fast-bulk-i-o">Fast Bulk I/O</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Chapters</a><ul>
+      <li>Previous: <a href="loop.html" title="previous chapter">Loop</a></li>
+      <li>Next: <a href="files.html" title="next chapter">Files and Directories</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/chapters/io.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, cl-cookbook contributors.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="../_sources/chapters/io.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

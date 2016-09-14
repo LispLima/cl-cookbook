@@ -1,0 +1,237 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Interfacing with your OS &#8212; The Common Lisp Cookbook 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="The Common Lisp Cookbook 0.1 documentation" href="../index.html" />
+    <link rel="up" title="Chapters" href="index.html" />
+    <link rel="next" title="Foreign Function Interfaces" href="ffi.html" />
+    <link rel="prev" title="Sockets" href="sockets.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="interfacing-with-your-os">
+<h1>Interfacing with your OS<a class="headerlink" href="#interfacing-with-your-os" title="Permalink to this headline">¶</a></h1>
+<p>The ANSI Common Lisp standard doesn&#8217;t mention this topic. (Keep in mind
+that it was written at a time where <a class="reference external" href="http://kogs-www.informatik.uni-hamburg.de/~moeller/symbolics-info/symbolics.html">Lisp
+Machines</a>
+were at their peak. On these boxes Lisp <em>was</em> your operating system!) So
+almost everything that can be said here depends on your OS and your
+implementation.</p>
+<div class="section" id="accessing-environment-variables">
+<h2>Accessing Environment variables<a class="headerlink" href="#accessing-environment-variables" title="Permalink to this headline">¶</a></h2>
+<p>Here&#8217;s a function that&#8217;ll allow you to look at Unix/Linux environment
+variables on a lot of different CL implementations:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="p">(</span><span class="n">defun</span> <span class="n">my</span><span class="o">-</span><span class="n">getenv</span> <span class="p">(</span><span class="n">name</span> <span class="o">&amp;</span><span class="n">optional</span> <span class="n">default</span><span class="p">)</span>
+    <span class="c1">#+CMU</span>
+    <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">x</span> <span class="p">(</span><span class="n">assoc</span> <span class="n">name</span> <span class="n">ext</span><span class="p">:</span><span class="o">*</span><span class="n">environment</span><span class="o">-</span><span class="nb">list</span><span class="o">*</span>
+                    <span class="p">:</span><span class="n">test</span> <span class="c1">#&#39;string=)))</span>
+      <span class="p">(</span><span class="k">if</span> <span class="n">x</span> <span class="p">(</span><span class="n">cdr</span> <span class="n">x</span><span class="p">)</span> <span class="n">default</span><span class="p">))</span>
+    <span class="c1">#-CMU</span>
+    <span class="p">(</span><span class="ow">or</span>
+    <span class="c1">#+Allegro (sys:getenv name)</span>
+    <span class="c1">#+CLISP (ext:getenv name)</span>
+    <span class="c1">#+ECL (si:getenv name)</span>
+    <span class="c1">#+SBCL (sb-unix::posix-getenv name)</span>
+    <span class="c1">#+LISPWORKS (lispworks:environment-variable name)</span>
+    <span class="n">default</span><span class="p">))</span>
+<span class="n">MY</span><span class="o">-</span><span class="n">GETENV</span>
+<span class="o">*</span> <span class="p">(</span><span class="n">my</span><span class="o">-</span><span class="n">getenv</span> <span class="s2">&quot;HOME&quot;</span><span class="p">)</span>
+<span class="s2">&quot;/home/edi&quot;</span>
+<span class="o">*</span> <span class="p">(</span><span class="n">my</span><span class="o">-</span><span class="n">getenv</span> <span class="s2">&quot;HOM&quot;</span><span class="p">)</span>
+<span class="n">NIL</span>
+<span class="o">*</span> <span class="p">(</span><span class="n">my</span><span class="o">-</span><span class="n">getenv</span> <span class="s2">&quot;HOM&quot;</span> <span class="s2">&quot;huh?&quot;</span><span class="p">)</span>
+<span class="s2">&quot;huh?&quot;</span>
+</pre></div>
+</div>
+<p>You should also note that some of these implementations also provide the
+ability to <em>set</em> these variables. These include ECL (<code class="docutils literal"><span class="pre">si:setenv</span></code>) and
+AllegroCL, LispWorks, and CLISP where you can use the functions from
+above together with
+<code class="docutils literal"><span class="pre">`setf</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/">http://www.lispworks.com/documentation/HyperSpec/Body/</a><a href="#id1"><span class="problematic" id="id2">m_setf_</span></a>.htm&gt;`__.
+This feature might be important if you want to start subprocesses from
+your Lisp environment.</p>
+</div>
+<div class="section" id="accessing-the-command-line-arguments">
+<h2>Accessing the command line arguments<a class="headerlink" href="#accessing-the-command-line-arguments" title="Permalink to this headline">¶</a></h2>
+<p>Accessing command line arguments is implementation-specific but it
+appears most implementations have a way of getting at them.
+<a class="reference external" href="http://www.sbcl.org">SBCL</a> has the special variable <code class="docutils literal"><span class="pre">*posix-argv*</span></code></p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span>$ sbcl my-command-line-arg
+</pre></div>
+</div>
+<hr class="docutils" />
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="o">*</span><span class="n">posix</span><span class="o">-</span><span class="n">argv</span><span class="o">*</span>
+
+<span class="p">(</span><span class="s2">&quot;sbcl&quot;</span> <span class="s2">&quot;my-command-line-arg&quot;</span><span class="p">)</span>
+<span class="o">*</span>
+</pre></div>
+</div>
+<p>More on using this to write standalone Lisp scripts can be found in the
+<a class="reference external" href="http://www.sbcl.org/manual/Unix_002dstyle-Command-Line-Protocol.html">SBCL
+Manual</a></p>
+<p><a class="reference external" href="http://www.lispworks.com">LispWorks</a> has
+<code class="docutils literal"><span class="pre">system:*line-arguments-list*</span></code></p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="n">system</span><span class="p">:</span><span class="o">*</span><span class="n">line</span><span class="o">-</span><span class="n">arguments</span><span class="o">-</span><span class="nb">list</span><span class="o">*</span>
+<span class="p">(</span><span class="s2">&quot;/Users/cbrown/Projects/lisptty/tty-lispworks&quot;</span> <span class="s2">&quot;-init&quot;</span> <span class="s2">&quot;/Users/cbrown/Desktop/lisp/lispworks-init.lisp&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><a class="reference external" href="http://www.cons.org/cmucl/">CMUCL</a> has interesting extensions for
+<a class="reference external" href="http://common-lisp.net/project/cmucl/doc/cmu-user/unix.html">manipulating the
+arguments</a></p>
+<p>Here&#8217;s a quick function to return the argument strings list across
+multiple implementations:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">defun</span> <span class="n">my</span><span class="o">-</span><span class="n">command</span><span class="o">-</span><span class="n">line</span> <span class="p">()</span>
+  <span class="p">(</span><span class="ow">or</span>
+   <span class="c1">#+SBCL *posix-argv*</span>
+   <span class="c1">#+LISPWORKS system:*line-arguments-list*</span>
+   <span class="c1">#+CMU extensions:*command-line-words*</span>
+   <span class="n">nil</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="forking-with-cmucl">
+<h2>Forking with CMUCL<a class="headerlink" href="#forking-with-cmucl" title="Permalink to this headline">¶</a></h2>
+<p>Here&#8217;s a function by Martin Cracauer that&#8217;ll allow you to compile a
+couple of files in parallel with <a class="reference external" href="http://www.cons.org/cmucl/">CMUCL</a>.
+It demonstrates how to use the UNIX
+<code class="docutils literal"><span class="pre">`fork</span></code> &lt;<a class="reference external" href="http://www.freebsd.org/cgi/man.cgi?query=fork&amp;apropos=0&amp;sektion=0&amp;manpath=FreeBSD+4.5-RELEASE&amp;format=html">http://www.freebsd.org/cgi/man.cgi?query=fork&amp;apropos=0&amp;sektion=0&amp;manpath=FreeBSD+4.5-RELEASE&amp;format=html</a>&gt;`__
+system call with this CL implementation.</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span>(defparameter *sigchld* 0)
+
+(defparameter *compile-files-debug* 2)
+
+(defun sigchld-handler (p1 p2 p3)
+  (when (&gt; 0 *compile-files-debug*)
+    (print (list &quot;returned&quot; p1 p2 p3))
+    (force-output))
+  (decf *sigchld*))
+
+(defun compile-files (files &amp;key (load nil))
+  (setq *sigchld* 0)
+  (system:enable-interrupt unix:sigchld #&#39;sigchld-handler)
+  (do ((f files (cdr f)))
+      ((not f))
+    (format t &quot;~&amp;process ~d diving for ~a&quot; (unix:unix-getpid)
+            `(compile-file ,(car f)))
+    (force-output)
+    (let ((pid (unix:unix-fork)))
+      (if (/= 0 pid)
+          ;; parent
+          (incf *sigchld*)
+          ;; child
+          (progn
+            (compile-file (car f) :verbose nil :print nil)
+            (unix:unix-exit 0)))))
+  (do () ((= 0 *sigchld*))
+    (sleep 1)
+    (when (&gt; 0 *compile-files-debug*)
+      (format t &quot;~&amp;process ~d still waiting for ~d childs&quot;
+              (unix:unix-getpid) *sigchld*)))
+  (when (&gt; 0 *compile-files-debug*)
+    (format t &quot;~&amp;finished&quot;))
+  (when load
+    (do ((f files (cdr f)))
+        ((not f))
+      (load (compile-file-pathname (car f))))))
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Interfacing with your OS</a><ul>
+<li><a class="reference internal" href="#accessing-environment-variables">Accessing Environment variables</a></li>
+<li><a class="reference internal" href="#accessing-the-command-line-arguments">Accessing the command line arguments</a></li>
+<li><a class="reference internal" href="#forking-with-cmucl">Forking with CMUCL</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Chapters</a><ul>
+      <li>Previous: <a href="sockets.html" title="previous chapter">Sockets</a></li>
+      <li>Next: <a href="ffi.html" title="next chapter">Foreign Function Interfaces</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/chapters/os.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, cl-cookbook contributors.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="../_sources/chapters/os.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

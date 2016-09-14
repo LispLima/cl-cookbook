@@ -1,0 +1,819 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Setting up Emacs on Windows or Mac &#8212; The Common Lisp Cookbook 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="The Common Lisp Cookbook 0.1 documentation" href="../index.html" />
+    <link rel="up" title="Chapters" href="index.html" />
+    <link rel="next" title="Using Emacs as an IDE" href="emacs-ide.html" />
+    <link rel="prev" title="Defining Systems" href="systems.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="setting-up-emacs-on-windows-or-mac">
+<h1>Setting up Emacs on Windows or Mac<a class="headerlink" href="#setting-up-emacs-on-windows-or-mac" title="Permalink to this headline">¶</a></h1>
+<p>Emacs is the preferred Lisp source code editor for most CL developers;
+however, it is not easy for an Emacs neophyte to get an Emacs
+environment set up and configured properly for Lisp development. The
+problem is compounded if the development platform is Microsoft Windows
+since Unix (and variants) is the more common platform used by
+experienced Lisp developers. In order to help a Lisp beginner set up an
+Emacs Common Lisp development environment on a Microsoft Windows PC,
+this chapter will lay out step-by-step instructions for installing all
+the necessary components for each of the most popular Common Lisp
+implementations on Windows:</p>
+<ul class="simple">
+<li><strong>Allegro Common Lisp (ACL):</strong> Franz&#8217;s own &#8220;ELI&#8221; will be used in
+Emacs.</li>
+<li><strong>CLISP:</strong> ILISP and Emacs Inferior Lisp Mode will be two alternative
+environments that can be used with CLISP.</li>
+<li><strong>Corman Common Lisp:</strong> The Emacs Inferior Lisp Mode will be used.</li>
+<li><strong>LispWorks:</strong> ILISP will be used in Emacs to provide the development
+environment (Note: the trial version of the product doesn&#8217;t provide a
+non-gui Lisp image and this is necessary if the product is to be used
+with Emacs).</li>
+</ul>
+<p>By exactly following the installation instructions, the user will wind
+up with an Emacs setup that:</p>
+<ul class="simple">
+<li>Allows the user to trial the most popular Lisp implementations for
+Windows.</li>
+<li>Allows the user to try out 3 different techniques (ILISP, ELI,
+inferior-lisp mode) for establishing a Lisp development environment
+in Emacs - each with its own sets of pluses and minuses.</li>
+<li>Configures Emacs so that it has keystroke bindings more similar to
+what a Windows user is accustomed to.</li>
+<li>Configures Emacs with a number of custom configuration settings that
+are commonly used.</li>
+</ul>
+<div class="line-block">
+<div class="line">There is also a short appendix describing the sample .emacs file and
+brief Mac OS X setup instructions:</div>
+<div class="line">A. <a class="reference external" href="#Sample%20.emacs%20file">Sample .emacs file</a></div>
+<div class="line">B. <a class="reference external" href="#Mac%20OS%20X%20Setup%20Instructions">Mac OS X Setup
+Instructions</a></div>
+</div>
+<p>For each installation, an installation directory is suggested. It is
+recommended that you install in the suggested directory since, if you
+use the suggested directory names, the provided Emacs start-up file
+(.emacs) will work &#8220;out-of-the-box&#8221;. Please note the following:</p>
+<ul class="simple">
+<li>If you use alternative directory names, you will need to modify the
+.emacs file (instructions provided in step #8).</li>
+<li>The instructions assume you are using Winzip; however, you can use
+any alternative utility.</li>
+<li>When you unpack .gz files with Winzip, it will ask you &#8220;Should WinZip
+decompress it to a temporary folder and open it?&#8221; - click on &#8220;No&#8221;.
+When you unzip any files, you should ensure that &#8220;All files&#8221; radio
+button is selected and the &#8220;Use folder names&#8221; check box is ticked.</li>
+<li>There are instructions for downloading all the implementations;
+however, it is not necessary to do so. You should complete step #1
+(Read through step #2 to determine whether you want/need any of the
+optional Emacs utilities covered in this section. Step #3 is required
+if you want local access to the Common Lisp documentation. If you
+don&#8217;t want/need the documentation, this step is optional as well.)
+and the relevant parts of #8 &amp; #9 (regardless of which
+implementations you download) and you will need to download at least
+one of #4 - #7. You can download multiple implementations if you want
+to trial them.</li>
+</ul>
+<div class="section" id="installing-emacs">
+<h2>1. Installing Emacs<a class="headerlink" href="#installing-emacs" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p class="first">From a command line, create the following directories (used later):</p>
+<pre>
+md c:\home\
+md c:\home\site\
+md c:\home\docs\
+md c:\home\lisp\
+md c:\home\info\
+md c:\bin\
+</pre></li>
+<li><p class="first">Download the precompiled
+<a class="reference external" href="http://www.gnu.org/software/emacs/">Emacs</a> binaries for Windows
+from
+<a class="reference external" href="http://ftp.gnu.org/pub/gnu/windows/emacs/emacs-21.3-fullbin-i386.tar.gz">http://ftp.gnu.org/pub/gnu/windows/emacs/emacs-21.3-fullbin-i386.tar.gz</a>
+and use Winzip to unpack the files into the c:\bin directory. This
+should result in a new directory: c:\bin\emacs-21.3</p>
+</li>
+<li><p class="first">Using Run on the Windows Start menu, enter
+&#8220;c:\bin\emacs-21.3\bin\runemacs.exe&#8221; to verify that the program
+works. On the Help menu, there is an Emacs on-line tutorial. If you
+are unfamiliar with Emacs, you should (at least) complete this
+tutorial before proceeding any further. The remainder of this
+chapter&#8217;s instructions will assume that you have at least basic
+familiarity with the use of Emacs.</p>
+</li>
+<li><p class="first">Download the sample .emacs file from <a class="reference external" href=".emacs">here</a> and place it
+in the c:\home directory.</p>
+</li>
+</ul>
+<div class="section" id="installing-additional-emacs-utilities">
+<h3>2. Installing additional Emacs utilities<a class="headerlink" href="#installing-additional-emacs-utilities" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">OPTIONAL: ILISP is needed if you intend to use CLISP or LispWorks
+with it. Also, if you want to access the HyperSpec documentation or
+CLtL2, the code to do this is in the ILISP package. Download the
+<a class="reference external" href="http://sourceforge.net/projects/ilisp/">ILISP</a> package from
+<a class="reference external" href="http://prdownloads.sourceforge.net/ilisp/ilisp-5.12.0.tar.gz?download">http://prdownloads.sourceforge.net/ilisp/ilisp-5.12.0.tar.gz?download</a>
+and use Winzip to unpack it into the c:\home\site directory. This
+should result in a new directory: c:\home\site\ilisp-5.12.0\</p>
+<ul class="simple">
+<li>Edit the EMACSDIR and ILISPDIR variables at the beginning of the
+icompile.bat file in the ilisp-5.12.0 directory so that they match
+the settings given below.</li>
+</ul>
+<div class="line-block">
+<div class="line"><br /></div>
+<div class="line">set EMACSDIR=c:\bin\emacs-21.3</div>
+<div class="line">set ILISPDIR=c:\home\site\ilisp</div>
+<div class="line"><br /></div>
+</div>
+<ul class="simple">
+<li>From a command line, enter the following commands:</li>
+</ul>
+<div class="line-block">
+<div class="line"><br /></div>
+<div class="line">ren c:\home\site\ilisp-5.12.0 c:\home\site\ilisp</div>
+<div class="line">cd c:\home\site\ilisp</div>
+<div class="line">icompile.bat</div>
+<div class="line"><br /></div>
+</div>
+</li>
+<li><p class="first">OPTIONAL: If you want Emacs Copy/Cut/Paste keyboard shortcuts to
+match those of Windows (e.g. - C-c, C-x, C-v), download the
+<a class="reference external" href="http://www.cua.dk/cua.html">cua.el</a> utility (provides Windows
+standard key mappings)&nbsp; from <a class="reference external" href="http://www.cua.dk/cua.el">http://www.cua.dk/cua.el</a> and put it into
+the c:\home\site directory. If you want to use the Emacs defaults
+for the Copy/Cut/Paste keyboard shortcuts, don&#8217;t download the cua.el
+utility.</p>
+</li>
+<li><p class="first">OPTIONAL: If you want Emacs to emulate the Windows-style buffer
+switching (e.g. - C-TAB to move from buffer to buffer), download the
+<a class="reference external" href="http://www.vegetable.demon.co.uk/wence/cua-emul.el">cua-emul.el</a>
+utility from <a class="reference external" href="http://www.vegetable.demon.co.uk/wence/cua-emul.el">http://www.vegetable.demon.co.uk/wence/cua-emul.el</a> and
+put it into the c:\home\site directory. If you want to use the
+Emacs defaults for buffer switching, don&#8217;t download the cua-emul.el
+utility.</p>
+</li>
+<li><p class="first">OPTIONAL: The standard code colorization that is done by Emacs is not
+to everyone&#8217;s taste. If you want to use my custom colorization scheme
+(included in the sample .emacs file) or use one of the standard ones
+that are included in this optional package (after installation, just
+press &#8220;M-x color-theme-select&#8221; to get a listing that you can select
+from), then download
+<a class="reference external" href="http://www.geocities.com/kensanata/emacs.html#colortheme">color-theme.el</a>
+from <a class="reference external" href="http://www.emacswiki.org/elisp/color-theme.el.gz">http://www.emacswiki.org/elisp/color-theme.el.gz</a> and and use
+Winzip to unpack the files into the c:\home\site directory.</p>
+</li>
+<li><p class="first">OPTIONAL: If you want to browse the Lisp documentation files with
+your default web browser, then skip this step; however, if you want
+to be able to browse Lisp documentation from within an Emacs buffer,
+using an Emacs-based web browser, then download the
+<a class="reference external" href="http://www.cs.indiana.edu/elisp/w3/docs.html">w3</a> browser from
+<a class="reference external" href="ftp://ftp.xemacs.org/pub/xemacs/emacs-w3/w3.tar.gz">ftp://ftp.xemacs.org/pub/xemacs/emacs-w3/w3.tar.gz</a>&nbsp;and use Winzip to
+unpack the files into c:\home\site\w3. Then, from a command line,
+cd to the c:\home\site\w3&nbsp; directory and run the build.bat
+command.</p>
+</li>
+<li><p class="first">OPTIONAL: The <a class="reference external" href="http://ecb.sourceforge.net/">Emacs Code Browser</a>
+(ECB) is a useful utility for browsing Lisp code. However,
+installation is a bit involved and you might want to defer
+installation until you are more familiar with your Lisp
+implementation and decide whether it might be useful for your style
+of development. The sample .emacs file includes setup code for ECB if
+you do decide to install it. Follow the installation instructions on
+the ECB site and make certain that the installation directories are
+all in the C:\home\site\ directory and that they are named ecb,
+eieio, semantic and speedbar.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="installing-on-line-documentation-optional">
+<h3>3. Installing on-line documentation (optional)<a class="headerlink" href="#installing-on-line-documentation-optional" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">OPTIONAL: Download the <a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/">Common Lisp
+Hyperspec</a>
+reference from:
+<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/HyperSpec-6-0.tar.gz">http://www.lispworks.com/documentation/HyperSpec/HyperSpec-6-0.tar.gz</a>
+and use Winzip to unpack the files into the c:\home\docs directory.
+This should result in a new directory: c:\home\docs\HyperSpec</p>
+</li>
+<li><p class="first">OPTIONAL: Download the <a class="reference external" href="http://www-2.cs.cmu.edu/Groups/AI/html/cltl/cltl2.html">Common Lisp the
+Language</a>
+(CLtL2) reference from:
+<a class="reference external" href="http://www-2.cs.cmu.edu/afs/cs.cmu.edu/project/ai-repository/ai/lang/lisp/doc/cltl/cltl_ht.tgz">http://www-2.cs.cmu.edu/afs/cs.cmu.edu/project/ai-repository/ai/lang/lisp/doc/cltl/cltl_ht.tgz</a>
+and use Winzip to unpack the files into the c:\home\docs directory.
+This should result in a new directory:
+<a class="reference external" href="file:///c:/home/docs/cltl">c:\home\docs\cltl</a></p>
+</li>
+<li><p class="first">OPTIONAL: Download the info version of the CL (early ANSI draft)
+documentation from <a class="reference external" href="ftp://ftp.gnu.org/pub/gnu/gcl/gcl.info.tgz">ftp://ftp.gnu.org/pub/gnu/gcl/gcl.info.tgz</a> and use
+Winzip to unpack the files into the c:\home\info directory. You
+will then need to use Winzip again on each of the &#8220;<em>.gz&#8221; files that
+are in the info directory - unpack each of these into the
+c:\home\info directory as well. You may then delete the &#8220;</em>.gz&#8221;
+files that remain in the directory. Lastly, add the following line to
+the &#8220;dir&#8221; file in the c:\bin\emacs-21.3\info directory:</p>
+<pre>
+* ANSI-CL: (gcl). ANSI Common Lisp Manual.
+</pre></li>
+</ul>
+</div>
+<div class="section" id="installing-clisp-optional">
+<h3>4. Installing CLISP (optional)<a class="headerlink" href="#installing-clisp-optional" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Download the precompiled <a class="reference external" href="http://clisp.cons.org/">CLISP</a> binaries
+for Windows from: <a class="reference external" href="http://sourceforge.net/project/showfiles.php?group_id=1355">CLISP - an ANSI Common
+Lisp</a></li>
+<li>Use Winzip to unpack the files into the c:\bin directory This should
+result in a new directory: c:\bin\clisp-2.31</li>
+<li>Create a file named _clisprc.lisp in the c:\home directory. This
+file can have any initializations that need to occur when CLISP
+starts. For the time being, just leave it empty.</li>
+</ul>
+</div>
+<div class="section" id="installing-acl-optional">
+<h3>5. Installing ACL (optional)<a class="headerlink" href="#installing-acl-optional" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">Download the trial version of <a class="reference external" href="http://www.franz.com/">Franz&#8217;s ACL</a>
+for Windows from: <a class="reference external" href="http://www.franz.com/downloads/index.lhtml#acl">http://www.franz.com/downloads/index.lhtml#acl</a></p>
+</li>
+<li><p class="first">(Note: you will need to agree to their license and provide an email
+address. Franz will send you an email with instructions on how to
+download the temporary license key. The key works for 60 days and a
+new one can be downloaded before that one expires).</p>
+</li>
+<li><p class="first">Run the downloaded installation program (acl62_trial.exe) and
+install ACL into the c:\bin\acl-6.2 directory.</p>
+</li>
+<li><p class="first">Install the license key as per the instructions that you received
+from Franz.</p>
+</li>
+<li><p class="first">From the Windows Start menu, navigate to the Allegro CL group and
+startup ACL.</p>
+</li>
+<li><p class="first">In the Listener (Debug Window), enter the following:</p>
+<pre><code class="language-lisp">
+(progn
+  (build-lisp-image "alisp.dxl" :case-mode :case-insensitive-upper
+                    :include-ide nil :restart-app-function nil)
+  (sys:copy-file "sys:allegro-ansi.exe" "sys:alisp.exe"))
+</code></pre></li>
+<li><p class="first">A non-IDE Lisp image &amp; exe (alisp.exe) will be created in the ACL
+directory to be used with Emacs. Exit the ACL IDE.</p>
+</li>
+<li><p class="first">OPTIONAL: Download the <a class="reference external" href="http://www.franz.com/support/documentation/">Franz
+documentation</a> from
+<a class="reference external" href="http://www.franz.com/ftp/pub/acl62/acl62doc.zip">http://www.franz.com/ftp/pub/acl62/acl62doc.zip</a> and use Winzip to
+unpack the files into the c:\bin\acl-6.2 directory. <a class="reference external" href="http://compbio.uchsc.edu/Hunter/">Larry
+Hunter</a> wrote the
+<a class="reference external" href="http://compbio.uchsc.edu/Hunter/acldoc.el">acldoc.el</a> utility
+that allows you to use the Franz documentation. Download it from
+<a class="reference external" href="http://compbio.uchsc.edu/Hunter/acldoc.el">http://compbio.uchsc.edu/Hunter/acldoc.el</a> and put it into the
+c:\home\site directory.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="installing-lispworks-optional">
+<h3>6. Installing LispWorks (optional)<a class="headerlink" href="#installing-lispworks-optional" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">In order to use LispWorks with ILISP, it is necessary to create a
+non-gui console version of the LispWorks executable. This is not
+possible with the free downloadable &#8220;Personal&#8221; version of LispWorks.
+It is only possible with the commercial &#8220;Professional&#8221; and
+&#8220;Enterprise&#8221; editions. These can be ordered off the LispWorks web
+site at <a class="reference external" href="http://www.lispworks.com">www.lispworks.com</a>. The
+following instructions assume that you have the commercial version of
+LispWorks. If you don&#8217;t, skip this section.</p>
+</li>
+<li><p class="first">Run the LispWorks installation program and install LispWorks into the
+c:\bin\lispworks-4.2 directory.</p>
+</li>
+<li><p class="first">Create a file called console.lisp in the c:\home\lisp\ directory.
+This file will be used to create the non-gui console version of the
+LispWorks executable. The file should have the following lines in it:</p>
+<pre><code class="language-lisp">
+(load-all-patches)
+(save-image "lw42-console" :console t :environment nil)
+(quit)
+</code></pre></li>
+<li><p class="first">Go to a dos command line and enter the following commands to create
+the non-gui console version of the LispWorks executable:</p>
+<pre>
+cd c:\bin\lispworks-4.2
+lispworks-4200 -init c:\home\lisp\console.lisp
+</pre></li>
+</ul>
+<p>This will result in the lw42-console.exe file being created in the
+c:\bin\lispworks-4.2 directory.</p>
+</div>
+<div class="section" id="installing-corman-cl">
+<h3>7. Installing Corman CL<a class="headerlink" href="#installing-corman-cl" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">Download the precompiled binaries for <a class="reference external" href="http://www.corman.net/">Corman
+Lisp</a> for Windows from:
+<a class="reference external" href="http://www.cormanlisp.com/cgi/rgcorman/ccl_download_form.cgi">http://www.cormanlisp.com/cgi/rgcorman/ccl_download_form.cgi</a></p>
+</li>
+<li><p class="first">Run the downloaded installation program and install Corman CL into
+the c:\bin\corman-2.5 directory.</p>
+</li>
+<li><p class="first">Open the file &#8220;c:\bin\corman-2.5\init.lisp&#8221;, then remove or
+comment out the following line (line #3):</p>
+<pre><code class="language-lisp">
+(setf (current-directory) *cormanlisp-directory*)
+</code></pre></li>
+</ul>
+</div>
+<div class="section" id="configuration-steps">
+<h3>8. Configuration steps<a class="headerlink" href="#configuration-steps" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Setup environmental variables either in the autoexec.bat file (e.g. -
+Windows/98) or the Control Panel/System (e.g. - Windows/NT/2000/XP):<ul>
+<li>HOME: Should be set to c:/home (Note: use &#8220;/&#8221; rather than &#8220;&#8221;. Note
+also that you should make certain that you don&#8217;t have both a User
+and a System HOME variable set up when setting up the HOME
+environmental variable under Windows/NT/2000/XP. If you do, the
+User variable will override the System one. Delete one of the two
+(better to leave the system one if you want multiple login users
+to use your same emacs configuration) and make certain that it is
+set to the c:\home directory.).</li>
+<li>EMACSDIR: Should be set to c:\bin\emacs-21.3</li>
+<li>PATH: The c:\bin\emacs-21.3\bin directory path should be
+prepended to the existing PATH to ensure that the Emacs executable
+can be found (e.g. &#8211; set path=c:\bin\emacs-21.3\bin;%path%).</li>
+</ul>
+</li>
+<li>If the specified directory locations were used, no changes to the
+.emacs file should be necessary. If file locations were changed, the
+directory locations that are specified in the first section of the
+.emacs file (the &#8220;Site-Specific Variables&#8221; section) should be
+modified with the correct directory locations (Note: when specifying
+directory locations in the .emacs file, use &#8220;/&#8221; rather than &#8220;&#8221; as the
+directory separator character).</li>
+<li>If not all the Lisp implementations were downloaded, the .emacs file
+will still work &#8220;as is&#8221;. If you did download multiple installations,
+you will probably want to change the lisp-used variable (default
+value is the first lisp implementation in the list of lisp
+implementations that you installed) to default to the main lisp
+implementation that you will be using (you don&#8217;t have to change it,
+you can still toggle to the other lisp implementations using
+&#8220;C-M-F5&#8221;).</li>
+<li>Reboot the PC after making the above changes and configuration
+settings.</li>
+<li>Start Emacs (either by using the Start menu&#8217;s Gnu Emacs shortcut or
+by using Run on the Windows Start menu with the command
+&#8220;c:\emacs\bin\runemacs.exe&#8221;) and do the following:<ul>
+<li>If you installed the cua.el utility:<ul>
+<li>Double-click on the &#8220;site&#8221; directory to drill down into that
+directory.</li>
+<li>Compile the cua.el file by pressing &#8220;B&#8221; when the cursor is on
+the file name in the dired window (answer &#8220;y&#8221; to the
+&#8220;Byte-Compile (y or n)&#8221; prompt).</li>
+</ul>
+</li>
+<li>If you installed the cua-emul.el utility:<ul>
+<li>Double-click on the &#8220;site&#8221; directory to drill down into that
+directory.</li>
+<li>Compile the cua-emul.el file by pressing &#8220;B&#8221; when the cursor is
+on the file name in the dired window (answer &#8220;y&#8221; to the
+&#8220;Byte-Compile (y or n)&#8221; prompt).</li>
+</ul>
+</li>
+<li>If you installed the color-theme.el utility:<ul>
+<li>Double-click on the &#8220;site&#8221; directory to drill down into that
+directory.</li>
+<li>Compile the color-theme.el file by pressing &#8220;B&#8221; when the cursor
+is on the file name in the dired window (answer &#8220;y&#8221; to the
+&#8220;Byte-Compile (y or n)&#8221; prompt).</li>
+</ul>
+</li>
+<li>If you installed CLISP and ILISP, do the following:<ul>
+<li>Press &#8220;C-M-F5&#8221; until the minibuffer window at the bottom says
+&#8220;lisp-used: :clisp-ilisp&#8221; indicating that you have toggled to
+CLISP mode.</li>
+<li>Start CLISP by pressing &#8220;F5&#8221;.</li>
+<li>After starting ILISP/CLISP in Emacs, use &#8220;M-x
+ilisp-compile-inits&#8221; to compile the CLISP Lisp initialization
+files. When finished, press &#8220;F4&#8221; to close the <em>clisp-hs</em>
+window.</li>
+</ul>
+</li>
+<li>If you installed Lispworks and ILISP, do the following:<ul>
+<li>Press &#8220;C-M-F5&#8221; until the minibuffer window at the bottom says
+&#8220;lisp-used: :lw-ilisp&#8221; indicating that you have toggled to
+LispWorks mode.</li>
+<li>Start LispWorks by pressing &#8220;F5&#8221;.</li>
+<li>After starting ILISP/CLISP in Emacs, use &#8220;M-x
+ilisp-compile-inits&#8221; to compile the LispWorks Lisp
+initialization files. When finished, press &#8220;F4&#8221; to close the
+window.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>All configuration steps should now be complete - exit Emacs by
+pressing &#8220;C-x C-c&#8221; and pressing &#8220;y&#8221; when you get the &#8220;Do you really
+want to exit Emacs ? (y or n)&#8221; prompt in the minibuffer.</li>
+</ul>
+</div>
+<div class="section" id="testing-the-environments">
+<h3>9. Testing the environments<a class="headerlink" href="#testing-the-environments" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Start Emacs (either by using the Start menu&#8217;s Gnu Emacs shortcut or
+by using Run on the Windows Start menu with the command
+&#8220;c:\emacs\bin\runemacs.exe&#8221;) and do the following:<ul>
+<li>If you installed CLISP, do the following:<ul>
+<li>Click in the dired window and press &#8220;C-M-F5&#8221; until the
+minibuffer window at the bottom says &#8220;lisp-used: :clisp-ilisp&#8221;
+indicating that you have toggled to CLISP mode).</li>
+<li>Test that CLISP runs by pressing &#8220;F5&#8221; (CLISP should open in the
+bottom window and the ILISP menu should appear in the Emacs
+menu bar).<ul>
+<li>Click in the <em>clisp-hs</em> window and press &#8220;C-h b&#8221; (this will
+show you the keybindings that are in effect for
+ILISP/CLISP).</li>
+<li>Click in the <em>Help</em> window and scroll through the keybinding
+list. When finished, press &#8220;F4&#8221; to close that window.</li>
+<li>Click in the <em>clisp-hs</em> window and press &#8220;F4&#8221; to close that
+window.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>If you installed ACL, do the following:<ul>
+<li>Click in the dired window and press &#8220;C-M-F5&#8221; until the
+minibuffer window at the bottom says &#8220;lisp-used: :acl-eli&#8221;
+indicating that you have toggled to ACL mode).</li>
+<li>Test that ACL runs by pressing &#8220;F5&#8221;. The ACL icon will appear
+in the Windows system tray.<ul>
+<li>A Listener for ACL should also appear in an Emacs
+<em>common-lisp</em> buffer and the ACL menus should appear in the
+Emacs menu bar.</li>
+<li>Click in the <em>common-lisp</em> window and press &#8220;C-h b&#8221; (this
+will show you the keybindings that are in effect for
+ELI/ACL).</li>
+<li>Click in the <em>Help</em> window and scroll through the keybinding
+list. When finished, press &#8220;F4&#8221; to close that window.</li>
+<li>Click in the <em>common-lisp</em> window and select the
+ACLFile/Exit Allegro CL menu option (this will close down
+the ACL connection and the ACL application will end).</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>If you installed LispWorks, do the following:<ul>
+<li>Click in the dired window and press &#8220;C-M-F5&#8221; until the
+minibuffer window at the bottom says &#8220;lisp-used: :lw-ilisp&#8221;
+indicating that you have toggled to LispWorks mode).</li>
+<li>Test that LispWorks runs by pressing &#8220;F5&#8221; (LispWorks should
+open in the bottom window and the ILISP menu should appear in
+the Emacs menu bar).<ul>
+<li>Click in the <em>lispworks</em> window and press &#8220;C-h b&#8221; (this will
+show you the keybindings that are in effect for
+ILISP/LispWorks).</li>
+<li>Click in the <em>Help</em> window and scroll through the keybinding
+list. When finished, press &#8220;F4&#8221; to close that window.</li>
+<li>Click in the <em>lispworks</em> window and press &#8220;F4&#8221; to close that
+window.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>If you installed Corman, do the following:<ul>
+<li>Click in the dired window and press &#8220;M-C-F5&#8221; until the
+minibuffer window at the bottom says &#8220;lisp-used: :corman-inf&#8221;
+indicating that you have toggled to Corman mode).</li>
+<li>Test that Corman runs by pressing &#8220;F5&#8221;.<ul>
+<li>Click in the <em>inferior-lisp</em> window and press &#8220;C-h b&#8221; (this
+will show you the keybindings that are in effect for Corman
+in Inferior Lisp Mode).</li>
+<li>Click in the <em>Help</em> window and scroll through the keybinding
+list. When finished, press &#8220;F4&#8221; to close that window.</li>
+<li>Click in the <em>inferior-lisp</em> window and press &#8220;F4&#8221; to close
+that window.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>If you installed the documentation, you can test that the online
+documentation works by pressing &#8220;F1&#8221; (for the HyperSpect) or
+&#8220;M-F1&#8221; (for CLtL2) when the cursor is on a Lisp keyword (e.g. &#8211;
+&#8220;defun&#8221; or &#8220;setq&#8221;). This should bring up a browser with the
+documentation for that keyword. See the function key definitions
+below for accessing other documentation.</li>
+<li>Exit Emacs by pressing &#8220;C-x C-c&#8221; and pressing &#8220;y&#8221; when you get the
+&#8220;Do you really want to exit Emacs ? (y or n)&#8221; prompt in the
+minibuffer.</li>
+</ul>
+</li>
+</ul>
+<p>You should now have a working Windows/Emacs setup that supports a number
+of different Lisp implementations.</p>
+</div>
+<div class="section" id="a-sample-emacs-file">
+<h3>A. Sample .emacs file<a class="headerlink" href="#a-sample-emacs-file" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Following is a brief explanation of each of the sections of the
+sample <a class="reference external" href=".emacs">.emacs</a> file:<ul>
+<li><strong>Site-Specific Variables:</strong> Contains directory locations for the
+different Lisp implementations, Lisp documentation and
+Emacs-specific files. It also sets the default Lisp implementation
+(Note: if you want to specify a different default Lisp
+implementation, change the lisp-used variable to one of
+:clisp-ilisp, :clisp-inf, :acl-eli, :lw-ilisp, :corman-inf).</li>
+<li><strong>Initial Code Load:</strong> Loads Emacs files that are needed later on.</li>
+<li><strong>System Customizations:</strong> Some standard customizations that make
+Emacs easier to use.</li>
+<li><strong>Programming - Common Lisp:</strong> CL-specific setup.</li>
+<li><strong>Programming -&nbsp; Elisp:</strong> Emacs Lisp-specific setup.</li>
+<li><strong>Lisp Key Overrides:</strong> ILISP &amp; ELI have their own key mappings -
+here are some extra ones:<ul>
+<li>F1 - Brings up the CL Hyperspec (if it was installed)
+documentation page for the Lisp symbol under the cursor using
+the default browser.</li>
+<li>S-F1 - Brings up the CL Hyperspec (if it was installed)
+documentation page for the Lisp symbol under the cursor using
+w3 (if it was installed).</li>
+<li>C-u F1 - Brings up the CL Hyperspec (if it was installed)
+documentation page for the format character under the cursor
+using the default browser.</li>
+<li>C-u S-F1 - Brings up the CL Hyperspec (if it was installed)
+documentation page for the format character under the cursor
+using w3 (if it was installed).</li>
+<li>C-F1 - Brings up the Franz CL (if it was installed)
+documentation page for the Lisp symbol under the cursor using
+the default browser.</li>
+<li>C-S-F1 - Brings up the Franz CL (if it was installed)
+documentation page for the Lisp symbol under the cursor using
+w3 (if it was installed).</li>
+<li>M-F1 - Brings up the CLtL2 (if it was installed) documentation
+page for the Lisp symbol under the cursor using the default
+browser.</li>
+<li>M-S-F1 - Brings up the CLtL2 (if it was installed)
+documentation page for the Lisp symbol under the cursor using
+w3 (if it was installed).</li>
+<li>C-M-F1 - Brings up the info (if it was installed) documentation
+page for the Lisp symbol under the cursor.</li>
+<li>F5 - Starts the appropriate Lisp mode for the Lisp
+implementation that was selected (use C-M-F5 to select the Lisp
+implementation before pressing F5 to start it).</li>
+<li>C-M-F5 - Toggles between the different installed Lisp
+implementations.</li>
+<li>M-p - For ACL only, in a Lisp listener, retrieves the previous
+historical entry (this is already the binding in ILISP).</li>
+<li>M-n - For ACL only, in a Lisp listener, retrieves the next
+historical entry (this is already the binding in ILISP).</li>
+<li>C-c d - For ACL only, does a &#8220;Do What I Mean&#8221; eval/compile (see
+function documentation for eli-lisp-eval-or-compile-dwim).</li>
+<li>C-c x - For ACL or the ILISP Lisps, does a &#8220;Do What I Mean&#8221;
+eval/compile (see function documentation for
+copy-eval-dwim-lisp).</li>
+<li>C-c e - Prompts for a Lisp form to evaluate.</li>
+<li>C-c ; - Comments out the sexp that the cursor is on (repeated
+presses comment outward sexp&#8217;s). (see function documentation
+for insert-balanced-comments).</li>
+<li>C-c : - Uncomments comments that were insered with
+insert-balanced-comments (see function documentation for
+remove-balanced-comments).</li>
+</ul>
+</li>
+<li><strong>Standard Key Overrides:</strong> Some convenience key setups. The
+following key bindings have been added:<ul>
+<li>mouse-2 - Brings up a menu of Lisp symbols when in a Lisp
+source file.</li>
+<li>F6 - Switches focus to another window (when multiple windows
+are in an Emacs frame).</li>
+<li>F7 - Closes all windows except for the window that currently
+has focus.</li>
+<li>C-F7 - If ECB was loaded, toggles between multiple ECB windows
+and just a single source window.</li>
+<li>M-F7 - If ECB was loaded, toggles between different ECB window
+layouts.</li>
+<li>F12 - Emacs shell</li>
+<li>C-F12 - Default shell</li>
+<li>M-F12 - Bash shell (if present on computer)</li>
+<li>C-c f - Finds the Emacs Lisp function at the cursor location.</li>
+<li>C-c F - Finds the file whose name is at the cursor location.</li>
+<li>C-c s - Search forward using the symbol that is currently under
+the cursor.</li>
+<li>C-c r - Search backward using the symbol that is currently
+under the cursor.</li>
+<li>C-c / - Do a word completion (using hippie-expand).</li>
+<li>C-c ] - Goto the matching parenthesis of the parenthesis under
+the cursor.</li>
+<li>C-c g - Goto a line (prompts for line#).</li>
+<li>C-c a - Select the entire buffer contents.</li>
+</ul>
+</li>
+<li><strong>MS Windows Customizations:</strong> These settings make Emacs feel more
+like a Windows application. For Windows machines, they add the
+following bindings:<ul>
+<li>In dired mode, when you press the &#8220;w&#8221; key when the cursor is on
+a file name, the file will be opened with the default
+application for that file type.</li>
+<li>When cua.el is installed:<ul>
+<li>C-c - Standard Windows copy.</li>
+<li>C-x - Standard Windows cut.</li>
+<li>C-v - Standard Windows paste.</li>
+<li>C-z - Standard Windows undo.</li>
+</ul>
+</li>
+<li>When cua-emul.el is installed:<ul>
+<li>M-F4 - Close frame (closes Emacs if only one Emacs frame is
+open).</li>
+<li>C-F4 - Close the current buffer.</li>
+<li>C-TAB - Switch to next buffer.</li>
+<li>C-S-TAB - Switch to previous buffer.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>Mac OS X Customizations:</strong> Mac OS X specific customizations:<ul>
+<li>Keypad DEL - Deletes character under cursor.</li>
+<li>C-kp-HOME - Goes to beginning of buffer.</li>
+<li>C-kp-END - Goes to end of buffer.</li>
+</ul>
+</li>
+<li><strong>Start Directory:</strong> After Emacs starts up, the start directory
+will be the HOME directory.</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="b-mac-os-x-setup-instructions">
+<h3>B. Mac OS X Setup Instructions<a class="headerlink" href="#b-mac-os-x-setup-instructions" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>At this stage, support for Mac OS X on this page is very limited and
+(since I do not use Mac OS X on a regular basis) I would welcome
+someone else providing a separate page of instructions. This section
+lists the things that are different from the above Windows
+instructions.</li>
+<li>There are multiple different versions of Emacs (some Aqua-ized, some
+not) for the Mac and there will eventually be an official FSF Emacs
+that supports the Aqua GUI. I used <a class="reference external" href="http://www.porkrind.org/emacs/">David Caldwell&#8217;s Carbon
+build</a> since the Mac I tested on
+had OS X version 10.2. Other Emacs builds on other versions of Mac OS
+X may or may not have problems using my .<a class="reference external" href=".emacs">emacs</a> file.</li>
+<li>All of the places in the above Windows instructions where &#8220;c:/home&#8221;
+is mentioned, you should substitute the path to your own home
+directory (referenced as &#8220;~/&#8221; in the remainder of these
+instructions). The .<a class="reference external" href=".emacs">emacs</a> file is setup in such a way
+that it is not necessary to set any environmental variables manually.</li>
+<li>After downloading ILISP, you will need to modify the makefile &amp; run
+make as per the instructions in ILISP.</li>
+<li>The optional cua.el and cua-emul.el utilities caused some issues
+under Mac OS X; therefore, the .<a class="reference external" href=".emacs">emacs</a> file ignores
+them if you&#8217;re not on Windows. I have not tested the optional ECB
+utility on Mac OS X but it should work with the settings that are in
+the .<a class="reference external" href=".emacs">emacs</a> file so long as all the components are
+installed in the directories that were specified under the Windows
+instructions. The optional color-theme.el utility works fine.</li>
+<li>The .<a class="reference external" href=".emacs">emacs</a> file that is supplied will work unchanged
+with either a Windows installation or a Mac OS X installation. For a
+Mac install, the assumed directory locations are listed below.</li>
+<li>The following Lisp installations are supported by the
+.<a class="reference external" href=".emacs">emacs</a> file. I am not providing full build
+instructions for them as was provided for the Windows installation.
+The things that you need to know to use these installations with the
+.<a class="reference external" href=".emacs">emacs</a> file are:<ul>
+<li>CLISP version 2.29: Installed and built with
+<a class="reference external" href="http://fink.sourceforge.net/pdb/package.php/clisp">Fink</a>.
+(Note: in order to build CLISP with Fink, you will need the <a class="reference external" href="http://developer.apple.com/tools/download/">Apple
+December 2002 Development
+Tools</a>). The
+resulting clisp executable should be installed in the /sw/bin/
+directory. This is the only source code based install, all the
+other Lisp installs are binary; therefore, the CLISP installation
+takes the longest and is the most complicated to do.</li>
+<li>ACL version 6.2: Installed from <a class="reference external" href="http://www.franz.com/downloads/index.lhtml">Franz&#8217;s download
+page</a>. After
+installation, you need to run (sys:update-allegro) in the ACL Lisp
+listener to download some needed fixes for it to run properly on
+OS X. ACL should be installed in the ~/bin/acl-6.2/ directory.</li>
+<li>OpenMCL version 0.13: The <a class="reference external" href="http://openmcl.clozure.com/Distributions">binary
+distribution</a> was
+downloaded and installed in the ~/bin/ directory. The OpenMCL
+executable should be at ~/bin/ccl/scripts/openmcl.</li>
+<li>SBCL version 0.8.2.8: The <a class="reference external" href="http://www-jcsu.jesus.cam.ac.uk/~csr21/sbcl-darwin-binary.tar.gz">binary
+distribution</a>
+was downloaded and unpacked. The files src/runtime/sbcl and
+output/sbcl.core were moved to the ~/bin/ directory.</li>
+<li>LispWorks 4.3: I was not able to get a trial version of LispWorks
+to try out on Mac OS X; however, I have made the changes to the
+.emacs file that I think will be necessary to support it. The
+LispWorks executable should be at
+~/bin/lispworks-4.3/lw43-console.</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Setting up Emacs on Windows or Mac</a><ul>
+<li><a class="reference internal" href="#installing-emacs">1. Installing Emacs</a><ul>
+<li><a class="reference internal" href="#installing-additional-emacs-utilities">2. Installing additional Emacs utilities</a></li>
+<li><a class="reference internal" href="#installing-on-line-documentation-optional">3. Installing on-line documentation (optional)</a></li>
+<li><a class="reference internal" href="#installing-clisp-optional">4. Installing CLISP (optional)</a></li>
+<li><a class="reference internal" href="#installing-acl-optional">5. Installing ACL (optional)</a></li>
+<li><a class="reference internal" href="#installing-lispworks-optional">6. Installing LispWorks (optional)</a></li>
+<li><a class="reference internal" href="#installing-corman-cl">7. Installing Corman CL</a></li>
+<li><a class="reference internal" href="#configuration-steps">8. Configuration steps</a></li>
+<li><a class="reference internal" href="#testing-the-environments">9. Testing the environments</a></li>
+<li><a class="reference internal" href="#a-sample-emacs-file">A. Sample .emacs file</a></li>
+<li><a class="reference internal" href="#b-mac-os-x-setup-instructions">B. Mac OS X Setup Instructions</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Chapters</a><ul>
+      <li>Previous: <a href="systems.html" title="previous chapter">Defining Systems</a></li>
+      <li>Next: <a href="emacs-ide.html" title="next chapter">Using Emacs as an IDE</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/chapters/windows.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, cl-cookbook contributors.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="../_sources/chapters/windows.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

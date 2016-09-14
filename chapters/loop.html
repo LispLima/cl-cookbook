@@ -1,0 +1,308 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Loop &#8212; The Common Lisp Cookbook 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="The Common Lisp Cookbook 0.1 documentation" href="../index.html" />
+    <link rel="up" title="Chapters" href="index.html" />
+    <link rel="next" title="Input/Output" href="io.html" />
+    <link rel="prev" title="Functions" href="functions.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="loop">
+<h1>Loop<a class="headerlink" href="#loop" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="background">
+<h2>Background<a class="headerlink" href="#background" title="Permalink to this headline">¶</a></h2>
+<div class="line-block">
+<div class="line">The Loop Macro is one of the most valuable, and least documented of
+the</div>
+<div class="line">operations in Common Lisp. It is valuable because it is more powerful,
+more</div>
+<div class="line">compact, and more readable than comparable Common Lisp constructs such
+as</div>
+<div class="line">mapping operations and recursion. It also uses a programming style
+that will be</div>
+<div class="line">familiar to programmers who have worked with other more traditional
+languages.</div>
+<div class="line">This short guide provides examples of how to use the Loop Macro.</div>
+</div>
+<div class="line-block">
+<div class="line">The Loop macro is different than most Lisp expressions in having a
+complex</div>
+<div class="line">internal syntax that is more similar to programming languages like C
+or Pascal.</div>
+<div class="line">So you need to read Loop expressions with half of your brain in Lisp
+mode, and</div>
+<div class="line">the other half in Pascal mode.</div>
+</div>
+<div class="line-block">
+<div class="line">Think of Loop expressions as having four parts: expressions that set
+up</div>
+<div class="line">variables that will be iterated, expressions that conditionally
+terminate the</div>
+<div class="line">iteration, expressions that do something on each iteration, and
+expressions that</div>
+<div class="line">do something right before the Loop exits. In addition, Loop
+expressions can</div>
+<div class="line">return a value. It is very rare to use all of these parts in a given
+Loop</div>
+<div class="line">expression, but you can combine them in many ways.</div>
+</div>
+<div class="line-block">
+<div class="line">The source of this tutorial is <a class="reference external" href="http://www.ai.sri.com/~pkarp/loop.html">Tutorial for the Common Lisp Loop
+Macro</a></div>
+<div class="line">and appears here by permission of <a class="reference external" href="mailto:pkarp&#37;&#52;&#48;ai&#46;sri&#46;com">Peter
+Karp</a>.</div>
+</div>
+</div>
+<div class="section" id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<p>Iterate through a list, and print each element.</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="p">(</span><span class="n">loop</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="s1">&#39;(a b c d e)</span>
+      <span class="n">do</span> <span class="p">(</span><span class="nb">print</span> <span class="n">x</span><span class="p">)</span> <span class="p">)</span>
+
+<span class="n">A</span>
+<span class="n">B</span>
+<span class="n">C</span>
+<span class="n">D</span>
+<span class="n">E</span>
+<span class="n">NIL</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line">Iterate through two lists in parallel, and cons up a result that is
+returned as</div>
+<div class="line">a value by Loop.</div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="p">(</span><span class="n">loop</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="s1">&#39;(a b c d e)</span>
+      <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="s1">&#39;(1 2 3 4 5)</span>
+      <span class="n">collect</span> <span class="p">(</span><span class="nb">list</span> <span class="n">x</span> <span class="n">y</span><span class="p">)</span> <span class="p">)</span>
+
+<span class="p">((</span><span class="n">A</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="n">B</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="n">C</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="n">D</span> <span class="mi">4</span><span class="p">)</span> <span class="p">(</span><span class="n">E</span> <span class="mi">5</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line">Iterate using a counter, and a variable whose value is computed from
+an</div>
+<div class="line">expression on each iteration.</div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="p">(</span><span class="n">loop</span> <span class="k">for</span> <span class="n">x</span> <span class="kn">from</span> <span class="mi">1</span> <span class="n">to</span> <span class="mi">5</span>
+      <span class="k">for</span> <span class="n">y</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span> <span class="n">x</span> <span class="mi">2</span><span class="p">)</span>
+      <span class="n">collect</span> <span class="n">y</span><span class="p">)</span>
+
+<span class="p">(</span><span class="mi">2</span> <span class="mi">4</span> <span class="mi">6</span> <span class="mi">8</span> <span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line">Iterate through a list, and have a counter iterate in parallel. The
+length of</div>
+<div class="line">the list determines when the iteration ends. Two sets of actions are
+defined,</div>
+<div class="line">one of which is executed conditionally.</div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="p">(</span><span class="n">loop</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="s1">&#39;(a b c d e)</span>
+      <span class="k">for</span> <span class="n">y</span> <span class="kn">from</span> <span class="mi">1</span>
+
+      <span class="n">when</span> <span class="p">(</span><span class="o">&gt;</span> <span class="n">y</span> <span class="mi">1</span><span class="p">)</span>
+      <span class="n">do</span> <span class="p">(</span><span class="nb">format</span> <span class="n">t</span> <span class="s2">&quot;, &quot;</span><span class="p">)</span>
+
+      <span class="n">do</span> <span class="p">(</span><span class="nb">format</span> <span class="n">t</span> <span class="s2">&quot;~A&quot;</span> <span class="n">x</span><span class="p">)</span>
+      <span class="p">)</span>
+
+<span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">E</span>
+<span class="n">NIL</span>
+</pre></div>
+</div>
+<p>We could also write the preceding loop using the IF construct.</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="p">(</span><span class="n">loop</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="s1">&#39;(a b c d e)</span>
+      <span class="k">for</span> <span class="n">y</span> <span class="kn">from</span> <span class="mi">1</span>
+
+      <span class="k">if</span> <span class="p">(</span><span class="o">&gt;</span> <span class="n">y</span> <span class="mi">1</span><span class="p">)</span>
+      <span class="n">do</span> <span class="p">(</span><span class="nb">format</span> <span class="n">t</span> <span class="s2">&quot;, ~A&quot;</span> <span class="n">x</span><span class="p">)</span>
+      <span class="k">else</span> <span class="n">do</span> <span class="p">(</span><span class="nb">format</span> <span class="n">t</span> <span class="s2">&quot;~A&quot;</span> <span class="n">x</span><span class="p">)</span>
+      <span class="p">)</span>
+
+<span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">E</span>
+<span class="n">NIL</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line">Terminate the loop early using a test. Actions can consist of
+arbitrarily many</div>
+<div class="line">lines and can refer to variables defined outside the lexical scope of
+the loop.</div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="p">(</span><span class="n">loop</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="s1">&#39;(a b c d e 1 2 3 4)</span>
+    <span class="n">until</span> <span class="p">(</span><span class="n">numberp</span> <span class="n">x</span><span class="p">)</span>
+    <span class="n">collect</span> <span class="p">(</span><span class="nb">list</span> <span class="n">x</span> <span class="s1">&#39;foo))</span>
+
+<span class="p">((</span><span class="n">A</span> <span class="n">FOO</span><span class="p">)</span> <span class="p">(</span><span class="n">B</span> <span class="n">FOO</span><span class="p">)</span> <span class="p">(</span><span class="n">C</span> <span class="n">FOO</span><span class="p">)</span> <span class="p">(</span><span class="n">D</span> <span class="n">FOO</span><span class="p">)</span> <span class="p">(</span><span class="n">E</span> <span class="n">FOO</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>&#8220;While&#8221; can also serve as a termination check. Both &#8220;do&#8221; and &#8220;collect&#8221;
+can be combined in one expression.</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="p">(</span><span class="n">loop</span> <span class="k">for</span> <span class="n">x</span> <span class="kn">from</span> <span class="mi">1</span>
+      <span class="k">for</span> <span class="n">y</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span> <span class="n">x</span> <span class="mi">10</span><span class="p">)</span>
+      <span class="k">while</span> <span class="p">(</span><span class="o">&lt;</span> <span class="n">y</span> <span class="mi">100</span><span class="p">)</span>
+
+      <span class="n">do</span> <span class="p">(</span><span class="nb">print</span> <span class="p">(</span><span class="o">*</span> <span class="n">x</span> <span class="mi">5</span><span class="p">))</span>
+
+      <span class="n">collect</span> <span class="n">y</span><span class="p">)</span>
+
+<span class="mi">5</span>
+<span class="mi">10</span>
+<span class="mi">15</span>
+<span class="mi">20</span>
+<span class="mi">25</span>
+<span class="mi">30</span>
+<span class="mi">35</span>
+<span class="mi">40</span>
+<span class="mi">45</span>
+<span class="p">(</span><span class="mi">10</span> <span class="mi">20</span> <span class="mi">30</span> <span class="mi">40</span> <span class="mi">50</span> <span class="mi">60</span> <span class="mi">70</span> <span class="mi">80</span> <span class="mi">90</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Loops can be nested in various ways</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="p">(</span><span class="n">loop</span> <span class="k">for</span> <span class="n">x</span> <span class="kn">from</span> <span class="mi">1</span> <span class="n">to</span> <span class="mi">10</span>
+      <span class="n">collect</span> <span class="p">(</span><span class="n">loop</span> <span class="k">for</span> <span class="n">y</span> <span class="kn">from</span> <span class="mi">1</span> <span class="n">to</span> <span class="n">x</span>
+            <span class="n">collect</span> <span class="n">y</span><span class="p">)</span> <span class="p">)</span>
+
+<span class="p">((</span><span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span><span class="p">)</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span><span class="p">)</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span> <span class="mi">5</span><span class="p">)</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span> <span class="mi">5</span> <span class="mi">6</span><span class="p">)</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span> <span class="mi">5</span> <span class="mi">6</span> <span class="mi">7</span><span class="p">)</span>
+ <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span> <span class="mi">5</span> <span class="mi">6</span> <span class="mi">7</span> <span class="mi">8</span><span class="p">)</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span> <span class="mi">5</span> <span class="mi">6</span> <span class="mi">7</span> <span class="mi">8</span> <span class="mi">9</span><span class="p">)</span> <span class="p">(</span><span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span> <span class="mi">5</span> <span class="mi">6</span> <span class="mi">7</span> <span class="mi">8</span> <span class="mi">9</span> <span class="mi">10</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Several variables can loop through the components of a complex list.</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="p">(</span><span class="n">loop</span> <span class="k">for</span> <span class="p">(</span><span class="n">a</span> <span class="n">b</span><span class="p">)</span> <span class="ow">in</span> <span class="s1">&#39;((x 1) (y 2) (z 3))</span>
+      <span class="n">collect</span> <span class="p">(</span><span class="nb">list</span> <span class="n">b</span> <span class="n">a</span><span class="p">)</span> <span class="p">)</span>
+
+<span class="p">((</span><span class="mi">1</span> <span class="n">X</span><span class="p">)</span> <span class="p">(</span><span class="mi">2</span> <span class="n">Y</span><span class="p">)</span> <span class="p">(</span><span class="mi">3</span> <span class="n">Z</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line">The &#8220;return&#8221; action both stops the loop and returns a result. Here we
+return the</div>
+<div class="line">first numeric character in the string s.</div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">s</span> <span class="s2">&quot;alpha45&quot;</span><span class="p">))</span>
+  <span class="p">(</span><span class="n">loop</span> <span class="k">for</span> <span class="n">i</span> <span class="kn">from</span> <span class="mi">0</span> <span class="n">below</span> <span class="p">(</span><span class="n">length</span> <span class="n">s</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">ch</span> <span class="o">=</span>  <span class="p">(</span><span class="n">char</span> <span class="n">s</span> <span class="n">i</span><span class="p">)</span>
+    <span class="n">when</span> <span class="p">(</span><span class="n">find</span> <span class="n">ch</span> <span class="s2">&quot;0123456789&quot;</span> <span class="p">:</span><span class="n">test</span> <span class="c1">#&#39;eql)</span>
+    <span class="k">return</span> <span class="n">ch</span><span class="p">)</span> <span class="p">)</span>
+
+<span class="c1">#\4</span>
+</pre></div>
+</div>
+<p>Several actions provide shorthands for combinations of when/return</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="p">(</span><span class="n">loop</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="s1">&#39;(foo 2)</span>
+      <span class="n">thereis</span> <span class="p">(</span><span class="n">numberp</span> <span class="n">x</span><span class="p">))</span>
+<span class="n">T</span>
+</pre></div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="p">(</span><span class="n">loop</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="s1">&#39;(foo 2)</span>
+      <span class="n">never</span> <span class="p">(</span><span class="n">numberp</span> <span class="n">x</span><span class="p">))</span>
+<span class="n">NIL</span>
+</pre></div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="p">(</span><span class="n">loop</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="s1">&#39;(foo 2)</span>
+      <span class="n">always</span> <span class="p">(</span><span class="n">numberp</span> <span class="n">x</span><span class="p">))</span>
+<span class="n">NIL</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Loop</a><ul>
+<li><a class="reference internal" href="#background">Background</a></li>
+<li><a class="reference internal" href="#examples">Examples</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Chapters</a><ul>
+      <li>Previous: <a href="functions.html" title="previous chapter">Functions</a></li>
+      <li>Next: <a href="io.html" title="next chapter">Input/Output</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/chapters/loop.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, cl-cookbook contributors.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="../_sources/chapters/loop.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

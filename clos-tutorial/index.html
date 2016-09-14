@@ -1,0 +1,1824 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>CLOS (the Common Lisp Object System) &#8212; The Common Lisp Cookbook 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="The Common Lisp Cookbook 0.1 documentation" href="../index.html" />
+    <link rel="next" title="Contributors" href="../contributors.html" />
+    <link rel="prev" title="Miscellaneous" href="../chapters/misc.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="clos-the-common-lisp-object-system">
+<h1>CLOS (the Common Lisp Object System)<a class="headerlink" href="#clos-the-common-lisp-object-system" title="Permalink to this headline">¶</a></h1>
+<div align="center"><p><a class="reference external" href="http://www.ravenbrook.com/">Ravenbrook</a> / <a class="reference external" href="http://www.international-lisp-conference.org/">ILC
+2003</a></p>
+<hr class="docutils" />
+<p class="rubric" id="fundamentals-of-clos">Fundamentals of CLOS</p>
+<p><a class="reference external" href="mailto:ndl&#37;&#52;&#48;ravenbrook&#46;com">Nick Levine</a>, <a class="reference external" href="http://www.ravenbrook.com/">Ravenbrook
+Limited</a>, 2003-07-15</p>
+</div><div class="section" id="introduction">
+<h2><a href="#id6"><span class="problematic" id="id7">`1. Introduction &lt;&gt;`__</span></a><a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>This document was written for presentation during a tutorial session at
+the <a class="reference external" href="http://www.international-lisp-conference.org/">International Lisp
+Conference</a> held in
+New York City in October 2003.</p>
+<p>The intended audience for the tutorial is anybody with a basic knowledge
+of lisp or scheme, who wants to know something about how to use the
+&#8220;Common Lisp Object System&#8221; (CLOS). However, in an attempt to provide
+something for everyone, the tutorial will cover:</p>
+<ul class="simple">
+<li>an introduction to the 10% of CLOS which you need to get you through
+90% of use cases;</li>
+<li>a number of opinionated statements, for instance about the
+differences between CLOS and other object systems;</li>
+<li>a brief look &#8220;under the hood&#8221; at how some of the more dynamic
+features of CLOS might be implemented;</li>
+<li>some exercises.</li>
+</ul>
+<p>The <a class="reference external" href="http://www.nicklevine.org/">author</a> worked on the LispWorks
+project at Harlequin for ten years. Since then he has <a class="reference external" href="http://www.fast-index.com/declarative/lectures/">taught
+lisp</a> to
+undergraduates, written an <a class="reference external" href="http://www.fast-index.com/">open-source search
+engine</a>, and taken up the stress-free
+existence of a <a class="reference external" href="http://www.franz.com/careers/resumes/nlevine.lhtml">software
+consultant</a>.</p>
+<p>The examples in this tutorial are available in a separate file
+<a class="reference external" href="examples.lisp">examples.lisp</a>. I hope to use the code in
+<a class="reference external" href="present.lisp">present.lisp</a> to squirt them into a lisp listener
+during the tutorial.</p>
+<p>This document is not confidential. It is available on the web, at
+<a class="reference external" href="http://www.ravenbrook.com/doc/2003/07/15/clos-fundamentals/">http://www.ravenbrook.com/doc/2003/07/15/clos-fundamentals/</a>.</p>
+</div>
+<div class="section" id="background">
+<h2><a href="#id6"><span class="problematic" id="id8">`2. Background &lt;&gt;`__</span></a><a class="headerlink" href="#background" title="Permalink to this headline">¶</a></h2>
+<p>CLOS (either one syllable rhyming with &#8220;dross&#8221;, or two syllables as in
+&#8220;see-loss&#8221;) is the &#8220;Common Lisp Object System&#8221;. The functionality
+belonging to this name was added to the Common Lisp language between the
+publication of Steele&#8217;s first edition of &#8220;Common Lisp, the Language&#8221; in
+1984 and the formalization of the language as an ANSI standard ten years
+later.</p>
+<p>The source material for CLOS was a report written in three chapters. The
+first two, consisting of &#8220;Programmer Interface Concepts&#8221; and &#8220;Functions
+in the Programmer Interface&#8221;, will now be found as the two halves of
+chapter 28 in [Steele 1990] and were the basis for relevant parts of the
+ANSI specification when it later appeared. The third chapter, on the
+Metaobject protocol, was regarded (by its authors, I believe) as
+incomplete and never published.</p>
+<p>This tutorial is also incomplete, but in a different sense: I have
+deliberately omitted as much as I could. CLOS offers many alternate
+styles of working, as well as - in some considerable detail - a number
+of opportunities for applications to extend and reconfigure CLOS itself.
+(Some of this detail will be covered in the following tutorial, on the
+&#8220;Metaobject Protocol&#8221;.) The intention of this tutorial is to provide a
+sufficient grounding in the (say) 10% of CLOS which covers 90% of use
+cases - enough to get a novice off the ground. We will access this 10%
+by examining in some (but not full!) detail two defining macros:
+<code class="docutils literal"><span class="pre">`defclass</span></code> &lt;#section-3&gt;`__ and <code class="docutils literal"><span class="pre">`defmethod</span></code> &lt;#section-4&gt;`__.</p>
+<p>As to what an object system is: I can only say that by the end of this
+tutorial you should have some idea of what CLOS has to offer. (Is it
+just a collection of 33 functions, 8 macros and some interesting new
+types? Or is it something more profound?) Historically, and
+implementationally, all the concepts here are strongly related. However,
+when you come to use them yourself you&#8217;ll find that in an application
+the relation is not so strong, and you can pick and choose what&#8217;s useful
+to you and leave alone what isn&#8217;t.</p>
+<div class="section" id="references">
+<h3><a href="#id6"><span class="problematic" id="id9">`2.1. References &lt;&gt;`__</span></a><a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h3>
+<p>These are listed in <a class="reference external" href="#section-A">appendix A</a> at the end of this
+document. [Keene 1989] is a very easy introduction and more thorough
+than the single chapter in [Graham 1995], but it will obviously take you
+longer to read. [Steele 1990, otherwise known as &#8220;CLtl2&#8221;] is a handy
+reference guide, but do take a little care because it predates the ANSI
+specification - for which see the &#8220;hyperspec&#8221; [Pitman 1996] - and
+differs in some important respects (for a list of which see the end of
+appendix C in [Graham 1995). A (note: not &#8220;the&#8221;) metaobject protocol,
+described in [Kiczales et al 1991, otherwise known as &#8220;AMOP&#8221;], gives
+many hints about configuration and implementation.</p>
+</div>
+<div class="section" id="getting-started">
+<h3><a href="#id6"><span class="problematic" id="id10">`2.2. Getting started &lt;&gt;`__</span></a><a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h3>
+<p>Theoretically this should not be an issue in any fully enabled Common
+Lisp, because CLOS is part of the language. However, some
+implementations might expect you to <code class="docutils literal"><span class="pre">(require</span> <span class="pre">&quot;clos&quot;)</span></code> or similar.
+Check your manual.</p>
+<p>Most of the examples in this tutorial should work fine in any package
+which &#8220;uses&#8221; <code class="docutils literal"><span class="pre">COMMON-LISP</span></code>, and they should port to any conforming
+implementation. The exceptions are marked as such. I have tested the
+examples in LispWorks (version 4.2.7, used to generate all the examples
+below) and Allegro CL (version 6.2).</p>
+</div>
+</div>
+<div class="section" id="classes-and-instances">
+<h2><a href="#id6"><span class="problematic" id="id11">`3. Classes and instances &lt;&gt;`__</span></a><a class="headerlink" href="#classes-and-instances" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="review-the-non-oo-approach">
+<h3><a href="#id6"><span class="problematic" id="id12">`3.1. Review - the non-OO approach &lt;&gt;`__</span></a><a class="headerlink" href="#review-the-non-oo-approach" title="Permalink to this headline">¶</a></h3>
+<p>Before we introduce the first of our two defining macros, let&#8217;s review
+its non object-oriented equivalent: <code class="docutils literal"><span class="pre">defstruct</span></code>. The language provides
+you with a number of specialized data types (<code class="docutils literal"><span class="pre">cons</span></code>, <code class="docutils literal"><span class="pre">string</span></code>,
+<code class="docutils literal"><span class="pre">hash-table</span></code>, etc.) along with this mechanism for defining your own
+structures. An example:</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">defstruct</span> <span class="n">point</span>
+<span class="n">x</span>
+<span class="n">y</span>
+<span class="n">z</span><span class="p">)</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>The form is roughly equivalent to a struct declaration in C. It defines
+a new type, called <code class="docutils literal"><span class="pre">point</span></code>, with three slots (or fields if that&#8217;s a
+word you&#8217;re happier with) called <code class="docutils literal"><span class="pre">x</span></code>, <code class="docutils literal"><span class="pre">y</span></code> and <code class="docutils literal"><span class="pre">z</span></code>.</p>
+<p>Compactly, the above invocation of <code class="docutils literal"><span class="pre">defstruct</span></code> gives us all of the
+following:</p>
+<ul class="simple">
+<li>A constructor function <code class="docutils literal"><span class="pre">make-point</span></code>, which takes keyword arguments
+<code class="docutils literal"><span class="pre">:x</span></code> <code class="docutils literal"><span class="pre">:y</span></code> and <code class="docutils literal"><span class="pre">:z</span></code> (all defaulting to <code class="docutils literal"><span class="pre">nil</span></code> if not supplied).
+Every time you call this function a new <code class="docutils literal"><span class="pre">point</span></code> is allocated and
+returned.</li>
+<li>Any object returned by <code class="docutils literal"><span class="pre">make-point</span></code> will be of type <code class="docutils literal"><span class="pre">point</span></code>, and
+will respond enthusiastically to the predicate <code class="docutils literal"><span class="pre">point-p</span></code>.</li>
+<li>Setfable accessors <code class="docutils literal"><span class="pre">point-x</span></code>, <code class="docutils literal"><span class="pre">point-y</span></code> and <code class="docutils literal"><span class="pre">point-z</span></code> can be
+used to read and modify the slots of any <code class="docutils literal"><span class="pre">point</span></code> object.</li>
+<li>A shallow copier, <code class="docutils literal"><span class="pre">copy-point</span></code>.</li>
+</ul>
+<p>Structures can have any number of slots, from zero up (to some
+implementation-defined limit, e.g. 254 in LispWorks for Windows) and -
+as with lists and general vectors - the slots can hold any values.</p>
+<p>In this example, <strong>note</strong> the form in which structures are printed by
+default, and which can be parsed by the lisp reader.</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">1</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">defstruct</span> <span class="n">point</span>
+    <span class="n">x</span>
+    <span class="n">y</span>
+    <span class="n">z</span><span class="p">)</span>
+<span class="n">POINT</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">2</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">defun</span> <span class="n">distance</span><span class="o">-</span><span class="n">from</span><span class="o">-</span><span class="n">origin</span> <span class="p">(</span><span class="n">point</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">let</span><span class="o">*</span> <span class="p">((</span><span class="n">x</span> <span class="p">(</span><span class="n">point</span><span class="o">-</span><span class="n">x</span> <span class="n">point</span><span class="p">))</span>
+    <span class="p">(</span><span class="n">y</span> <span class="p">(</span><span class="n">point</span><span class="o">-</span><span class="n">y</span> <span class="n">point</span><span class="p">))</span>
+    <span class="p">(</span><span class="n">z</span> <span class="p">(</span><span class="n">point</span><span class="o">-</span><span class="n">z</span> <span class="n">point</span><span class="p">)))</span>
+    <span class="p">(</span><span class="n">sqrt</span> <span class="p">(</span><span class="o">+</span> <span class="p">(</span><span class="o">*</span> <span class="n">x</span> <span class="n">x</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span> <span class="n">y</span> <span class="n">y</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span> <span class="n">z</span> <span class="n">z</span><span class="p">)))))</span>
+<span class="n">DISTANCE</span><span class="o">-</span><span class="n">FROM</span><span class="o">-</span><span class="n">ORIGIN</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">3</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">defun</span> <span class="n">reflect</span><span class="o">-</span><span class="ow">in</span><span class="o">-</span><span class="n">y</span><span class="o">-</span><span class="n">axis</span> <span class="p">(</span><span class="n">point</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">setf</span> <span class="p">(</span><span class="n">point</span><span class="o">-</span><span class="n">y</span> <span class="n">point</span><span class="p">)</span>
+    <span class="p">(</span><span class="o">-</span> <span class="p">(</span><span class="n">point</span><span class="o">-</span><span class="n">y</span> <span class="n">point</span><span class="p">))))</span>
+<span class="n">REFLECT</span><span class="o">-</span><span class="n">IN</span><span class="o">-</span><span class="n">Y</span><span class="o">-</span><span class="n">AXIS</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">4</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">setf</span> <span class="n">my</span><span class="o">-</span><span class="n">point</span> <span class="p">(</span><span class="n">make</span><span class="o">-</span><span class="n">point</span> <span class="p">:</span><span class="n">x</span> <span class="mi">3</span> <span class="p">:</span><span class="n">y</span> <span class="mi">4</span> <span class="p">:</span><span class="n">z</span> <span class="mi">12</span><span class="p">))</span>
+<span class="c1">#S(POINT X 3 Y 4 Z 12)</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">5</span> <span class="o">&gt;</span> <span class="p">(</span><span class="nb">type</span><span class="o">-</span><span class="n">of</span> <span class="n">my</span><span class="o">-</span><span class="n">point</span><span class="p">)</span>
+<span class="n">POINT</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">6</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">distance</span><span class="o">-</span><span class="n">from</span><span class="o">-</span><span class="n">origin</span> <span class="n">my</span><span class="o">-</span><span class="n">point</span><span class="p">)</span>
+<span class="mf">13.0</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">7</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">reflect</span><span class="o">-</span><span class="ow">in</span><span class="o">-</span><span class="n">y</span><span class="o">-</span><span class="n">axis</span> <span class="n">my</span><span class="o">-</span><span class="n">point</span><span class="p">)</span>
+<span class="o">-</span><span class="mi">4</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">8</span> <span class="o">&gt;</span> <span class="n">my</span><span class="o">-</span><span class="n">point</span>
+<span class="c1">#S(POINT X 3 Y -4 Z 12)</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">9</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">setf</span> <span class="n">a</span><span class="o">-</span><span class="n">similar</span><span class="o">-</span><span class="n">point</span> <span class="c1">#s(point :x 3 :y -4 :z 12))</span>
+<span class="c1">#S(POINT X 3 Y -4 Z 12)</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">10</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">equal</span> <span class="n">my</span><span class="o">-</span><span class="n">point</span> <span class="n">a</span><span class="o">-</span><span class="n">similar</span><span class="o">-</span><span class="n">point</span><span class="p">)</span>
+<span class="n">NIL</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">11</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">equalp</span> <span class="n">my</span><span class="o">-</span><span class="n">point</span> <span class="n">a</span><span class="o">-</span><span class="n">similar</span><span class="o">-</span><span class="n">point</span><span class="p">)</span>
+<span class="n">T</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">12</span> <span class="o">&gt;</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p><strong>Note</strong> that <code class="docutils literal"><span class="pre">defstruct</span></code> has a number of options (which we won&#8217;t
+cover here), for describing inheritance, printing behaviour, slot types
+and defaults, and so on.</p>
+</div>
+<div class="section" id="introducing-the-macro-defclass">
+<h3><cite>3.2. Introducing the macro ``defclass`</cite> &lt;&gt;`__<a class="headerlink" href="#introducing-the-macro-defclass" title="Permalink to this headline">¶</a></h3>
+<p>The macro used for defining new data types in CLOS is <code class="docutils literal"><span class="pre">defclass</span></code>. An
+example:</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">defclass</span> <span class="n">point</span> <span class="p">()</span>
+<span class="p">(</span><span class="n">x</span>
+<span class="n">y</span>
+<span class="n">z</span><span class="p">))</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p><strong>Note</strong> but ignore the empty parentheses for now. <strong>Note</strong> also the
+parentheses around the set of slot names (unlike <code class="docutils literal"><span class="pre">defstruct</span></code>). The
+above invocation gives us the following (and no more):</p>
+<ul class="simple">
+<li>A CLOS type (or class) named <code class="docutils literal"><span class="pre">point</span></code>.</li>
+<li>Three slots in this class, again named <code class="docutils literal"><span class="pre">x</span></code>, <code class="docutils literal"><span class="pre">y</span></code> and <code class="docutils literal"><span class="pre">z</span></code>.</li>
+</ul>
+<p><strong>Note</strong> that - unlike <code class="docutils literal"><span class="pre">defstruct</span></code> above - <code class="docutils literal"><span class="pre">defclass</span></code> gives us none
+of the following: constructor, predicate, accessors (unless we ask for
+them explicitly - see <a class="reference external" href="#section-3.5">section 3.5</a> below), copier,
+<code class="docutils literal"><span class="pre">#s</span></code> <code class="docutils literal"><span class="pre">print</span></code> / <code class="docutils literal"><span class="pre">read</span></code> syntax. You can generate similar
+functionality in CLOS, but it doesn&#8217;t come automatically the way it did
+with structures. Quite often, you&#8217;ll find that you don&#8217;t need the power
+of CLOS and that <code class="docutils literal"><span class="pre">defstruct</span></code> is more than enough to meet your needs,
+not to mention being more convenient. When I&#8217;m writing an application, I
+typically start by defining my types with <code class="docutils literal"><span class="pre">defstruct</span></code>, and only change
+them to <code class="docutils literal"><span class="pre">defclass</span></code> when it becomes necessary to do so.</p>
+<p><strong>Note</strong> next that if a type has previously been defined as a structure,
+then you can&#8217;t redefine it as a class. (On the other hand, &#8220;the
+consequences of redefining a defstruct structure are undefined&#8221; so we
+shouldn&#8217;t feel we&#8217;re losing out.) We&#8217;ll sneak around that in this
+session by <code class="docutils literal"><span class="pre">unintern</span></code>ing the name of the old type:</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">12</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">unintern</span> <span class="s1">&#39;point)</span>
+<span class="n">T</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">13</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">defclass</span> <span class="n">point</span> <span class="p">()</span>
+    <span class="p">(</span><span class="n">x</span>
+    <span class="n">y</span>
+    <span class="n">z</span><span class="p">))</span>
+<span class="c1">#&lt;STANDARD-CLASS POINT 2060C12C&gt;</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">14</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">setf</span> <span class="n">my</span><span class="o">-</span><span class="n">point</span> <span class="p">(</span><span class="n">make</span><span class="o">-</span><span class="n">instance</span> <span class="s1">&#39;point))</span>
+<span class="c1">#&lt;POINT 205FA53C&gt;</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">15</span> <span class="o">&gt;</span> <span class="p">(</span><span class="nb">type</span><span class="o">-</span><span class="n">of</span> <span class="n">my</span><span class="o">-</span><span class="n">point</span><span class="p">)</span>
+<span class="n">POINT</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">16</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">defun</span> <span class="nb">set</span><span class="o">-</span><span class="n">point</span><span class="o">-</span><span class="n">values</span> <span class="p">(</span><span class="n">point</span> <span class="n">x</span> <span class="n">y</span> <span class="n">z</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">setf</span> <span class="p">(</span><span class="n">slot</span><span class="o">-</span><span class="n">value</span> <span class="n">point</span> <span class="s1">&#39;x) x</span>
+    <span class="p">(</span><span class="n">slot</span><span class="o">-</span><span class="n">value</span> <span class="n">point</span> <span class="s1">&#39;y) y</span>
+    <span class="p">(</span><span class="n">slot</span><span class="o">-</span><span class="n">value</span> <span class="n">point</span> <span class="s1">&#39;z) z))</span>
+<span class="n">SET</span><span class="o">-</span><span class="n">POINT</span><span class="o">-</span><span class="n">VALUES</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">17</span> <span class="o">&gt;</span> <span class="p">(</span><span class="nb">set</span><span class="o">-</span><span class="n">point</span><span class="o">-</span><span class="n">values</span> <span class="n">my</span><span class="o">-</span><span class="n">point</span> <span class="mi">3</span> <span class="mi">4</span> <span class="mi">12</span><span class="p">)</span>
+<span class="mi">12</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">18</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">defun</span> <span class="n">distance</span><span class="o">-</span><span class="n">from</span><span class="o">-</span><span class="n">origin</span> <span class="p">(</span><span class="n">point</span><span class="p">)</span>
+    <span class="p">(</span><span class="k">with</span><span class="o">-</span><span class="n">slots</span> <span class="p">(</span><span class="n">x</span> <span class="n">y</span> <span class="n">z</span><span class="p">)</span>
+    <span class="n">point</span>
+    <span class="p">(</span><span class="n">sqrt</span> <span class="p">(</span><span class="o">+</span> <span class="p">(</span><span class="o">*</span> <span class="n">x</span> <span class="n">x</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span> <span class="n">y</span> <span class="n">y</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span> <span class="n">z</span> <span class="n">z</span><span class="p">)))))</span>
+<span class="n">DISTANCE</span><span class="o">-</span><span class="n">FROM</span><span class="o">-</span><span class="n">ORIGIN</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">19</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">distance</span><span class="o">-</span><span class="n">from</span><span class="o">-</span><span class="n">origin</span> <span class="n">my</span><span class="o">-</span><span class="n">point</span><span class="p">)</span>
+<span class="mf">13.0</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">20</span> <span class="o">&gt;</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p><strong>Note</strong> the following:</p>
+<ul class="simple">
+<li>The use of <code class="docutils literal"><span class="pre">make-instance</span></code> to allocate an instance of our new
+class.</li>
+<li>The &#8220;unreadable&#8221; printed representation of <code class="docutils literal"><span class="pre">my-point</span></code> in line 14.</li>
+<li>The setfable function <code class="docutils literal"><span class="pre">slot-value</span></code> used to access values in an
+instance&#8217;s slots.</li>
+<li>The macro <code class="docutils literal"><span class="pre">with-slots</span></code>, for abbreviating calls to <code class="docutils literal"><span class="pre">slot-value</span></code>.
+The first argument is a list of slot names. The second argument
+evaluates to a CLOS instance; this is followed by optional
+declarations and an implicit <code class="docutils literal"><span class="pre">progn</span></code>. Lexically during the
+evaluation of the body, an access to any of these names as a variable
+is equivalent to accessing the corresponding slot of the CLOS
+instance.</li>
+</ul>
+<p><strong>Exercise:</strong> Rewrite <code class="docutils literal"><span class="pre">set-point-values</span></code> using <code class="docutils literal"><span class="pre">with-slots</span></code>.</p>
+<p><strong>Exercise:</strong> Use <code class="docutils literal"><span class="pre">symbol-macrolet</span></code> to implement <code class="docutils literal"><span class="pre">with-slots</span></code>. Note
+that each name listed in the first argument to <code class="docutils literal"><span class="pre">symbol-macrolet</span></code> can
+be replaced by the pair (variable-name slot-name).</p>
+<p><strong>Exercise:</strong> Write a macro <code class="docutils literal"><span class="pre">defclass-plus</span></code> which expands into a
+<code class="docutils literal"><span class="pre">defclass</span></code> plus some or all of the following, in the spirit of
+<code class="docutils literal"><span class="pre">defstruct</span></code>: constructor, predicate, accessors and copier. This may
+get tedious, in which case convince yourself that you know what you&#8217;re
+doing and then stop.</p>
+</div>
+<div class="section" id="classes-are-instances-too">
+<h3><a href="#id6"><span class="problematic" id="id13">`3.3. Classes are instances too &lt;&gt;`__</span></a><a class="headerlink" href="#classes-are-instances-too" title="Permalink to this headline">¶</a></h3>
+<p>Compare the values returned from the example calls to <code class="docutils literal"><span class="pre">defstruct</span></code>
+(line 1 above) and <code class="docutils literal"><span class="pre">defclass</span></code> (line 13). The former doesn&#8217;t return
+anything useful, but the latter has returned a lisp object of some sort:
+<code class="docutils literal"><span class="pre">#&lt;STANDARD-CLASS</span> <span class="pre">POINT</span>&#160;&#160;&#160;&#160; <span class="pre">275B78DC&gt;</span></code>. This object is the class named
+<code class="docutils literal"><span class="pre">point</span></code>. It&#8217;s a first class object within lisp: an embodiment of a
+CLOS type. In fact it can be passed as the type argument to <code class="docutils literal"><span class="pre">typep</span></code>
+and <code class="docutils literal"><span class="pre">subtypep</span></code>. It&#8217;s also a CLOS object, which means it must be an
+instance of a CLOS class, and we can find out what that class is, as in
+the example below.</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span>CL-USER 20 &gt; (find-class &#39;point)
+#&lt;STANDARD-CLASS POINT 275B78DC&gt;
+
+CL-USER 21 &gt; (class-name (find-class &#39;point))
+POINT
+
+CL-USER 22 &gt; (class-of my-point)
+#&lt;STANDARD-CLASS POINT 275B78DC&gt;
+
+CL-USER 23 &gt; (typep my-point (class-of my-point))
+T
+
+CL-USER 24 &gt; (class-of (class-of my-point))
+#&lt;STANDARD-CLASS STANDARD-CLASS 20306534&gt;
+
+CL-USER 25 &gt;
+</pre></div>
+</div>
+</div></blockquote>
+<p>The last of these looks a little scary at first. The object <code class="docutils literal"><span class="pre">my-point</span></code>
+is an instance of the class named <code class="docutils literal"><span class="pre">point</span></code>; the class named <code class="docutils literal"><span class="pre">point</span></code>
+is itself an instance of the class named <code class="docutils literal"><span class="pre">standard-class</span></code>. We say that
+the class named <code class="docutils literal"><span class="pre">standard-class</span></code> is the metaclass (i.e. the class of
+the class) of <code class="docutils literal"><span class="pre">my-point</span></code>.</p>
+<p><strong>Notation:</strong> describing something as &#8220;the class named
+<code class="docutils literal"><span class="pre">standard-class</span></code>&#8221; may be correct but it doesn&#8217;t make for elegant
+reading. When we refer to &#8220;the class <code class="docutils literal"><span class="pre">standard-class</span></code>&#8221; or even to
+<code class="docutils literal"><span class="pre">standard-class</span></code>, we generally mean the class named by that symbol.</p>
+</div>
+<div class="section" id="you-don-t-need-clos-objects-to-use-clos">
+<h3><a href="#id6"><span class="problematic" id="id14">`3.4. You don&#8217;t need CLOS objects to use CLOS &lt;&gt;`__</span></a><a class="headerlink" href="#you-don-t-need-clos-objects-to-use-clos" title="Permalink to this headline">¶</a></h3>
+<p>Generously, the functions introduced in the last section also work on
+lisp objects which are not CLOS instances:</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span>CL-USER 25 &gt; (let ((the-symbol-class (find-class &#39;symbol)))
+    (values the-symbol-class
+(class-name the-symbol-class)
+    (eq the-symbol-class (class-of &#39;symbol))
+(class-of the-symbol-class)))
+#&lt;BUILT-IN-CLASS SYMBOL 20306474&gt;
+SYMBOL
+T
+#&lt;STANDARD-CLASS BUILT-IN-CLASS 20306414&gt;
+
+CL-USER 26 &gt;
+</pre></div>
+</div>
+</div></blockquote>
+<p>Postponing to <a class="reference external" href="#section-4.5">section 4.5</a> the question of why this
+might be useful to us, we see here that lisp <code class="docutils literal"><span class="pre">symbol</span></code>s are instances
+of the system class <code class="docutils literal"><span class="pre">symbol</span></code>. This is one of 75 cases in which the
+language requires a class to exist with the same name as the
+corresponding lisp type. Many of these cases are concerned with CLOS
+itself (for example, the correspondence between the type
+<code class="docutils literal"><span class="pre">standard-class</span></code> and the CLOS class of that name) or with the
+condition system (which might or might not be built using CLOS classes
+in any given implementation). However, 33 correspondences remain
+relating to &#8220;traditional&#8221; lisp types:</p>
+<blockquote>
+<div><table border="1" class="docutils">
+<colgroup>
+<col width="38%" />
+<col width="34%" />
+<col width="29%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">array</span></code></td>
+<td><code class="docutils literal"><span class="pre">hash-table</span></code></td>
+<td><code class="docutils literal"><span class="pre">readtable</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">bit-vector</span></code></td>
+<td><code class="docutils literal"><span class="pre">integer</span></code></td>
+<td><code class="docutils literal"><span class="pre">real</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">broadcast-stream</span></code></td>
+<td><code class="docutils literal"><span class="pre">list</span></code></td>
+<td><code class="docutils literal"><span class="pre">sequence</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">character</span></code></td>
+<td><code class="docutils literal"><span class="pre">logical-pathname&nbsp;&nbsp;</span></code></td>
+<td><code class="docutils literal"><span class="pre">stream</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">complex</span></code></td>
+<td><code class="docutils literal"><span class="pre">null</span></code></td>
+<td><code class="docutils literal"><span class="pre">string</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">concatenated-stream&nbsp;&nbsp;</span></code></td>
+<td><code class="docutils literal"><span class="pre">number</span></code></td>
+<td><code class="docutils literal"><span class="pre">string-stream</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">cons</span></code></td>
+<td><code class="docutils literal"><span class="pre">package</span></code></td>
+<td><code class="docutils literal"><span class="pre">symbol</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">echo-stream</span></code></td>
+<td><code class="docutils literal"><span class="pre">pathname</span></code></td>
+<td><code class="docutils literal"><span class="pre">synonym-stream</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">file-stream</span></code></td>
+<td><code class="docutils literal"><span class="pre">random-state</span></code></td>
+<td><code class="docutils literal"><span class="pre">t</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">float</span></code></td>
+<td><code class="docutils literal"><span class="pre">ratio</span></code></td>
+<td><code class="docutils literal"><span class="pre">two-way-stream</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">function</span></code></td>
+<td><code class="docutils literal"><span class="pre">rational</span></code></td>
+<td><code class="docutils literal"><span class="pre">vector</span></code></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<p><strong>Note</strong> that not all &#8220;traditional&#8221; lisp types are included in this
+list. (Consider: <code class="docutils literal"><span class="pre">atom</span></code>, <code class="docutils literal"><span class="pre">fixnum</span></code>, <code class="docutils literal"><span class="pre">short-float</span></code>, and any type not
+denoted by a symbol.)</p>
+<p>The presence of <code class="docutils literal"><span class="pre">t</span></code> is interesting. Just as every lisp object is of
+type <code class="docutils literal"><span class="pre">t</span></code>, every lisp object is also a member of the class named <code class="docutils literal"><span class="pre">t</span></code>.
+This is a simple example of membership of more then one class at a time,
+and it brings into question the issue of inheritance, which we will
+consider in some detail later (<a class="reference external" href="#section-3.6">section 3.6</a>).</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">26</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">find</span><span class="o">-</span><span class="k">class</span> <span class="nc">t</span><span class="p">)</span>
+<span class="c1">#&lt;BUILT-IN-CLASS T 20305AEC&gt;</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">27</span> <span class="o">&gt;</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>In addition to classes corresponding to lisp types, there is also a CLOS
+class for every structure type you define:</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">27</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">defstruct</span> <span class="n">foo</span><span class="p">)</span>
+<span class="n">FOO</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">28</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">class</span><span class="o">-</span><span class="n">of</span> <span class="p">(</span><span class="n">make</span><span class="o">-</span><span class="n">foo</span><span class="p">))</span>
+<span class="c1">#&lt;STRUCTURE-CLASS FOO 21DE8714&gt;</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">29</span> <span class="o">&gt;</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>The metaclass of a <code class="docutils literal"><span class="pre">structure-object</span></code> is the class
+<code class="docutils literal"><span class="pre">structure-class</span></code>. It is implementation-dependent whether the
+metaclass of a &#8220;traditional&#8221; lisp object is <code class="docutils literal"><span class="pre">standard-class</span></code> (as in
+<a class="reference external" href="#section-3.3">section 3.3</a>), <code class="docutils literal"><span class="pre">structure-class</span></code>, or
+<code class="docutils literal"><span class="pre">built-in-class</span></code>. Restrictions:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="8%" />
+<col width="92%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">built-in-class</span></code></td>
+<td>May not use <code class="docutils literal"><span class="pre">make-instance</span></code>, may not use <code class="docutils literal"><span class="pre">slot-value</span></code>, may not use <code class="docutils literal"><span class="pre">defclass</span></code> to modify, may not create subclasses.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">structure-class</span></code></td>
+<td>May not use <code class="docutils literal"><span class="pre">make-instance</span></code>, might work with <code class="docutils literal"><span class="pre">slot-value</span></code> (implementation-dependent). Use <code class="docutils literal"><span class="pre">defstruct</span></code> to subclass application structure types. Consequences of modifying an existing <code class="docutils literal"><span class="pre">structure-class</span></code> are undefined: full recompilation may be necessary.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">standard-class</span></code></td>
+<td>None of these restrictions.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="slots">
+<h3><a href="#id6"><span class="problematic" id="id15">`3.5. Slots &lt;&gt;`__</span></a><a class="headerlink" href="#slots" title="Permalink to this headline">¶</a></h3>
+<p>The full syntax for <code class="docutils literal"><span class="pre">defclass</span></code> is:</p>
+<blockquote>
+<div><code class="docutils literal"><span class="pre">defclass</span></code> class-name ({superclass-name}*) ({slot-specifier}*)
+[[class-option]]</div></blockquote>
+<p>We&#8217;ll discuss the second argument in <a class="reference external" href="#section-3.6">section 3.6</a>
+below. Class-options are outside the scope of this tutorial. In this
+section, we&#8217;ll take a look at the slot-specifiers.</p>
+<p>In the class definition of <code class="docutils literal"><span class="pre">point</span></code> above, each slot was specified
+simply by its name. We can instead specify a slot thus:</p>
+<blockquote>
+<div>(slot-name [[slot-option]])</div></blockquote>
+<p>Each slot-option consists of a keyword followed by a value. Among the
+keywords available are the following; you can specify as many or few as
+you need. Three of these keywords (<code class="docutils literal"><span class="pre">:accessor</span></code>, <code class="docutils literal"><span class="pre">:reader</span></code> and
+<code class="docutils literal"><span class="pre">:initarg</span></code>) may appear more than once for each slot, if you like.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">:accessor</span></code></td>
+<td><p class="first">Defines methods (see <a class="reference external" href="#section-4">section
+4</a> below, think of
+them as functions for the time
+being), named by the given value,
+for reading and modifying the slot.
+For example, <code class="docutils literal"><span class="pre">:accessor</span> <span class="pre">point-x</span></code>
+defines the functions <code class="docutils literal"><span class="pre">point-x</span></code>
+and <code class="docutils literal"><span class="pre">(setf</span> <span class="pre">point-x)</span></code>. Using
+accessors is a Good Idea, because:</p>
+<ul class="last simple">
+<li>you can use them as part of a
+documented interface without
+committing yourself to
+implementing the interface by
+means of a <code class="docutils literal"><span class="pre">slot-value</span></code> access
+in future;</li>
+<li>you are rewarded for using them
+by having code that&#8217;s simpler and
+more compact.</li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">:reader</span></code></td>
+<td>Defines a single method for reading
+the slot; a read-only counterpart to
+<code class="docutils literal"><span class="pre">:accessors</span></code>.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">:initarg</span></code></td>
+<td>Specifies a keyword which can be
+used to pass an initial value for
+this slot to <code class="docutils literal"><span class="pre">make-instance</span></code> (an
+initialization argument).</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">:initform</span></code></td>
+<td>Specifies a default value for this
+slot, to be used if no initial value
+was specified explicitly. This form
+is evaluated each time it&#8217;s needed,
+in the lexical environment of the
+<code class="docutils literal"><span class="pre">defclass</span></code>.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">:allocation</span></code></td>
+<td><p class="first">Specifies whether the value of this
+slot:</p>
+<ul class="simple">
+<li>can be different for each
+instance of the class
+(<a href="#id1"><span class="problematic" id="id2">``</span></a>:allocation         :instance`</li>
+</ul>
+<dl class="docutils">
+<dt><a href="#id3"><span class="problematic" id="id4">`</span></a></dt>
+<dd><ul class="first simple">
+<li>the default - resulting in a</li>
+</ul>
+<p class="last">local slot); or</p>
+</dd>
+</dl>
+<ul class="last simple">
+<li>is shared between all instances
+of the class
+(<code class="docutils literal"><span class="pre">:allocation</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">:class</span></code> -
+resulting in a class slot).</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>In the following example, <strong>note</strong> the following:</p>
+<ul>
+<li><p class="first">the specification and use of the <code class="docutils literal"><span class="pre">:x</span></code> initialization argument for
+the slot <code class="docutils literal"><span class="pre">x</span></code>;</p>
+</li>
+<li><p class="first">the default value for the slot <code class="docutils literal"><span class="pre">y</span></code>;</p>
+</li>
+<li><p class="first">how changing the value of the class slot <code class="docutils literal"><span class="pre">z</span></code> - but not the local
+slots - affects all instances of the class (whether or not those
+instances exist yet);</p>
+</li>
+<li><p class="first">the stylistic difference in line 33 between using an accessor
+(<code class="docutils literal"><span class="pre">daft-y</span></code>) and <code class="docutils literal"><span class="pre">slot-value</span></code>.</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">29</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">defclass</span> <span class="n">daft</span><span class="o">-</span><span class="n">point</span> <span class="p">()</span>
+    <span class="p">((</span><span class="n">x</span> <span class="p">:</span><span class="n">accessor</span> <span class="n">daft</span><span class="o">-</span><span class="n">x</span> <span class="p">:</span><span class="n">initarg</span> <span class="p">:</span><span class="n">x</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">y</span> <span class="p">:</span><span class="n">accessor</span> <span class="n">daft</span><span class="o">-</span><span class="n">y</span> <span class="p">:</span><span class="n">initform</span> <span class="mf">3.14159</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">z</span> <span class="p">:</span><span class="n">reader</span> <span class="n">daft</span><span class="o">-</span><span class="n">z</span> <span class="p">:</span><span class="n">allocation</span> <span class="p">:</span><span class="n">class</span><span class="p">)))</span>
+<span class="c1">#&lt;STANDARD-CLASS DAFT-POINT 21DF867C&gt;</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">30</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">setf</span> <span class="p">(</span><span class="n">slot</span><span class="o">-</span><span class="n">value</span> <span class="p">(</span><span class="n">make</span><span class="o">-</span><span class="n">instance</span> <span class="s1">&#39;daft-point) &#39;</span><span class="n">z</span><span class="p">)</span> <span class="mi">42</span><span class="p">)</span>
+<span class="mi">42</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">31</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">setf</span> <span class="n">my</span><span class="o">-</span><span class="n">daft</span><span class="o">-</span><span class="n">point</span> <span class="p">(</span><span class="n">make</span><span class="o">-</span><span class="n">instance</span> <span class="s1">&#39;daft-point :x 19))</span>
+<span class="c1">#&lt;DAFT-POINT 205F264C&gt;</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">32</span> <span class="o">&gt;</span> <span class="p">(</span><span class="nb">list</span> <span class="p">(</span><span class="n">daft</span><span class="o">-</span><span class="n">x</span> <span class="n">my</span><span class="o">-</span><span class="n">daft</span><span class="o">-</span><span class="n">point</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">daft</span><span class="o">-</span><span class="n">y</span> <span class="n">my</span><span class="o">-</span><span class="n">daft</span><span class="o">-</span><span class="n">point</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">daft</span><span class="o">-</span><span class="n">z</span> <span class="n">my</span><span class="o">-</span><span class="n">daft</span><span class="o">-</span><span class="n">point</span><span class="p">))</span>
+<span class="p">(</span><span class="mi">19</span> <span class="mf">3.14159</span> <span class="mi">42</span><span class="p">)</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">33</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">temp</span> <span class="p">(</span><span class="n">make</span><span class="o">-</span><span class="n">instance</span> <span class="s1">&#39;daft-point)))</span>
+    <span class="p">(</span><span class="n">setf</span> <span class="p">(</span><span class="n">daft</span><span class="o">-</span><span class="n">y</span> <span class="n">temp</span><span class="p">)</span> <span class="mi">999</span>
+<span class="p">(</span><span class="n">slot</span><span class="o">-</span><span class="n">value</span> <span class="n">temp</span> <span class="s1">&#39;z) 0))</span>
+<span class="mi">0</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">34</span> <span class="o">&gt;</span> <span class="p">(</span><span class="nb">list</span> <span class="p">(</span><span class="n">daft</span><span class="o">-</span><span class="n">x</span> <span class="n">my</span><span class="o">-</span><span class="n">daft</span><span class="o">-</span><span class="n">point</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">daft</span><span class="o">-</span><span class="n">y</span> <span class="n">my</span><span class="o">-</span><span class="n">daft</span><span class="o">-</span><span class="n">point</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">daft</span><span class="o">-</span><span class="n">z</span> <span class="n">my</span><span class="o">-</span><span class="n">daft</span><span class="o">-</span><span class="n">point</span><span class="p">))</span>
+<span class="p">(</span><span class="mi">19</span> <span class="mf">3.14159</span> <span class="mi">0</span><span class="p">)</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">35</span> <span class="o">&gt;</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+</ul>
+<p><strong>Exercise:</strong> Find a <code class="docutils literal"><span class="pre">defstruct</span></code> form and &#8220;port to CLOS&#8221; one of its
+slot options (or more if they&#8217;re interesting).</p>
+</div>
+<div class="section" id="subclasses-and-inheritance">
+<h3><a href="#id6"><span class="problematic" id="id16">`3.6. Subclasses and inheritance &lt;&gt;`__</span></a><a class="headerlink" href="#subclasses-and-inheritance" title="Permalink to this headline">¶</a></h3>
+<p>Suppose we want two classes to share behaviour, in the sense that one of
+them (the subclass) is defined in terms of the other (the superclass).
+This leads us to the notion of inheritance, common in some form to all
+object systems.</p>
+<p>For example:</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">35</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">defclass</span> <span class="n">animal</span> <span class="p">()</span>
+    <span class="p">((</span><span class="n">legs</span> <span class="p">:</span><span class="n">reader</span> <span class="n">leg</span><span class="o">-</span><span class="n">count</span> <span class="p">:</span><span class="n">initarg</span> <span class="p">:</span><span class="n">legs</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">comes</span><span class="o">-</span><span class="kn">from</span> <span class="p">:</span><span class="n">reader</span> <span class="n">comes</span><span class="o">-</span><span class="kn">from</span> <span class="p">:</span><span class="n">initarg</span> <span class="p">:</span><span class="n">comes</span><span class="o">-</span><span class="n">from</span><span class="p">)))</span>
+<span class="c1">#&lt;STANDARD-CLASS ANIMAL 2150BA0C&gt;</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">36</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">defclass</span> <span class="n">mammal</span> <span class="p">(</span><span class="n">animal</span><span class="p">)</span>
+    <span class="p">((</span><span class="n">diet</span> <span class="p">:</span><span class="n">initform</span> <span class="s1">&#39;antelopes :initarg :diet)))</span>
+<span class="c1">#&lt;STANDARD-CLASS MAMMAL 2150A894&gt;</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">37</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">defclass</span> <span class="n">aardvark</span> <span class="p">(</span><span class="n">mammal</span><span class="p">)</span>
+    <span class="p">((</span><span class="n">cute</span><span class="o">-</span><span class="n">p</span> <span class="p">:</span><span class="n">accessor</span> <span class="n">cute</span><span class="o">-</span><span class="n">p</span> <span class="p">:</span><span class="n">initform</span> <span class="n">nil</span><span class="p">)))</span>
+<span class="c1">#&lt;STANDARD-CLASS AARDVARK 2150A5D4&gt;</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">38</span> <span class="o">&gt;</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>In this example, <code class="docutils literal"><span class="pre">mammal</span></code> is defined (by line 36) to be a subclass of
+<code class="docutils literal"><span class="pre">animal</span></code>. This means that every instance of <code class="docutils literal"><span class="pre">mammal</span></code> is also an
+instance of <code class="docutils literal"><span class="pre">animal</span></code>. If we <code class="docutils literal"><span class="pre">(make-instance</span> <span class="pre">'mammal)</span></code>, we get an
+object with three slots: <code class="docutils literal"><span class="pre">diet</span></code> which comes directly from the
+definition of <code class="docutils literal"><span class="pre">mammal</span></code>, plus <code class="docutils literal"><span class="pre">legs</span></code> and <code class="docutils literal"><span class="pre">comes-from</span></code> which are
+both inherited from the definition of <code class="docutils literal"><span class="pre">animal</span></code>.</p>
+<p>Similarly, every <code class="docutils literal"><span class="pre">aardvark</span></code> is both a <code class="docutils literal"><span class="pre">mammal</span></code> and an <code class="docutils literal"><span class="pre">animal</span></code>,
+and has four slots, three of which are inherited from superclasses.
+<strong>Note</strong> that the subclass relationship is transitive - <code class="docutils literal"><span class="pre">aardvark</span></code> is
+an (indirect) subclass of <code class="docutils literal"><span class="pre">animal</span></code>, via <code class="docutils literal"><span class="pre">mammal</span></code>. Therefore you do
+not need to explicitly list <code class="docutils literal"><span class="pre">animal</span></code> as a superclass of <code class="docutils literal"><span class="pre">aardvark</span></code>.</p>
+<div align="center"><p><a class="reference internal" href="../_images/fig-1.gif"><img alt="Aardvark is a subclass of mammal, which is a subclass of animal" src="../_images/fig-1.gif" style="width: 269px; height: 199px;" /></a>
+<cite>Figure 1. ``Aardvark`</cite> is a subclass of <code class="docutils literal"><span class="pre">mammal</span></code> which is a subclass
+of <code class="docutils literal"><span class="pre">animal</span></code> &lt;&gt;`__. The arrows denote the superclass relationship.</p>
+</div><p>In CLOS, these relationships can be queried by the readers
+<code class="docutils literal"><span class="pre">class-direct-superclasses</span></code> and <code class="docutils literal"><span class="pre">class-precedence-list</span></code>.
+(<strong>Implementation note:</strong> these two functions are not part of Common
+Lisp. In LispWorks they&#8217;re available via your default
+<code class="docutils literal"><span class="pre">package-use-list</span></code>, in Allegro they&#8217;re exported from <code class="docutils literal"><span class="pre">ACLMOP</span></code>. Also
+in Allegro, you have to have made an instance of <code class="docutils literal"><span class="pre">aardvark</span></code> before you
+can interrogate its precedence list.)</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span>CL-USER 38 &gt; (class-direct-superclasses (find-class &#39;aardvark))
+(#&lt;STANDARD-CLASS MAMMAL 2150A894&gt;)
+
+CL-USER 39 &gt; (class-precedence-list (find-class &#39;aardvark))
+(#&lt;STANDARD-CLASS AARDVARK 2150A5D4&gt; #&lt;STANDARD-CLASS MAMMAL 2150A894&gt;
+#&lt;STANDARD-CLASS ANIMAL 2150BA0C&gt; #&lt;STANDARD-CLASS STANDARD-OBJECT 20305B4C&gt;
+#&lt;BUILT-IN-CLASS T 20305AEC&gt;)
+
+CL-USER 40 &gt;
+</pre></div>
+</div>
+</div></blockquote>
+<p>The <code class="docutils literal"><span class="pre">class-precedence-list</span></code> of a class is a list which starts from
+that class and recursively shows superclasses, in order. The first three
+elements in the above list come as no surprise but the other two merit
+brief discussion.</p>
+<ul class="simple">
+<li>All CLOS objects (anything allocated by calling <code class="docutils literal"><span class="pre">make-instance</span></code>)
+are instances of the system class <code class="docutils literal"><span class="pre">standard-object</span></code>. In other
+words, all instances of <code class="docutils literal"><span class="pre">standard-class</span></code>es inherit from
+<code class="docutils literal"><span class="pre">standard-object</span></code>. You do not ever have to list <code class="docutils literal"><span class="pre">standard-object</span></code>
+as a superclass because it&#8217;s there implicitly.
+<code class="docutils literal"><span class="pre">(defclass</span> <span class="pre">foo</span> <span class="pre">()</span> <span class="pre">())</span></code> and
+<code class="docutils literal"><span class="pre">(defclass</span> <span class="pre">foo</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">(standard-object)</span> <span class="pre">())</span></code> are the same.</li>
+<li>All classes are subclasses of the class named <code class="docutils literal"><span class="pre">t</span></code>, which we
+introduced in <a class="reference external" href="#section-3.4">section 3.4</a> above.</li>
+</ul>
+<div align="center"><p><a class="reference internal" href="../_images/fig-2.gif"><img alt="Class precedence for aardvark" src="../_images/fig-2.gif" style="width: 136px; height: 337px;" /></a>
+<cite>Figure 2. Class precedence for ``aardvark`</cite> &lt;&gt;`__</p>
+</div><p>Now consider this:</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">40</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">defclass</span> <span class="n">figurine</span> <span class="p">()</span>
+    <span class="p">((</span><span class="n">potter</span> <span class="p">:</span><span class="n">accessor</span> <span class="n">made</span><span class="o">-</span><span class="n">by</span> <span class="p">:</span><span class="n">initarg</span> <span class="p">:</span><span class="n">made</span><span class="o">-</span><span class="n">by</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">comes</span><span class="o">-</span><span class="kn">from</span> <span class="p">:</span><span class="n">initarg</span> <span class="p">:</span><span class="n">made</span><span class="o">-</span><span class="ow">in</span><span class="p">)))</span>
+<span class="c1">#&lt;STANDARD-CLASS FIGURINE 205FBD1C&gt;</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">41</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">defclass</span> <span class="n">figurine</span><span class="o">-</span><span class="n">aardvark</span> <span class="p">(</span><span class="n">aardvark</span> <span class="n">figurine</span><span class="p">)</span>
+    <span class="p">((</span><span class="n">name</span> <span class="p">:</span><span class="n">reader</span> <span class="n">aardvark</span><span class="o">-</span><span class="n">name</span> <span class="p">:</span><span class="n">initarg</span> <span class="p">:</span><span class="n">aardvark</span><span class="o">-</span><span class="n">name</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">diet</span> <span class="p">:</span><span class="n">initform</span> <span class="n">nil</span><span class="p">)))</span>
+<span class="c1">#&lt;STANDARD-CLASS FIGURINE-AARDVARK 205FF354&gt;</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">42</span> <span class="o">&gt;</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>The class <code class="docutils literal"><span class="pre">figurine-aardvark</span></code> here inherits its behaviour from two
+direct superclasses. Any instance of this class will therefore also be
+an instance of each of these two classes, and of all their superclasses.</p>
+<div align="center"><p><a class="reference internal" href="../_images/fig-3.gif"><img alt="Figurine-aardvark inherits from two direct superclasses" src="../_images/fig-3.gif" style="width: 193px; height: 406px;" /></a>
+<cite>Figure 3. ``Figurine-aardvark`</cite> inherits from two direct
+superclasses &lt;&gt;`__</p>
+</div><p>This is called multiple inheritance. It&#8217;s a terribly useful feature of
+CLOS. Not all OO systems support it. For example, consider
+<code class="docutils literal"><span class="pre">implements</span></code> in Java, where you can have full inheritance from no more
+than one superclass and a highly restricted form of inheritance from any
+others. Multiple inheritance in CLOS is symmetric between as many
+superclasses as you want to specify. Ensure that the OO system you&#8217;re
+using supports full multiple inheritance.</p>
+<p><strong>Note that</strong>, because every CLOS class inherits from
+<code class="docutils literal"><span class="pre">standard-object</span></code>, a feature of multiple inheritance is the presence
+of &#8220;loops&#8221; in the class inheritance diagram. Calculating the precedence
+list is no longer straightforward (look up topological sorting), but
+it&#8217;s worth knowing that the result has to be compatible with (a) the
+order of explicitly named superclasses and (b) the class precedence
+lists of all superclasses.</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span>CL-USER 42 &gt; (class-precedence-list (find-class &#39;figurine-aardvark))
+(#&lt;STANDARD-CLASS FIGURINE-AARDVARK 2150938C&gt; #&lt;STANDARD-CLASS AARDVARK 2150A5D4&gt;
+#&lt;STANDARD-CLASS MAMMAL 2150A894&gt; #&lt;STANDARD-CLASS ANIMAL 2150BA0C&gt;
+#&lt;STANDARD-CLASS FIGURINE 2150A06C&gt; #&lt;STANDARD-CLASS STANDARD-OBJECT 20305B4C&gt;
+#&lt;BUILT-IN-CLASS T 20305AEC&gt;)
+
+CL-USER 43 &gt;
+</pre></div>
+</div>
+</div></blockquote>
+<p>Let&#8217;s now turn to look at the slots of <code class="docutils literal"><span class="pre">figurine-aardvark</span></code>:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">legs</span></code> - inherited from <code class="docutils literal"><span class="pre">animal</span></code>;</li>
+<li><code class="docutils literal"><span class="pre">comes-from</span></code> - inherited from <code class="docutils literal"><span class="pre">animal</span></code> and <code class="docutils literal"><span class="pre">figurine</span></code>;</li>
+<li><code class="docutils literal"><span class="pre">diet</span></code> - inherited from <code class="docutils literal"><span class="pre">mammal</span></code>, also a direct slot in
+<code class="docutils literal"><span class="pre">figurine-aardvark</span></code>;</li>
+<li><code class="docutils literal"><span class="pre">cute-p</span></code> - inherited from <code class="docutils literal"><span class="pre">aardvark</span></code>;</li>
+<li><code class="docutils literal"><span class="pre">potter</span></code> - inherited from <code class="docutils literal"><span class="pre">figurine</span></code>;</li>
+<li><code class="docutils literal"><span class="pre">name</span></code> - direct slot in <code class="docutils literal"><span class="pre">figurine-aardvark</span></code>.</li>
+</ul>
+<p>What happens if a slot with some given name appears more than once in
+the precedence list? The answer is that the subclass ends up with only
+one slot of that name, and that slot&#8217;s properties are a combination of
+the properties of the slots which it inherited. The rules for combining
+each option are as follows:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">:accessor</span></code> and <code class="docutils literal"><span class="pre">:reader</span></code> - the union of accessors / readers from
+all the inherited slots; see <a class="reference external" href="#section-4">section 4</a> below for the
+sense in which this works if names are repeated.</li>
+<li><code class="docutils literal"><span class="pre">:initarg</span></code> - the union of initialization arguments from all the
+inherited slots. For example, the valid <code class="docutils literal"><span class="pre">:initarg</span></code>s for the
+<code class="docutils literal"><span class="pre">comes-from</span></code> slot in <code class="docutils literal"><span class="pre">figurine-aardvark</span></code> are <code class="docutils literal"><span class="pre">:comes-from</span></code> and
+<code class="docutils literal"><span class="pre">:made-in</span></code>.</li>
+<li><code class="docutils literal"><span class="pre">:initform</span></code> - the most specific default initial value form (i.e.
+the first <code class="docutils literal"><span class="pre">:initform</span></code> for that slot in the precedence list). For
+example, the <code class="docutils literal"><span class="pre">:initform</span></code> for a <code class="docutils literal"><span class="pre">figurine-aardvark</span></code>&#8216;s <code class="docutils literal"><span class="pre">diet</span></code> is
+<code class="docutils literal"><span class="pre">nil</span></code>.</li>
+<li><code class="docutils literal"><span class="pre">:allocation</span></code> - not inherited; controlled solely by the class being
+defined; defaults to <code class="docutils literal"><span class="pre">:instance</span></code>.</li>
+</ul>
+<p>Example:</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">43</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">setf</span> <span class="n">Eric</span> <span class="p">(</span><span class="n">make</span><span class="o">-</span><span class="n">instance</span> <span class="s1">&#39;figurine-aardvark</span>
+    <span class="p">:</span><span class="n">legs</span> <span class="mi">4</span>
+    <span class="p">:</span><span class="n">made</span><span class="o">-</span><span class="n">by</span> <span class="s2">&quot;Jen&quot;</span>
+    <span class="p">:</span><span class="n">made</span><span class="o">-</span><span class="ow">in</span> <span class="s2">&quot;Brittany&quot;</span>
+    <span class="p">:</span><span class="n">aardvark</span><span class="o">-</span><span class="n">name</span> <span class="s2">&quot;Eric&quot;</span><span class="p">))</span>
+<span class="c1">#&lt;FIGURINE-AARDVARK 206108BC&gt;</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">44</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">shiftf</span> <span class="p">(</span><span class="n">cute</span><span class="o">-</span><span class="n">p</span> <span class="n">Eric</span><span class="p">)</span> <span class="n">t</span><span class="p">)</span>
+<span class="n">NIL</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">45</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">slot</span><span class="o">-</span><span class="n">value</span> <span class="n">Eric</span> <span class="s1">&#39;diet)</span>
+<span class="n">NIL</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">46</span> <span class="o">&gt;</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>Be warned that inheritance is fairly easy to misuse, and multiple
+inheritance is multiply so, so please take a little care. Ask yourself
+whether <code class="docutils literal"><span class="pre">foo</span></code> really wants to inherit from <code class="docutils literal"><span class="pre">bar</span></code>, or whether
+instances of <code class="docutils literal"><span class="pre">foo</span></code> want a slot containing a <code class="docutils literal"><span class="pre">bar</span></code>. A good general
+guide is that if <code class="docutils literal"><span class="pre">foo</span></code> and <code class="docutils literal"><span class="pre">bar</span></code> are &#8220;same sort of thing&#8221; then it&#8217;s
+correct to mix them together by inheritance, but if they&#8217;re really
+separate concepts then you should use slots to keep them apart.</p>
+<p>For instance, suppose your application wants to draw a picture of a
+traffic light. The class <code class="docutils literal"><span class="pre">drawable-traffic-light</span></code> probably wants to
+inherit from <code class="docutils literal"><span class="pre">drawable</span></code> and to have a slot pointing to each instance&#8217;s
+<code class="docutils literal"><span class="pre">traffic-light</span></code>. Mixing the classes together with this flashy multiple
+inheritance stuff will just lead to
+<a class="reference external" href="http://www.cogsci.princeton.edu/cgi-bin/webwn1.7.1?stage=1&amp;word=spaghetti">spaghetti</a>.
+If following your code depends on an intimate understanding of how
+topological sorting works, or detailed examination of many classes to
+figure out why you didn&#8217;t get the <code class="docutils literal"><span class="pre">:initform</span></code> you wanted, then you&#8217;ve
+overdone it by a long way. Back off.</p>
+<p><strong>Exercise:</strong> For which features of <code class="docutils literal"><span class="pre">defstruct</span></code> have we not yet
+covered the CLOS counterparts?</p>
+<p><strong>Exercise:</strong> Take an application which uses structures, rewrite it
+using <code class="docutils literal"><span class="pre">defclass</span></code>, and get it working again.</p>
+<p><strong>Exercise:</strong> Use your lisp implementation, to take a look at the
+<code class="docutils literal"><span class="pre">class-precedence-list</span></code> of (the class of) <code class="docutils literal"><span class="pre">nil</span></code>.</p>
+</div>
+<div class="section" id="changing-a-class">
+<h3><a href="#id6"><span class="problematic" id="id17">`3.7. Changing a class &lt;&gt;`__</span></a><a class="headerlink" href="#changing-a-class" title="Permalink to this headline">¶</a></h3>
+<p>This section briefly covers two topics: redefinition of an existing
+class, and changing an instance of one class into an instance of
+another. In both cases we&#8217;ll gloss over the details: suffice it to say
+that they&#8217;re hairy but everything&#8217;s configurable.</p>
+<p>To redefine a class, simply evaluate a new <code class="docutils literal"><span class="pre">defclass</span></code> form. This then
+takes the place of the old definition, the existing class object is
+updated, and all instances of the class (and - recursively - its
+subclasses) are updated to reflect the new definition. For example:</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">46</span> <span class="o">&gt;</span> <span class="p">(</span><span class="nb">list</span> <span class="n">Eric</span> <span class="p">(</span><span class="n">class</span><span class="o">-</span><span class="n">of</span> <span class="n">Eric</span><span class="p">)</span> <span class="p">(</span><span class="n">slot</span><span class="o">-</span><span class="n">exists</span><span class="o">-</span><span class="n">p</span> <span class="n">Eric</span> <span class="s1">&#39;has-tail-p))</span>
+<span class="p">(</span><span class="c1">#&lt;FIGURINE-AARDVARK 2112B44C&gt;</span>
+<span class="c1">#&lt;STANDARD-CLASS FIGURINE-AARDVARK 2150938C&gt;</span>
+<span class="n">NIL</span><span class="p">)</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">47</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">defclass</span> <span class="n">animal</span> <span class="p">()</span>
+    <span class="p">((</span><span class="n">legs</span> <span class="p">:</span><span class="n">reader</span> <span class="n">leg</span><span class="o">-</span><span class="n">count</span> <span class="p">:</span><span class="n">initarg</span> <span class="p">:</span><span class="n">legs</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">has</span><span class="o">-</span><span class="n">tail</span><span class="o">-</span><span class="n">p</span> <span class="p">:</span><span class="n">reader</span> <span class="n">has</span><span class="o">-</span><span class="n">tail</span><span class="o">-</span><span class="n">p</span> <span class="p">:</span><span class="n">initform</span> <span class="n">t</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">comes</span><span class="o">-</span><span class="kn">from</span> <span class="p">:</span><span class="n">reader</span> <span class="n">comes</span><span class="o">-</span><span class="kn">from</span> <span class="p">:</span><span class="n">initarg</span> <span class="p">:</span><span class="n">comes</span><span class="o">-</span><span class="n">from</span><span class="p">)))</span>
+<span class="c1">#&lt;STANDARD-CLASS ANIMAL 2150BA0C&gt;</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">48</span> <span class="o">&gt;</span> <span class="p">(</span><span class="nb">list</span> <span class="n">Eric</span> <span class="p">(</span><span class="n">class</span><span class="o">-</span><span class="n">of</span> <span class="n">Eric</span><span class="p">)</span> <span class="p">(</span><span class="n">slot</span><span class="o">-</span><span class="n">value</span> <span class="n">Eric</span> <span class="s1">&#39;has-tail-p))</span>
+<span class="p">(</span><span class="c1">#&lt;FIGURINE-AARDVARK 2112B44C&gt;</span>
+<span class="c1">#&lt;STANDARD-CLASS FIGURINE-AARDVARK 2150938C&gt;</span>
+<span class="n">T</span><span class="p">)</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">49</span> <span class="o">&gt;</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>You can redefine classes while an application is running, in just the
+same way and for the same reasons as you can redefine functions. The
+great strength of class redefinition though is during application
+development. For example, you can revisit a class and add a slot or a
+superclass that you hadn&#8217;t thought about earlier, without having to
+recompile anything other than the new <code class="docutils literal"><span class="pre">defclass</span></code>, and without
+invalidating any of your objects.</p>
+<p>To change the class of an instance, use <code class="docutils literal"><span class="pre">change-class</span></code>:</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">49</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">defclass</span> <span class="n">antelope</span> <span class="p">(</span><span class="n">mammal</span><span class="p">)</span>
+    <span class="p">((</span><span class="n">diet</span> <span class="p">:</span><span class="n">reader</span> <span class="n">munched</span><span class="o">-</span><span class="n">by</span><span class="p">)))</span>
+<span class="c1">#&lt;STANDARD-CLASS ANTELOPE 2061A14C&gt;</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">50</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">change</span><span class="o">-</span><span class="k">class</span> <span class="nc">Eric</span> <span class="s1">&#39;antelope</span>
+    <span class="p">:</span><span class="n">diet</span> <span class="s1">&#39;greens)</span>
+<span class="c1">#&lt;ANTELOPE 2112B44C&gt;</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">51</span> <span class="o">&gt;</span> <span class="p">(</span><span class="nb">list</span> <span class="p">(</span><span class="n">slot</span><span class="o">-</span><span class="n">exists</span><span class="o">-</span><span class="n">p</span> <span class="n">Eric</span> <span class="s1">&#39;potter) (munched-by Eric))</span>
+<span class="p">(</span><span class="n">NIL</span> <span class="n">GREENS</span><span class="p">)</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">52</span> <span class="o">&gt;</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>In the above example, a ceramic aardvark has become a graceful Old World
+ruminant, automatically losing the slot <code class="docutils literal"><span class="pre">potter</span></code> and explicitly being
+put on a healthy diet of greens (among other changes). Leaving aside
+questions of <a class="reference external" href="http://ww.telent.net/diary/2002/10/#28.4949">animal
+cruelty</a>, this is a
+powerful feature of CLOS although probably one which you won&#8217;t use very
+often.</p>
+</div>
+<div class="section" id="implementation-notes-object-wrappers">
+<h3><a href="#id6"><span class="problematic" id="id18">`3.8. Implementation notes: object wrappers &lt;&gt;`__</span></a><a class="headerlink" href="#implementation-notes-object-wrappers" title="Permalink to this headline">¶</a></h3>
+<p>We&#8217;ll conclude this part of the tutorial by looking at a possible
+implementation for instances, covering:</p>
+<ul class="simple">
+<li>access to local and class slots,</li>
+<li>how an instance knows its class but why a class doesn&#8217;t know its
+instances,</li>
+<li>preservation of identity when a class is redefined,</li>
+<li>lazy updating of slots.</li>
+</ul>
+<p>This section is extremely implementation-specific, although I have a
+sneaky feeling that many implementations will have followed a similar
+route. The examples are for illustrative purposes only.</p>
+<p>A wrapper is an internal structure. Every class - including
+structure-classes and built-in-classes - has a wrapper. The class points
+to the wrapper and the wrapper points back to the class. Every call to
+<code class="docutils literal"><span class="pre">make-instance</span></code> allocates two new structures: a vector of instance
+slots and the instance itself. The internal structure of the instance is
+small: it has two slots, pointing to the wrapper and to the slots
+vector.</p>
+<div align="center"><p><a class="reference internal" href="../_images/fig-4.gif"><img alt="Instance, class and wrapper." src="../_images/fig-4.gif" style="width: 238px; height: 194px;" /></a>
+<a href="#id6"><span class="problematic" id="id19">`Figure 4. Instance, class and wrapper. The arrows denote the
+relationship points to. &lt;&gt;`__</span></a></p>
+</div><p>We can define <code class="docutils literal"><span class="pre">class-of</span></code> like this.</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span>(defun class-of (object)
+(if (built-in-object-p object)
+(built-in-class-of object)
+;; structures wrappers are similar enough to CLOS instances
+(wrapper-class (instance-wrapper object))))
+</pre></div>
+</div>
+</div></blockquote>
+<p>The wrapper has the following slots (<strong>note</strong> the absence of pointers
+from the wrapper to the instance):</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">class</span></code> - points to the instance&#8217;s class.</li>
+<li><code class="docutils literal"><span class="pre">cache-number</span></code> - a fixnum unique to the class definition; every
+time a class is defined (including structure and built-in classes,
+for reasons which will be made clear at the end of <a class="reference external" href="#section-4">section
+4</a>) some global variable is incremented and its value
+is used for the new wrapper.</li>
+<li><code class="docutils literal"><span class="pre">instance-slot-names</span></code> - a sequence of the instance&#8217;s local slot
+names. This serves to describe the instance&#8217;s slot layout.</li>
+<li><code class="docutils literal"><span class="pre">shared-slots</span></code> - an association list of shared slot names and the
+corresponding values.</li>
+</ul>
+<p>(<strong>Implementation note:</strong> the function <code class="docutils literal"><span class="pre">wrapper-of</span></code> below is not part
+of Common Lisp. In Allegro it&#8217;s in the <code class="docutils literal"><span class="pre">EXCL</span></code> package.)</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">52</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">clos</span><span class="p">::</span><span class="n">wrapper</span><span class="o">-</span><span class="n">of</span> <span class="n">Eric</span><span class="p">)</span>
+<span class="c1">#&lt;record 1513 (LEGS HAS-TAIL-P COMES-FROM DIET) NIL</span>
+<span class="c1">#&lt;STANDARD-CLASS ANTELOPE 2115243C&gt;&gt;</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">53</span> <span class="o">&gt;</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>An implementation of <code class="docutils literal"><span class="pre">slot-value</span></code> might take the following lines, if
+it weren&#8217;t for issues of inefficiency and - in particular - several
+failures to follow the CLOS API which we won&#8217;t go into here.</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">defun</span> <span class="n">slot</span><span class="o">-</span><span class="n">value</span> <span class="p">(</span><span class="n">instance</span> <span class="n">slot</span><span class="o">-</span><span class="n">name</span><span class="p">)</span>
+<span class="p">(</span><span class="n">validate</span><span class="o">-</span><span class="n">instance</span> <span class="n">instance</span><span class="p">)</span>                   <span class="p">;</span> <span class="n">See</span> <span class="n">below</span>
+<span class="p">(</span><span class="n">let</span><span class="o">*</span> <span class="p">((</span><span class="n">wrapper</span> <span class="p">(</span><span class="n">instance</span><span class="o">-</span><span class="n">wrapper</span> <span class="n">instance</span><span class="p">))</span>
+    <span class="p">(</span><span class="n">local</span><span class="o">-</span><span class="n">slot</span><span class="o">-</span><span class="n">names</span> <span class="p">(</span><span class="n">wrapper</span><span class="o">-</span><span class="n">local</span><span class="o">-</span><span class="n">slot</span><span class="o">-</span><span class="n">names</span> <span class="n">wrapper</span><span class="p">))</span>
+    <span class="p">(</span><span class="n">local</span><span class="o">-</span><span class="n">position</span> <span class="p">(</span><span class="n">position</span> <span class="n">slot</span><span class="o">-</span><span class="n">name</span> <span class="n">local</span><span class="o">-</span><span class="n">slot</span><span class="o">-</span><span class="n">names</span><span class="p">))</span>
+    <span class="p">(</span><span class="n">value</span> <span class="p">(</span><span class="k">if</span> <span class="n">local</span><span class="o">-</span><span class="n">position</span>
+    <span class="p">;;</span> <span class="n">It</span><span class="s1">&#39;s a local slot.</span>
+    <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">local</span><span class="o">-</span><span class="n">slots</span> <span class="p">(</span><span class="n">instance</span><span class="o">-</span><span class="n">slots</span> <span class="n">instance</span><span class="p">)))</span>
+    <span class="p">(</span><span class="n">svref</span> <span class="n">local</span><span class="o">-</span><span class="n">slots</span> <span class="n">local</span><span class="o">-</span><span class="n">position</span><span class="p">))</span>
+    <span class="p">(</span><span class="n">let</span><span class="o">*</span> <span class="p">((</span><span class="n">shared</span><span class="o">-</span><span class="n">slots</span> <span class="p">(</span><span class="n">wrapper</span><span class="o">-</span><span class="n">shared</span><span class="o">-</span><span class="n">slots</span> <span class="n">wrapper</span><span class="p">))</span>
+    <span class="p">(</span><span class="n">shared</span><span class="o">-</span><span class="n">slot</span> <span class="p">(</span><span class="n">assoc</span> <span class="n">slot</span><span class="o">-</span><span class="n">name</span> <span class="n">shared</span><span class="o">-</span><span class="n">slots</span><span class="p">)))</span>
+    <span class="p">(</span><span class="k">if</span> <span class="n">shared</span><span class="o">-</span><span class="n">slot</span>
+    <span class="p">;;</span> <span class="n">It</span><span class="s1">&#39;s a class slot.</span>
+    <span class="p">(</span><span class="n">cdr</span> <span class="n">shared</span><span class="o">-</span><span class="n">slot</span><span class="p">)</span>
+<span class="p">;;</span> <span class="n">It</span><span class="s1">&#39;s not a slot of this instance.</span>
+    <span class="p">(</span><span class="n">slot</span><span class="o">-</span><span class="n">missing</span><span class="o">-</span><span class="n">error</span> <span class="n">instance</span> <span class="n">slot</span><span class="o">-</span><span class="n">name</span><span class="p">))))))</span>
+<span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="n">eq</span> <span class="n">value</span> <span class="p">(</span><span class="n">the</span><span class="o">-</span><span class="n">unbound</span><span class="o">-</span><span class="n">slot</span><span class="o">-</span><span class="n">value</span><span class="p">))</span>
+    <span class="p">;;</span> <span class="n">The</span> <span class="n">slot</span><span class="o">-</span><span class="n">value</span> <span class="n">has</span> <span class="ow">not</span> <span class="n">yet</span> <span class="n">been</span> <span class="nb">set</span><span class="o">.</span> <span class="n">Always</span> <span class="n">an</span> <span class="n">error</span> <span class="ow">in</span> <span class="n">CLOS</span><span class="o">.</span>
+    <span class="p">(</span><span class="n">slot</span><span class="o">-</span><span class="n">unbound</span><span class="o">-</span><span class="n">error</span> <span class="n">instance</span> <span class="n">slot</span><span class="o">-</span><span class="n">name</span><span class="p">)</span>
+<span class="n">value</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>If a class is redefined it gets a new wrapper with a new
+<code class="docutils literal"><span class="pre">cache-number</span></code>, and reflecting the new slot layout. The
+<code class="docutils literal"><span class="pre">cache-number</span></code> of the old wrapper is zeroed (this marks the wrapper as
+invalidated). Nothing else is done at this stage. CLOS doesn&#8217;t require
+instances to be updated until they&#8217;re &#8220;touched&#8221; by the application. A
+class could therefore be updated several times without any work having
+to be done on its instances.</p>
+<div align="center"><p><a class="reference internal" href="../_images/fig-5.gif"><img alt="Invalid instance, class, new and old wrappers." src="../_images/fig-5.gif" style="width: 472px; height: 197px;" /></a>
+<a href="#id6"><span class="problematic" id="id20">`Figure 5. &#8220;Invalid&#8221; instance, class, new and old wrappers. The
+greyed-out strutures have been updated. &lt;&gt;`__</span></a></p>
+</div><p>Every time the application accesses an instance - for example in the
+definition of <code class="docutils literal"><span class="pre">slot-value</span></code> above - the CLOS system needs to know
+whether that instance has been invalidated, and this check must be cheap
+because it&#8217;s going to happen often. In practice, <code class="docutils literal"><span class="pre">validate-instance</span></code>
+and everything it calls, except the revalidation function, would be
+implemented as macros or inlined functions to keep the overheads down.</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">defun</span> <span class="n">validate</span><span class="o">-</span><span class="n">instance</span> <span class="p">(</span><span class="n">instance</span><span class="p">)</span>
+<span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">wrapper</span> <span class="p">(</span><span class="n">instance</span><span class="o">-</span><span class="n">wrapper</span> <span class="n">instance</span><span class="p">)))</span>
+<span class="p">(</span><span class="n">when</span> <span class="p">(</span><span class="n">zerop</span> <span class="p">(</span><span class="n">wrapper</span><span class="o">-</span><span class="n">cache</span><span class="o">-</span><span class="n">number</span> <span class="n">wrapper</span><span class="p">))</span>
+<span class="p">;;</span> <span class="n">Instance</span> <span class="n">needs</span> <span class="n">revalidation</span>
+<span class="p">(</span><span class="n">revalidate</span><span class="o">-</span><span class="n">instance</span> <span class="n">instance</span><span class="p">))))</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>Revalidation is a laborious process, but the general plan is clear
+enough: you follow the chain of pointers through to the new slot-layout,
+compare it with the old layout, and build a new slots vector using the
+new description and as many of the old values as are still valid. The
+instance is left pointing to its fresh slot vector and the new class
+wrapper.</p>
+<p><strong>Final notes:</strong></p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">change-class</span></code> follows a route similar to the revalidation
+described above, setting the new class wrapper and a fresh slot
+vector into an existing instance;</li>
+<li><code class="docutils literal"><span class="pre">class-of</span></code> doesn&#8217;t require validation: the old class was modified
+rather than replaced and so the old wrapper points to the (updated)
+class;</li>
+<li>indirection through wrappers (see <a class="reference external" href="#figure-4">figure 4</a> above)
+permits dynamic lookup of slot names, <code class="docutils literal"><span class="pre">EQ</span></code>ness through dynamic
+redefinition, and lazy modification, all at a low overhead.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="methods">
+<h2><a href="#id6"><span class="problematic" id="id21">`4. Methods &lt;&gt;`__</span></a><a class="headerlink" href="#methods" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id5">
+<h3><a href="#id6"><span class="problematic" id="id22">`4.1. Review - the non-OO approach &lt;&gt;`__</span></a><a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<p>The step up from functions to methods parallels the move from structures
+to instances.</p>
+<p>Suppose we want to implement our own - simplified - version of
+<code class="docutils literal"><span class="pre">describe</span></code>:</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">53</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">defun</span> <span class="n">my</span><span class="o">-</span><span class="n">describe</span> <span class="p">(</span><span class="n">thing</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">typecase</span> <span class="n">thing</span>
+    <span class="p">(</span><span class="n">cons</span>   <span class="p">(</span><span class="n">describe</span><span class="o">-</span><span class="n">cons</span> <span class="n">thing</span><span class="p">))</span>
+    <span class="p">(</span><span class="n">symbol</span> <span class="p">(</span><span class="n">describe</span><span class="o">-</span><span class="n">symbol</span> <span class="n">thing</span><span class="p">))</span>
+    <span class="p">(</span><span class="n">array</span>  <span class="p">(</span><span class="n">describe</span><span class="o">-</span><span class="n">array</span> <span class="n">thing</span><span class="p">))</span>
+    <span class="p">(</span><span class="n">number</span> <span class="p">(</span><span class="n">describe</span><span class="o">-</span><span class="n">number</span> <span class="n">thing</span><span class="p">))</span>
+    <span class="p">;;</span> <span class="p">[</span> <span class="n">etc</span> <span class="n">etc</span> <span class="n">etc</span> <span class="p">]</span>
+    <span class="p">(</span><span class="n">t</span>      <span class="p">(</span><span class="n">describe</span><span class="o">-</span><span class="n">whatever</span> <span class="n">thing</span><span class="p">))))</span>
+<span class="n">MY</span><span class="o">-</span><span class="n">DESCRIBE</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">54</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">defun</span> <span class="n">describe</span><span class="o">-</span><span class="n">symbol</span> <span class="p">(</span><span class="n">symbol</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">package</span> <span class="p">(</span><span class="n">symbol</span><span class="o">-</span><span class="n">package</span> <span class="n">symbol</span><span class="p">))</span>
+    <span class="p">(</span><span class="n">boundp</span> <span class="p">(</span><span class="n">boundp</span> <span class="n">symbol</span><span class="p">)))</span>
+    <span class="p">(</span><span class="nb">format</span> <span class="n">t</span>
+    <span class="s2">&quot;~s is a symbol. ~</span>
+<span class="n">It</span> <span class="o">~</span><span class="p">:[</span><span class="o">~*</span><span class="n">does</span> <span class="ow">not</span> <span class="n">have</span> <span class="n">a</span> <span class="n">home</span><span class="o">~</span><span class="p">;</span><span class="ow">is</span> <span class="ow">in</span> <span class="n">the</span> <span class="o">~</span><span class="n">s</span><span class="o">~</span><span class="p">]</span> <span class="n">package</span><span class="o">.</span> <span class="o">~</span>
+<span class="n">Its</span> <span class="n">value</span> <span class="ow">is</span> <span class="o">~</span><span class="p">:[</span><span class="n">unbound</span><span class="o">~</span><span class="p">;</span><span class="o">~</span><span class="n">s</span><span class="o">~</span><span class="p">]</span><span class="o">.</span><span class="s2">&quot;</span>
+    <span class="n">symbol</span>
+    <span class="n">package</span> <span class="p">(</span><span class="n">when</span> <span class="n">package</span> <span class="p">(</span><span class="n">package</span><span class="o">-</span><span class="n">name</span> <span class="n">package</span><span class="p">))</span>
+    <span class="n">boundp</span> <span class="p">(</span><span class="n">when</span> <span class="n">boundp</span> <span class="p">(</span><span class="n">symbol</span><span class="o">-</span><span class="n">value</span> <span class="n">symbol</span><span class="p">)))))</span>
+<span class="n">DESCRIBE</span><span class="o">-</span><span class="n">SYMBOL</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">55</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">my</span><span class="o">-</span><span class="n">describe</span> <span class="p">:</span><span class="n">foo</span><span class="p">)</span>
+<span class="p">:</span><span class="n">FOO</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">symbol</span><span class="o">.</span> <span class="n">It</span> <span class="ow">is</span> <span class="ow">in</span> <span class="n">the</span> <span class="s2">&quot;KEYWORD&quot;</span> <span class="n">package</span><span class="o">.</span> <span class="n">Its</span> <span class="n">value</span> <span class="ow">is</span> <span class="p">:</span><span class="n">FOO</span><span class="o">.</span>
+<span class="n">NIL</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">56</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">my</span><span class="o">-</span><span class="n">describe</span> <span class="s1">&#39;#:foo)</span>
+<span class="c1">#:FOO is a symbol. It does not have a home package. Its value is unbound.</span>
+<span class="n">NIL</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">57</span> <span class="o">&gt;</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>There are a number of problems with this:</p>
+<ul>
+<li><p class="first">There&#8217;s no obligation on <code class="docutils literal"><span class="pre">typecase</span></code> to be efficient. Of course in
+the case of <code class="docutils literal"><span class="pre">my-describe</span></code> this doesn&#8217;t matter, because the code
+only runs once per user interaction and so nobody will ever notice if
+it isn&#8217;t as fast as it might have been. But discrimination according
+to the type of some program value is a common operation in lisp and
+there are many occasions (e.g. implementing a GUI) where the number
+of possibilities may be non-trivial and the overheads in working down
+a case list are unacceptable.</p>
+</li>
+<li><p class="first">We have to take care ordering the statements (the case for <code class="docutils literal"><span class="pre">null</span></code>
+would have to preceed <code class="docutils literal"><span class="pre">symbol</span></code>.)</p>
+</li>
+<li><p class="first">Suppose we wanted to discriminate according to the types of more than
+one value?</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">typecase</span> <span class="p">(</span><span class="n">cons</span> <span class="n">thing</span> <span class="n">stream</span><span class="p">)</span>
+<span class="p">((</span><span class="n">cons</span> <span class="n">array</span> <span class="n">non</span><span class="o">-</span><span class="n">scrollable</span><span class="o">-</span><span class="n">io</span><span class="p">)</span>
+<span class="p">(</span><span class="n">describe</span><span class="o">-</span><span class="n">array</span><span class="o">-</span><span class="n">non</span><span class="o">-</span><span class="n">scrollable</span> <span class="n">array</span> <span class="n">stream</span><span class="p">))</span>
+<span class="p">((</span><span class="n">cons</span> <span class="n">array</span> <span class="n">scrollable</span><span class="o">-</span><span class="n">io</span><span class="p">)</span>
+<span class="p">(</span><span class="n">describe</span><span class="o">-</span><span class="n">array</span><span class="o">-</span><span class="n">scrollable</span> <span class="n">array</span> <span class="n">stream</span><span class="p">))</span>
+<span class="p">((</span><span class="n">cons</span> <span class="n">array</span> <span class="n">output</span><span class="o">-</span><span class="n">stream</span><span class="p">)</span>
+<span class="p">(</span><span class="n">describe</span><span class="o">-</span><span class="n">array</span><span class="o">-</span><span class="n">general</span><span class="o">-</span><span class="n">stream</span> <span class="n">array</span> <span class="n">stream</span><span class="p">))</span>
+<span class="o">...</span><span class="p">)</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p class="first">As we keep on thinking up cases, the definition of <code class="docutils literal"><span class="pre">my-describe</span></code>
+gets longer and longer, as we keep revisiting it to add more clauses.</p>
+</li>
+<li><p class="first">The names of subsidiary functions also risk getting longer and
+longer. (Suppose we discriminate on three values, or four...) The
+code rapidly gets less readable.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="introducing-the-macro-defmethod">
+<h3><cite>4.2. Introducing the macro ``defmethod`</cite> &lt;&gt;`__<a class="headerlink" href="#introducing-the-macro-defmethod" title="Permalink to this headline">¶</a></h3>
+<p>The defining macro for controlling type-based discrimination in CLOS is
+<code class="docutils literal"><span class="pre">defmethod</span></code>. An example:</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">57</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">fmakunbound</span> <span class="s1">&#39;my-describe)</span>
+<span class="n">MY</span><span class="o">-</span><span class="n">DESCRIBE</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">58</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">defmethod</span> <span class="n">my</span><span class="o">-</span><span class="n">describe</span> <span class="p">(</span><span class="n">thing</span><span class="p">)</span>
+    <span class="p">(</span><span class="nb">format</span> <span class="n">t</span>
+    <span class="s2">&quot;~s could be anything, for all I care.&quot;</span>
+    <span class="n">thing</span><span class="p">))</span>
+<span class="c1">#&lt;STANDARD-METHOD MY-DESCRIBE NIL (T) 205EA9E4&gt;</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">59</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">defmethod</span> <span class="n">my</span><span class="o">-</span><span class="n">describe</span> <span class="p">((</span><span class="n">animal</span> <span class="n">animal</span><span class="p">))</span>
+    <span class="p">(</span><span class="nb">format</span> <span class="n">t</span>
+    <span class="s2">&quot;~s is an animal. It has ~d leg~:p ~</span>
+    <span class="ow">and</span> <span class="n">comes</span> <span class="kn">from</span> <span class="o">~</span><span class="n">a</span><span class="o">.</span><span class="s2">&quot;</span>
+    <span class="n">animal</span>
+    <span class="p">(</span><span class="n">leg</span><span class="o">-</span><span class="n">count</span> <span class="n">animal</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">comes</span><span class="o">-</span><span class="kn">from</span> <span class="nn">animal</span><span class="p">)))</span>
+<span class="c1">#&lt;STANDARD-METHOD MY-DESCRIBE NIL (ANIMAL) 205F476C&gt;</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">60</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">my</span><span class="o">-</span><span class="n">describe</span> <span class="n">Eric</span><span class="p">)</span>
+<span class="c1">#&lt;ANTELOPE 2112B44C&gt; is an animal. It has 4 legs and comes from Brittany.</span>
+<span class="n">NIL</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">61</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">my</span><span class="o">-</span><span class="n">describe</span> <span class="p">(</span><span class="n">make</span><span class="o">-</span><span class="n">instance</span> <span class="s1">&#39;figurine))</span>
+<span class="c1">#&lt;FIGURINE 205FFD14&gt; could be anything, for all I care.</span>
+<span class="n">NIL</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">62</span> <span class="o">&gt;</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>The <code class="docutils literal"><span class="pre">defmethod</span></code> form looks like - and is similar to - a <code class="docutils literal"><span class="pre">defun</span></code>. It
+associates a body of code with the function name <code class="docutils literal"><span class="pre">my-describe</span></code> but -
+unlike an ordinary function - that body may only be executed if the
+types of the arguments match the pattern declared by the lambda list.</p>
+<p><strong>Note</strong> that the syntax for invoking a method is precisely the same as
+the syntax for invoking an ordinary function. You cannot tell from the
+calling code (e.g. lines 60 and 61 above) whether the call is to an
+ordinary function or a CLOS method. You can call methods from ordinary
+functions, and ordinary functions from methods, and generally mix them
+together.</p>
+<p>Moving onto the <code class="docutils literal"><span class="pre">defmethod</span></code> form itself, the way that pattern matching
+works is that the required parameters in the method&#8217;s lambda list may
+take one of the following two forms: variable or (variable specializer).
+In the first case, variable is bound to the corresponding argument value
+as usual. However in the latter case, variable is bound to the
+corresponding argument only if that argument is of class specializer (or
+a subclass). If any argument fails to match its specializer then the
+method is not applicable and it cannot be executed with those arguments.</p>
+<p>You can define any number of methods with the same function name but
+with different specializers. The system chooses the most specific
+applicable method - that is, the applicable method whose specializers
+are nearest to the head of the <code class="docutils literal"><span class="pre">class-precedence-list</span></code> corresponding
+to each argument - and executes its body.</p>
+<p>In the above example, we defined two methods on <code class="docutils literal"><span class="pre">my-describe</span></code>. The
+first one does not specialize on its argument and so that method is
+always applicable. The second method specializes its argument on the
+class <code class="docutils literal"><span class="pre">animal</span></code>, and so is applicable only if this argument is an
+<code class="docutils literal"><span class="pre">animal</span></code>.</p>
+<p>In line 60 we describe an <code class="docutils literal"><span class="pre">animal</span></code>. Both methods are applicable. How
+does the system choose which one to invoke?</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">62</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">mapcar</span> <span class="s1">&#39;class-name</span>
+    <span class="p">(</span><span class="n">class</span><span class="o">-</span><span class="n">precedence</span><span class="o">-</span><span class="nb">list</span> <span class="p">(</span><span class="n">class</span><span class="o">-</span><span class="n">of</span> <span class="n">Eric</span><span class="p">)))</span>
+<span class="p">(</span><span class="n">ANTELOPE</span> <span class="n">MAMMAL</span> <span class="n">ANIMAL</span> <span class="n">STANDARD</span><span class="o">-</span><span class="n">OBJECT</span> <span class="n">T</span><span class="p">)</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">63</span> <span class="o">&gt;</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>The specialized method is more specific because its specializer appears
+earlier in the precedence list than that of the unqualified (or default)
+method: <code class="docutils literal"><span class="pre">animal</span></code> precedes <code class="docutils literal"><span class="pre">t</span></code>. Another way of expressing this is
+that the specialized method overrides the unqualified one.</p>
+<p>In line 61 we describe a <code class="docutils literal"><span class="pre">figurine</span></code>. This time only one of the two
+methods is applicable, because the class <code class="docutils literal"><span class="pre">figurine</span></code> is not a subclass
+of <code class="docutils literal"><span class="pre">animal</span></code>.</p>
+<p>This matching process has two consequences:</p>
+<ul class="simple">
+<li>dispatch by discrimination according to the type of a program value,
+which is just what we were looking for; and</li>
+<li>as an interesting side effect, an implied guarantee about the class
+of a specialized value inside the method body, which has implications
+for optimization (for example, of calls to <code class="docutils literal"><span class="pre">slot-value</span></code>).</li>
+</ul>
+<p><strong>Notes:</strong></p>
+<ul class="simple">
+<li>It&#8217;s an error to define a method with the same function name as an
+ordinary function, hence the call to <code class="docutils literal"><span class="pre">fmakunbound</span></code> above.</li>
+<li>Methods can be redefined (exactly as for ordinary functions).</li>
+<li>The order in which methods are defined is irrelevant, although any
+classes on which they specialize must already exist.</li>
+<li>An unspecialized argument is more or less equivalent to being
+specialized on the class <code class="docutils literal"><span class="pre">t</span></code>. The only difference is that all
+specialized arguments are implicitly taken to be &#8220;referred to&#8221; (in
+the sense of <code class="docutils literal"><span class="pre">declare</span> <span class="pre">ignore</span></code>.)</li>
+<li>Each <code class="docutils literal"><span class="pre">defmethod</span></code> form generates (and returns) a CLOS instance, of
+class <code class="docutils literal"><span class="pre">standard-method</span></code>.</li>
+</ul>
+<p><strong>Exercise:</strong> All CLOS objects are printed by a method on
+<code class="docutils literal"><span class="pre">print-object</span></code>, whose arguments are <code class="docutils literal"><span class="pre">(object</span>&#160;&#160;&#160;&#160; <span class="pre">stream)</span></code>. Define
+methods for printing <code class="docutils literal"><span class="pre">aardvark</span></code>s and <code class="docutils literal"><span class="pre">antelope</span></code>s more
+interestingly than by the default method. How might the default method
+(for printing a <code class="docutils literal"><span class="pre">standard-object</span></code>) be defined?</p>
+<p><strong>Exercise</strong> (in which I am indebted to Steve Haflich for his
+clarifications): Consider the following code and form unassailable
+opinions as to the circumstances in which a compiler might be entitled
+to eliminate either of the tests in the method body.</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">defclass</span> <span class="n">frob</span> <span class="p">(</span><span class="n">standard</span><span class="o">-</span><span class="nb">object</span><span class="p">)</span> <span class="p">())</span>
+
+<span class="p">(</span><span class="n">defmethod</span> <span class="n">foo</span> <span class="p">((</span><span class="n">baz</span> <span class="n">frob</span><span class="p">))</span>
+<span class="p">(</span><span class="n">loop</span> <span class="n">initially</span> <span class="p">(</span><span class="n">mangle</span><span class="p">)</span>
+<span class="k">while</span> <span class="n">baz</span> <span class="n">do</span>
+    <span class="p">(</span><span class="n">etypecase</span> <span class="n">baz</span>
+    <span class="p">(</span><span class="n">frob</span> <span class="p">(</span><span class="n">setf</span> <span class="n">baz</span> <span class="p">(</span><span class="n">bar</span> <span class="n">baz</span><span class="p">)))))))</span>
+</pre></div>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="generic-functions-and-next-methods">
+<h3><a href="#id6"><span class="problematic" id="id23">`4.3. Generic functions and next methods &lt;&gt;`__</span></a><a class="headerlink" href="#generic-functions-and-next-methods" title="Permalink to this headline">¶</a></h3>
+<p>A generic function is a lisp function which is associated with a set of
+methods and dispatches them when it&#8217;s invoked. All the methods with the
+same function name belong to the same generic function.</p>
+<p>The first time we defined a method on <code class="docutils literal"><span class="pre">my-describe</span></code>, we implicitly
+created a generic function with that name. The generic function
+initially had a single method, until we added a second method with the
+same name.</p>
+<p>(<strong>Implementation note:</strong> the functions <code class="docutils literal"><span class="pre">generic-function-methods</span></code> and
+<code class="docutils literal"><span class="pre">method-generic-function</span></code> below are not part of Common Lisp. In
+LispWorks they&#8217;re available via your default <code class="docutils literal"><span class="pre">package-use-list</span></code>, in
+Allegro they&#8217;re exported from <code class="docutils literal"><span class="pre">ACLMOP</span></code>.)</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">63</span> <span class="o">&gt;</span> <span class="c1">#&#39;my-describe</span>
+<span class="c1">#&lt;STANDARD-GENERIC-FUNCTION MY-DESCRIBE 21111C2A&gt;</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">64</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">generic</span><span class="o">-</span><span class="n">function</span><span class="o">-</span><span class="n">methods</span> <span class="c1">#&#39;my-describe)</span>
+<span class="p">(</span><span class="c1">#&lt;STANDARD-METHOD MY-DESCRIBE NIL (T) 2110B544&gt;</span>
+<span class="c1">#&lt;STANDARD-METHOD MY-DESCRIBE NIL (ANIMAL) 21111BF4&gt;)</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">65</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">method</span><span class="o">-</span><span class="n">generic</span><span class="o">-</span><span class="n">function</span> <span class="p">(</span><span class="n">car</span> <span class="o">*</span><span class="p">))</span>
+<span class="c1">#&lt;STANDARD-GENERIC-FUNCTION MY-DESCRIBE 21111C2A&gt;</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">66</span> <span class="o">&gt;</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p><strong>Some notes:</strong></p>
+<ul class="simple">
+<li>In <a class="reference external" href="#section-4.2">section 4.2</a> above we mentioned &#8220;invoking a
+method&#8221;. To be accurate, the application cannot directly invoke a
+method. If the application calls a function which happens to be a
+generic function, then this will dispatch to (i.e. invoke) the most
+applicable method.</li>
+<li>Methods can have optional, keyword and <code class="docutils literal"><span class="pre">&amp;rest</span></code> arguments. These
+must be compatible (congruent lambda lists) between every method of
+each generic function. For example, if there existed an optional
+<code class="docutils literal"><span class="pre">stream</span></code> argument in one of the two methods on <code class="docutils literal"><span class="pre">my-describe</span></code> then
+this argument would have to be present and optional in the other.</li>
+<li>All slot accessors / readers defined by <code class="docutils literal"><span class="pre">defclass</span></code> are methods.
+They can override or be overridden by other methods on the same
+generic function.</li>
+</ul>
+<p>When a generic function is invoked, the dispatch mechanism proceeds as
+follows:</p>
+<ol class="arabic simple">
+<li>compute the list of applicable methods;</li>
+<li>if no method is applicable then signal an error;</li>
+<li>sort the applicable methods in order of specificity;</li>
+<li>invoke the most specific method.</li>
+</ol>
+<p>During the execution of a method, the remaining applicable methods are
+still accessible, via the local function <code class="docutils literal"><span class="pre">call-next-method</span></code>. This
+function has lexical scope within the body of a method but indefinite
+extent. It invokes the next most specific method, and returns whatever
+value that method returned. It can be called with either:</p>
+<ul class="simple">
+<li>no arguments, in which case the next method will receive exactly the
+same arguments as this method did; or</li>
+<li>explicit arguments, in which case it is required that the sorted set
+of methods applicable to the new arguments must be the same as that
+computed when the generic function was first called.</li>
+</ul>
+<p>Calling <code class="docutils literal"><span class="pre">call-next-method</span></code> when there is no next method signals an
+error. You can find out whether a next method exists by calling the
+local function <code class="docutils literal"><span class="pre">next-method-p</span></code> (which also has has lexical scope and
+indefinite extent).</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span>CL-USER 66 &gt; (defmethod my-describe ((antelope antelope))
+    (if (string= (slot-value antelope &#39;comes-from)
+    &quot;Brittany&quot;)
+    (format t &quot;Eric? Is that you?&quot;)
+    (call-next-method)))
+#&lt;STANDARD-METHOD MY-DESCRIBE NIL (ANTELOPE) 20603594&gt;
+
+CL-USER 67 &gt; (my-describe
+    (make-instance &#39;antelope :comes-from &#39;nowhere :legs 4))
+#&lt;ANTELOPE 205ECB64&gt; is an animal. It has 4 legs and comes from NOWHERE.
+NIL
+
+CL-USER 68 &gt; (my-describe Eric)
+Eric? Is that you?
+NIL
+
+CL-USER 69 &gt;
+</pre></div>
+</div>
+</div></blockquote>
+<p><strong>Note</strong> finally that the body of every method establishes a block with
+the same name as the method&#8217;s generic function. If you <code class="docutils literal"><span class="pre">return-from</span></code>
+that name you are exiting the current method, not the call to the
+enclosing generic function.</p>
+<p><strong>Exercise:</strong> Use your lisp implementation, to take a look at the
+<code class="docutils literal"><span class="pre">class-precedence-list</span></code> of generic functions.</p>
+<p><strong>Exercise:</strong> When you evaluate <code class="docutils literal"><span class="pre">(comes-from</span>&#160;&#160;&#160;&#160; <span class="pre">Eric)</span></code>, from which
+class is the reader inherited? Override this method, so that Antelopes
+always come from Africa. (This isn&#8217;t true, but it&#8217;s an improvement.)</p>
+<p><strong>Exercise:</strong> Experiment with the indefinite extent of
+<code class="docutils literal"><span class="pre">call-next-method</span></code>.</p>
+</div>
+<div class="section" id="in-oo-languages-the-functionality-lives-in-the-object">
+<h3><a href="#id6"><span class="problematic" id="id24">`4.4. In OO languages the functionality lives in the object &lt;&gt;`__</span></a><a class="headerlink" href="#in-oo-languages-the-functionality-lives-in-the-object" title="Permalink to this headline">¶</a></h3>
+<p>This preposterous claim is the product of a diseased imagination.
+However many OO systems feel obliged to try and enforce it. Try to avoid
+having to program in one of these.</p>
+<p>As far as CLOS is concerned, the truth is that - with the exception of
+slot accessors - all of your application&#8217;s functionality lives in
+function and method definitions, not in classes.</p>
+<p>It&#8217;s sometimes appropriate to place methods applicable to some class
+into the same file as that class. It&#8217;s sometimes appropriate to place
+all the methods of a generic function into a single file. There are no
+language constraints on this.</p>
+<p>Hand in hand with the title of this section comes the notion of message
+passing. This derives from OO systems which only allow you to specialize
+on the first argument. This argument is then given linguistic
+prominence, and the function call is given a new syntax to reflect that:</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Eric</span><span class="o">&lt;-</span><span class="p">(</span><span class="n">my</span><span class="o">-</span><span class="n">describe</span><span class="p">)</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>You&#8217;d read that as send the message <code class="docutils literal"><span class="pre">my-describe</span></code> to <code class="docutils literal"><span class="pre">Eric</span></code> (in this
+case with no additional arguments). C++ is an obvious culprit:
+<code class="docutils literal"><span class="pre">Eric::my_describe();</span></code></p>
+<p>CLOS supports multi-methods - methods that can specialize on more than
+one argument. Although you might not use that much, it&#8217;s liberating. Not
+only does it free you from the truly horrid code you can end up with as
+programmers struggle to get around the restrictions of the
+message-passing paradigm, but it implies that methods don&#8217;t have to live
+inside classes. (If a method specializes on two classes, which one would
+it live in?) A consequence is that you can redefine one of your methods
+without having to recompile the class and with it 500 other methods.
+That&#8217;s nice.</p>
+<p><strong>A stylistic note:</strong> there&#8217;s an occasional tendency, maybe borrowed
+from languages which don&#8217;t support multi-methods, to call &#8220;the&#8221;
+specialized argument <code class="docutils literal"><span class="pre">self</span></code>:</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">defmethod</span> <span class="n">wibble</span> <span class="p">((</span><span class="bp">self</span> <span class="n">aardvark</span><span class="p">)</span> <span class="o">...</span><span class="p">)</span> <span class="o">...</span><span class="p">)</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>If the methods of a generic function only specialize on the same
+argument, this is no better or worse than calling arguments after the
+class they specialize:</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">defmethod</span> <span class="n">wibble</span> <span class="p">((</span><span class="n">aardvark</span> <span class="n">aardvark</span><span class="p">)</span> <span class="o">...</span><span class="p">)</span> <span class="o">...</span><span class="p">)</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>Do whatever makes your code clearer.</p>
+<p><strong>Exercise:</strong> Lisp&#8217;s <code class="docutils literal"><span class="pre">describe</span></code> is implemented by the generic function
+<code class="docutils literal"><span class="pre">describe-object</span></code>. Implementations are expected to define sufficient
+methods (and users are encouraged to add more if they like),
+specializing on the two arguments <code class="docutils literal"><span class="pre">object</span></code> and <code class="docutils literal"><span class="pre">stream</span></code>. Discuss
+whether the implementors should group all the methods on
+<code class="docutils literal"><span class="pre">describe-object</span></code> into one file, or spread them around (so that - for
+instance a method specializing on <code class="docutils literal"><span class="pre">aardvark</span></code>s should be in the file
+&#8220;aardvark.lisp&#8221; along with the class definition and other methods). What
+are the issues?</p>
+<p><strong>Exercise:</strong> Find some excuse to specialize a method on its second
+argument, or on more than one argument.</p>
+</div>
+<div class="section" id="other-specializers-you-still-don-t-need-clos-objects-to-use-clos">
+<h3><a href="#id6"><span class="problematic" id="id25">`4.5. Other specializers (you still don&#8217;t need CLOS objects to use CLOS) &lt;&gt;`__</span></a><a class="headerlink" href="#other-specializers-you-still-don-t-need-clos-objects-to-use-clos" title="Permalink to this headline">¶</a></h3>
+<p>The examples of methods shown so far all specialize on
+<code class="docutils literal"><span class="pre">standard-class</span></code>es. That isn&#8217;t necessary. You can specialize on any
+CLOS class: for example the system classes listed near the top of
+<a class="reference external" href="#section-3.4">section 3.4</a>, or any structure class.</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">69</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">defmethod</span> <span class="n">my</span><span class="o">-</span><span class="n">describe</span> <span class="p">((</span><span class="bp">self</span> <span class="n">structure</span><span class="o">-</span><span class="nb">object</span><span class="p">))</span>
+    <span class="p">(</span><span class="nb">format</span> <span class="n">t</span> <span class="s2">&quot;~s is a structure object.&quot;</span>
+    <span class="bp">self</span><span class="p">))</span>
+<span class="c1">#&lt;STANDARD-METHOD MY-DESCRIBE NIL (STRUCTURE-OBJECT) 205F5744&gt;</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">70</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">my</span><span class="o">-</span><span class="n">describe</span> <span class="p">(</span><span class="n">make</span><span class="o">-</span><span class="n">foo</span><span class="p">))</span>
+<span class="c1">#S(FOO) is a structure object.</span>
+<span class="n">NIL</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">71</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">defmethod</span> <span class="n">my</span><span class="o">-</span><span class="n">describe</span> <span class="p">((</span><span class="bp">self</span> <span class="n">foo</span><span class="p">))</span>
+    <span class="p">(</span><span class="nb">format</span> <span class="n">t</span> <span class="s2">&quot;bar&quot;</span><span class="p">))</span>
+<span class="c1">#&lt;STANDARD-METHOD MY-DESCRIBE NIL (FOO) 205F3ADC&gt;</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">72</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">my</span><span class="o">-</span><span class="n">describe</span> <span class="p">(</span><span class="n">make</span><span class="o">-</span><span class="n">foo</span><span class="p">))</span>
+<span class="n">bar</span>
+<span class="n">NIL</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">73</span> <span class="o">&gt;</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>You can use methods in your code without ever defining a CLOS class,
+just as you can use CLOS classes without a single <code class="docutils literal"><span class="pre">defmethod</span></code>. These
+two parts of CLOS are independent - think of them as two object systems
+for the price of one.</p>
+<p>Another form of specializer, which will occasionally be useful, is known
+as an eql specializer. In this case, the specializing class name is
+replaced by a list whose first element is the symbol <code class="docutils literal"><span class="pre">eql</span></code> and whose
+second value is any lisp form. That form is evaluated at the same time
+as the <code class="docutils literal"><span class="pre">defmethod</span></code>. In order for the method to be applicable, the
+corresponding argument must be <code class="docutils literal"><span class="pre">eql</span></code> to the result of that evaluation.
+An eql method is more specific than one specializing on classes.</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">73</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">defmethod</span> <span class="n">my</span><span class="o">-</span><span class="n">describe</span> <span class="p">((</span><span class="bp">self</span> <span class="p">(</span><span class="n">eql</span> <span class="n">pi</span><span class="p">)))</span>
+    <span class="p">(</span><span class="nb">format</span> <span class="n">t</span> <span class="s2">&quot;approximately 22/7&quot;</span><span class="p">))</span>
+<span class="c1">#&lt;STANDARD-METHOD MY-DESCRIBE NIL ((EQL 3.141592653589793)) 2060E57C&gt;</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">74</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">defmethod</span> <span class="n">my</span><span class="o">-</span><span class="n">describe</span> <span class="p">((</span><span class="bp">self</span> <span class="nb">float</span><span class="p">))</span>
+    <span class="p">(</span><span class="nb">format</span> <span class="n">t</span> <span class="s2">&quot;some float&quot;</span><span class="p">))</span>
+<span class="c1">#&lt;STANDARD-METHOD MY-DESCRIBE NIL (FLOAT) 2061EEF4&gt;</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">75</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">my</span><span class="o">-</span><span class="n">describe</span> <span class="n">pi</span><span class="p">)</span>
+<span class="n">approximately</span> <span class="mi">22</span><span class="o">/</span><span class="mi">7</span>
+<span class="n">NIL</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">76</span> <span class="o">&gt;</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p><strong>Exercise:</strong> Write a method on <code class="docutils literal"><span class="pre">my-describe</span></code> for lists.</p>
+<p><strong>Exercise:</strong> Write a method on <code class="docutils literal"><span class="pre">print-object</span></code> for <code class="docutils literal"><span class="pre">Eric</span></code> the
+antelope. Change the <code class="docutils literal"><span class="pre">class-of</span> <span class="pre">Eric</span></code>. Do you expect your method to
+still be applicable?</p>
+</div>
+<div class="section" id="qualifiers-and-method-combination">
+<h3><a href="#id6"><span class="problematic" id="id26">`4.6. Qualifiers and method combination &lt;&gt;`__</span></a><a class="headerlink" href="#qualifiers-and-method-combination" title="Permalink to this headline">¶</a></h3>
+<p>Let&#8217;s start with a word of warning. Reckless use of method combination
+can - like an unfettered hand with multiple inheritance -
+<a class="reference external" href="http://www.cogsci.princeton.edu/cgi-bin/webwn1.7.1?stage=1&amp;word=spaghetti">tangle</a>
+your code beyond recognition.</p>
+<p>The full syntax for <code class="docutils literal"><span class="pre">defmethod</span></code> is:</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">defmethod</span> <span class="n">function</span><span class="o">-</span><span class="n">name</span> <span class="p">{</span><span class="n">method</span><span class="o">-</span><span class="n">qualifier</span><span class="p">}</span><span class="o">*</span> <span class="n">specialized</span><span class="o">-</span><span class="k">lambda</span><span class="o">-</span><span class="nb">list</span>
+      <span class="p">[[</span><span class="n">declaration</span><span class="o">*</span> <span class="o">|</span> <span class="n">documentation</span><span class="p">]]</span> <span class="n">form</span><span class="o">*</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>We&#8217;re only going to look here at the default, or standard method
+combination. (Other method combinations are available, and you can even
+define your own but I&#8217;m not sure I&#8217;ve ever met anyone who did.) With
+standard method combination, no more than one method qualifier is
+permitted per method, and if present is must be one of the following
+keywords: <code class="docutils literal"><span class="pre">:before</span></code>, <code class="docutils literal"><span class="pre">:after</span></code> and <code class="docutils literal"><span class="pre">:around</span></code>. The methods without a
+qualifier are known as primary methods. The full dispatch mechanism for
+generic functions is as follows; <strong>note</strong> that <code class="docutils literal"><span class="pre">:before</span></code> and
+<code class="docutils literal"><span class="pre">:after</span></code> methods are only run for their side effects.</p>
+<ol class="arabic simple">
+<li>compute the applicable methods, and partition them into separate
+lists according to their qualifier;</li>
+<li>if there is no applicable primary method then signal an error;</li>
+<li>sort each of the lists into order of specificity;</li>
+<li>execute the most specific <code class="docutils literal"><span class="pre">:around</span></code> method and return whatever that
+returns;</li>
+<li>if an <code class="docutils literal"><span class="pre">:around</span></code> method invokes <code class="docutils literal"><span class="pre">call-next-method</span></code>, execute the
+next most specific <code class="docutils literal"><span class="pre">:around</span></code> method;</li>
+<li>if there were no <code class="docutils literal"><span class="pre">:around</span></code> methods in the first place, or if an
+<code class="docutils literal"><span class="pre">:around</span></code> method invokes <code class="docutils literal"><span class="pre">call-next-method</span></code> but there are no
+further <code class="docutils literal"><span class="pre">:around</span></code> methods to call, then proceed as follows:<ol class="loweralpha">
+<li>run all the <code class="docutils literal"><span class="pre">:before</span></code> methods, in order, ignoring any return
+values and not permitting calls to <code class="docutils literal"><span class="pre">call-next-method</span></code> or
+<code class="docutils literal"><span class="pre">next-method-p</span></code>;</li>
+<li>execute the most specific primary method and return whatever that
+returns;</li>
+<li>if a primary method invokes <code class="docutils literal"><span class="pre">call-next-method</span></code>, execute the next
+most specific primary method;</li>
+<li>if a primary method invokes <code class="docutils literal"><span class="pre">call-next-method</span></code> but there are no
+further primary methods to call then signal an error;</li>
+<li>after the primary method(s) have completed, run all the <code class="docutils literal"><span class="pre">:after</span></code>
+methods, in <strong>reverse</strong> order, ignoring any return values and not
+permitting calls to <code class="docutils literal"><span class="pre">call-next-method</span></code> or <code class="docutils literal"><span class="pre">next-method-p</span></code>.</li>
+</ol>
+</li>
+</ol>
+<p>If you think all this looks insanely complicated, you&#8217;re probably right.
+Think of it as an onion, with all the <code class="docutils literal"><span class="pre">:around</span></code> methods in the
+outermost layer, <code class="docutils literal"><span class="pre">:before</span></code> and <code class="docutils literal"><span class="pre">:after</span></code> methods in the middle layer,
+and primary methods on the inside. Be grateful there are only three
+layers. To make the model work, it helps conceptually to pair
+<code class="docutils literal"><span class="pre">:before</span></code> and <code class="docutils literal"><span class="pre">:after</span></code> methods like this:</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">defmethod</span> <span class="n">spong</span> <span class="p">:</span><span class="n">before</span><span class="o">-</span><span class="ow">and</span><span class="o">-</span><span class="n">after</span> <span class="p">(</span><span class="o">&amp;</span><span class="n">rest</span> <span class="n">args</span><span class="p">)</span>
+<span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">before</span> <span class="p">(</span><span class="n">find</span><span class="o">-</span><span class="n">method</span> <span class="c1">#&#39;spong &#39;(:before) args))</span>
+    <span class="p">(</span><span class="n">after</span>  <span class="p">(</span><span class="n">find</span><span class="o">-</span><span class="n">method</span> <span class="c1">#&#39;spong &#39;(:after) args)))</span>
+<span class="p">(</span><span class="n">when</span> <span class="n">before</span> <span class="p">(</span><span class="n">invoke</span><span class="o">-</span><span class="n">method</span> <span class="n">before</span> <span class="n">args</span><span class="p">))</span>
+<span class="p">(</span><span class="n">multiple</span><span class="o">-</span><span class="n">value</span><span class="o">-</span><span class="n">prog1</span>
+    <span class="p">(</span><span class="n">call</span><span class="o">-</span><span class="nb">next</span><span class="o">-</span><span class="n">before</span><span class="o">-</span><span class="ow">and</span><span class="o">-</span><span class="n">after</span><span class="o">-</span><span class="n">method</span><span class="p">)</span>
+<span class="p">(</span><span class="n">when</span> <span class="n">after</span> <span class="p">(</span><span class="n">invoke</span><span class="o">-</span><span class="n">method</span> <span class="n">after</span> <span class="n">args</span><span class="p">)))))</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p><strong>Note</strong> how this gives us a reversed order for <code class="docutils literal"><span class="pre">:after</span></code> methods. This
+happens quite naturally, which might explain why the reversal was
+specified in the first place.</p>
+<p>In real life (you hope) the situation won&#8217;t get that complicated. A
+simple example: <code class="docutils literal"><span class="pre">my-describe</span></code> suppressing return values.</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span>CL-USER 76 &gt; (defmethod my-describe :around (self)
+    (call-next-method)
+    (values))
+#&lt;STANDARD-METHOD MY-DESCRIBE (:AROUND) (T) 20605A34&gt;
+
+CL-USER 77 &gt; (my-describe Eric)
+Eric? Is that you?
+
+CL-USER 78 &gt;
+</pre></div>
+</div>
+</div></blockquote>
+<p>Another example: The CLOS implementation of <code class="docutils literal"><span class="pre">make-instance</span></code> is in two
+stages: allocate the new object, and then pass it along with all the
+<code class="docutils literal"><span class="pre">make-instance</span></code> keyword arguments, to the generic function
+<code class="docutils literal"><span class="pre">initialize-instance</span></code>. Implementors and application writers define
+<code class="docutils literal"><span class="pre">:after</span></code> methods on <code class="docutils literal"><span class="pre">initialize-instance</span></code>, to initialize the slots
+of the instance. The system-supplied primary method does this with
+regard to (a) <code class="docutils literal"><span class="pre">:initform</span></code> and <code class="docutils literal"><span class="pre">:initarg</span></code> values supplied with the
+class was defined and (b) the keywords passed through from
+<code class="docutils literal"><span class="pre">make-instance</span></code>. Other methods can extend this behaviour as they see
+fit. For example, they might accept an additional keyword which invokes
+a database access to fill certain slots. The lambda list for
+<code class="docutils literal"><span class="pre">initialize-instance</span></code> is:</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">initialize</span><span class="o">-</span><span class="n">instance</span> <span class="n">instance</span> <span class="o">&amp;</span><span class="n">rest</span> <span class="n">initargs</span> <span class="o">&amp;</span><span class="n">key</span> <span class="o">&amp;</span><span class="n">allow</span><span class="o">-</span><span class="n">other</span><span class="o">-</span><span class="n">keys</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p><strong>Exercise:</strong> Add an <code class="docutils literal"><span class="pre">:after</span></code> method to <code class="docutils literal"><span class="pre">initialize-instance</span></code> to
+make all aardvarks come from Cambridge, England. Add another method
+(qualified how?) to prohibit the following interaction:</p>
+<blockquote>
+<div><div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">make</span><span class="o">-</span><span class="n">instance</span> <span class="s1">&#39;cannibal :diet (make-instance &#39;</span><span class="n">cannibal</span><span class="p">))</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p><strong>Exercise:</strong> You might choose to regard <code class="docutils literal"><span class="pre">initialize-instance</span></code> as a
+souped-up analogue of the constructors offered by other OO systems. But
+CLOS doesn&#8217;t offer a destructor. Should this matter?</p>
+</div>
+<div class="section" id="implementation-notes-generic-function-dispatch">
+<h3><a href="#id6"><span class="problematic" id="id27">`4.7. Implementation notes: generic function dispatch &lt;&gt;`__</span></a><a class="headerlink" href="#implementation-notes-generic-function-dispatch" title="Permalink to this headline">¶</a></h3>
+<p>Computing, sorting and executing a list of applicable methods are
+time-consuming operations. An implementation will typically want to
+cache its results and reuse them as often - but as cheaply - as
+possible. An implementor once told me that his aim was to make &#8220;best
+case&#8221; generic function dispatch no more than three times slower than
+calling an ordinary function.</p>
+<p>The method cache cannot be calculated in advance, because (a) we
+typically don&#8217;t know what arguments might be passed to the generic
+function in future and (b) there are so many classes in the system that
+the cache might be enormous, particularly if the generic function
+specializes on more than one argument. Therefore the cache has to be
+augmented on the fly as the application runs.</p>
+<p>The following strategies might be useful:</p>
+<ul class="simple">
+<li>A generic function is both a function and a CLOS instance. Implement
+the former by closing system template code over the latter.</li>
+<li>Implement method execution (steps 4 though 6 in the &#8220;full dispatch
+mechanism&#8221; described in <a class="reference external" href="#section-4.6">section 4.6</a> above) by
+closing pre-compiled templates over sorted lists of applicable
+methods, thus generating combined methods. A combined method is a
+funcallable object which takes the same arguments as the generic
+function, and which handles the all aspects of method combination
+when the arguments are of given classes.</li>
+<li>Only invoke the compiler - i.e. only generate fresh dispatch code -
+if no pre-compiled template exists. For example, the implementation
+might be prepared for generic functions which specialize on up to ten
+arguments, and then some benevolent user writes a generic function
+which specializes on all eleven.</li>
+<li>Maintain a &#8220;slow-lookup&#8221; cache within each generic function,
+associating classes of arguments against combined methods. This cache
+is augmented every time the generic function is called with arguments
+whose classes have not previously been seen by the generic function.</li>
+<li>Also maintain optimized &#8220;fast-lookup&#8221; caches, associating classes of
+the arguments used in the last few calls to this generic function
+against combined methods.</li>
+<li>If a new method is added, throw away the caches rather than attempt
+to modify them. Method definition is much rarer than method
+invocation.</li>
+<li>Consider special cases. For example, a gratifyingly high proportion
+of generic functions in a typical application will only have one
+method, and these can be optimized accordingly.</li>
+</ul>
+<p>The assumption behind the fast-lookup cache is that any given call to a
+generic function is likely to have arguments of the same class as one of
+the last few calls. This cache is responsible for the &#8220;no more than
+three times slower&#8221; property mentioned above, and so has to be very fast
+indeed. A possible implementation is as a flat vector, using the
+following lookup scheme. <strong>Note</strong> that this scheme does not allocate.</p>
+<ol class="arabic simple">
+<li>Obtain the wrapper of the first specialized argument (recall:
+wrappers are associated with all lisp objects, not just CLOS
+instances). For CLOS or structure objects this is very fast, for
+built-in objects it&#8217;s worth optimizing.</li>
+<li>Validate the wrapper (so the cache-number will be up to date).</li>
+<li>Fetch the wrapper&#8217;s <code class="docutils literal"><span class="pre">cache-number</span></code>, divide it by the length of the
+cache vector, and take the remainder.</li>
+<li>Use this value as an index into the cache. If the value in the cache
+at that location is the wrapper in question, we look at the next
+location and compare that with the wrapper of the next specialized
+argument, and so on until we&#8217;ve matched all the arguments against
+wrappers in the cache. If we get that far, we look one location
+further on still and there we hope to find the combined method.</li>
+<li>If any of the above failed, we have a cache miss. Go to the list of
+classes and combined methods in the main cache and use <code class="docutils literal"><span class="pre">assoc</span></code> to
+locate the combined method. (If this too fails, calculate the
+combined method - at this point we have to bite the bullet and
+allocate - and add it to the slow cache.) Write the argument wrappers
+and combined method into the fast cache.</li>
+</ol>
+<p><strong>To discuss over dinner:</strong> How large do you think the fast-lookup cache
+should be?</p>
+<p><strong>To discuss over dinner:</strong> How might an implementation optimize the
+process of obtaining the wrappers of built-in objects (such as numbers
+and strings)? Answers involving <code class="docutils literal"><span class="pre">assoc</span></code> on the type, or <code class="docutils literal"><span class="pre">typecase</span></code>,
+are incorrect.</p>
+<p><strong>To discuss over dinner:</strong> How might the above be modified to take
+account of <code class="docutils literal"><span class="pre">eql</span></code> methods?</p>
+</div>
+</div>
+<div class="section" id="a-references">
+<h2><a href="#id6"><span class="problematic" id="id28">`A. References &lt;&gt;`__</span></a><a class="headerlink" href="#a-references" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="12%" />
+<col width="88%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>[Graham 1995]</td>
+<td>&#8220;ANSI Common Lisp&#8221;; <a class="reference external" href="mailto:pg&#37;&#52;&#48;paulgraham&#46;com">Paul Graham</a>; Prentice Hall; 1995; ISBN 0133708756. See <a class="reference external" href="http://www.paulgraham.com/acl.html">http://www.paulgraham.com/acl.html</a></td>
+</tr>
+<tr class="row-even"><td>[Keene 1989]</td>
+<td>&#8220;Object-Oriented Programming in Common Lisp&#8221;; Sonya E. Keene; Addison-Wesley; 1989; ISBN 0201175894.</td>
+</tr>
+<tr class="row-odd"><td>[Kiczales et al 1991]</td>
+<td>&#8220;The Art of the Metaobject Protocol&#8221;; Gregor Kiczales, Jim des Rivières, Daniel G. Bobrow; MIT Press; 1991; ISBN 0262610744.</td>
+</tr>
+<tr class="row-even"><td>[Pitman 1996]</td>
+<td>&#8220;The Common Lisp Hyperspec&#8221;; <a class="reference external" href="mailto:pitman&#37;&#52;&#48;nhplace&#46;com">Kent M<span>&#46;</span> Pitman</a> (editor); 1996. Available online at <a class="reference external" href="http://www.lispworks.com/reference/HyperSpec/Front/index.htm">http://www.lispworks.com/reference/HyperSpec/Front/index.htm</a></td>
+</tr>
+<tr class="row-odd"><td>[Steele 1990]</td>
+<td>&#8220;Common Lisp the Language, 2nd edition&#8221;; Guy L. Steele Jr.; Digital Press; 1990; ISBN 1555580416. Available online at <a class="reference external" href="http://www-2.cs.cmu.edu/Groups/AI/html/cltl/cltl2.html">http://www-2.cs.cmu.edu/Groups/AI/html/cltl/cltl2.html</a></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="b-document-history">
+<h2><a href="#id6"><span class="problematic" id="id29">`B. Document History &lt;&gt;`__</span></a><a class="headerlink" href="#b-document-history" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="16%" />
+<col width="45%" />
+<col width="38%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>2003-07-15</td>
+<td><a class="reference external" href="mailto:ndl&#37;&#52;&#48;ravenbrook&#46;com">NDL</a></td>
+<td>Placeholder document created.</td>
+</tr>
+<tr class="row-even"><td>2003-08-13</td>
+<td><a class="reference external" href="mailto:ndl&#37;&#52;&#48;ravenbrook&#46;com">NDL</a></td>
+<td>Drafting started.</td>
+</tr>
+<tr class="row-odd"><td>2003-08-26</td>
+<td><a class="reference external" href="mailto:ndl&#37;&#52;&#48;ravenbrook&#46;com">NDL</a></td>
+<td>First draft complete.</td>
+</tr>
+<tr class="row-even"><td>2003-09-01</td>
+<td><a class="reference external" href="mailto:ndl&#37;&#52;&#48;ravenbrook&#46;com">NDL</a></td>
+<td>Corrections following review.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="c-partial-class-hierarchy">
+<h2><a href="#id6"><span class="problematic" id="id30">`C. Partial class hierarchy &lt;&gt;`__</span></a><a class="headerlink" href="#c-partial-class-hierarchy" title="Permalink to this headline">¶</a></h2>
+<div align="center"><p><a class="reference internal" href="../_images/fig-6.gif"><img alt="Partial class hierarchy." src="../_images/fig-6.gif" style="width: 434px; height: 370px;" /></a>
+<cite>Figure 6. Partial class hierarchy. The arrows denote the superclass
+relationship. All classes are instances of ``standard-class`</cite>, apart
+from <code class="docutils literal"><span class="pre">t</span></code> and <code class="docutils literal"><span class="pre">function</span></code> which are instances of <code class="docutils literal"><span class="pre">built-in-class</span></code>
+and <code class="docutils literal"><span class="pre">generic-function</span></code> which is an instance of
+<code class="docutils literal"><span class="pre">funcallable-standard-class.</span></code> &lt;&gt;`__</p>
+</div><hr class="docutils" />
+<p>This document is provided &#8220;as is&#8221;, without any express or implied
+warranty. In no event will the author be held liable for any damages
+arising from the use of this document. You may make and distribute
+verbatim copies of this document provided that you do not charge a fee
+for this document or for its distribution.</p>
+<div align="center"><p><code class="docutils literal"><span class="pre">$Id$</span></code></p>
+<p><a class="reference external" href="http://www.ravenbrook.com/">Ravenbrook</a> / <a class="reference external" href="http://www.international-lisp-conference.org/">ILC
+2003</a></p>
+<p><a class="reference external" href="http://validator.w3.org/check/referer"><img alt="Valid XHTML 1.0!" src="../_images/valid-xhtml10.png" style="width: 88px; height: 31px;" /></a></p>
+</div></div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">CLOS (the Common Lisp Object System)</a><ul>
+<li><a class="reference internal" href="#introduction">`1. Introduction &lt;&gt;`__</a></li>
+<li><a class="reference internal" href="#background">`2. Background &lt;&gt;`__</a><ul>
+<li><a class="reference internal" href="#references">`2.1. References &lt;&gt;`__</a></li>
+<li><a class="reference internal" href="#getting-started">`2.2. Getting started &lt;&gt;`__</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#classes-and-instances">`3. Classes and instances &lt;&gt;`__</a><ul>
+<li><a class="reference internal" href="#review-the-non-oo-approach">`3.1. Review - the non-OO approach &lt;&gt;`__</a></li>
+<li><a class="reference internal" href="#introducing-the-macro-defclass"><cite>3.2. Introducing the macro ``defclass`</cite> &lt;&gt;`__</a></li>
+<li><a class="reference internal" href="#classes-are-instances-too">`3.3. Classes are instances too &lt;&gt;`__</a></li>
+<li><a class="reference internal" href="#you-don-t-need-clos-objects-to-use-clos">`3.4. You don&#8217;t need CLOS objects to use CLOS &lt;&gt;`__</a></li>
+<li><a class="reference internal" href="#slots">`3.5. Slots &lt;&gt;`__</a></li>
+<li><a class="reference internal" href="#subclasses-and-inheritance">`3.6. Subclasses and inheritance &lt;&gt;`__</a></li>
+<li><a class="reference internal" href="#changing-a-class">`3.7. Changing a class &lt;&gt;`__</a></li>
+<li><a class="reference internal" href="#implementation-notes-object-wrappers">`3.8. Implementation notes: object wrappers &lt;&gt;`__</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#methods">`4. Methods &lt;&gt;`__</a><ul>
+<li><a class="reference internal" href="#id5">`4.1. Review - the non-OO approach &lt;&gt;`__</a></li>
+<li><a class="reference internal" href="#introducing-the-macro-defmethod"><cite>4.2. Introducing the macro ``defmethod`</cite> &lt;&gt;`__</a></li>
+<li><a class="reference internal" href="#generic-functions-and-next-methods">`4.3. Generic functions and next methods &lt;&gt;`__</a></li>
+<li><a class="reference internal" href="#in-oo-languages-the-functionality-lives-in-the-object">`4.4. In OO languages the functionality lives in the object &lt;&gt;`__</a></li>
+<li><a class="reference internal" href="#other-specializers-you-still-don-t-need-clos-objects-to-use-clos">`4.5. Other specializers (you still don&#8217;t need CLOS objects to use CLOS) &lt;&gt;`__</a></li>
+<li><a class="reference internal" href="#qualifiers-and-method-combination">`4.6. Qualifiers and method combination &lt;&gt;`__</a></li>
+<li><a class="reference internal" href="#implementation-notes-generic-function-dispatch">`4.7. Implementation notes: generic function dispatch &lt;&gt;`__</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#a-references">`A. References &lt;&gt;`__</a></li>
+<li><a class="reference internal" href="#b-document-history">`B. Document History &lt;&gt;`__</a></li>
+<li><a class="reference internal" href="#c-partial-class-hierarchy">`C. Partial class hierarchy &lt;&gt;`__</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="../chapters/misc.html" title="previous chapter">Miscellaneous</a></li>
+      <li>Next: <a href="../contributors.html" title="next chapter">Contributors</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/clos-tutorial/index.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, cl-cookbook contributors.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="../_sources/clos-tutorial/index.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

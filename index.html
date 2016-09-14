@@ -1,0 +1,235 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>The Common Lisp Cookbook &#8212; The Common Lisp Cookbook 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="The Common Lisp Cookbook 0.1 documentation" href="#" />
+    <link rel="next" title="Chapters" href="chapters/index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="the-common-lisp-cookbook">
+<h1>The Common Lisp Cookbook<a class="headerlink" href="#the-common-lisp-cookbook" title="Permalink to this headline">¶</a></h1>
+<p>This is a collaborative project that aims to provide for Common Lisp something
+similar to the <a class="reference external" href="http://www.oreilly.com/catalog/cookbook/">Perl Cookbook</a>
+published by O&#8217;Reilly. More details about what it is and what it isn&#8217;t can be
+found in this <a class="reference external" href="http://groups.google.com/groups?threadm=m3it9soz3m.fsf%40bird.agharta.de">thread</a>
+from <a class="reference external" href="news:comp.lang.lisp">comp.lang.lisp</a>.</p>
+<p>The credit for finally giving birth to the project probably goes to
+&#8220;dj_special_ed&#8221; who posted <a class="reference external" href="http://groups.google.com/groups?selm=76be8851.0201222259.70ecbcb1%40posting.google.com">this message</a>
+to <a class="reference external" href="news:comp.lang.lisp">comp.lang.lisp</a>.</p>
+<p>If you want to contribute to the CL Cookbook, please send a pull request in or
+file a ticket!</p>
+<p>Yes, we&#8217;re talking to you! We need contributors - write a chapter that&#8217;s missing
+and add it, find an open question and provide an answer, find bugs and report
+them, (If you have no idea what might be missing but would like to help, take a
+look at the <a class="reference external" href="http://www.oreilly.com/catalog/cookbook/toc.html">table of contents</a> of the Perl Cookbook.)
+Don&#8217;t worry about the formatting, just send plain text if you like - we&#8217;ll take
+care about that later.</p>
+<p>Thanks in advance for your help!</p>
+<div class="section" id="contents">
+<h2>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="chapters/index.html">Chapters</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="chapters/strings.html">Strings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chapters/dates_and_times.html">Dates and Times</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chapters/hashes.html">Hash Tables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chapters/pattern_matching.html">Pattern Matching &amp; Regular Expressions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chapters/functions.html">Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chapters/loop.html">Loop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chapters/io.html">Input/Output</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chapters/files.html">Files and Directories</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chapters/packages.html">Packages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chapters/macros.html">Macros</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chapters/sockets.html">Sockets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chapters/os.html">Interfacing with your OS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chapters/ffi.html">Foreign Function Interfaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chapters/process.html">Threads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chapters/systems.html">Defining Systems</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chapters/windows.html">Setting up Emacs on Windows or Mac</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chapters/emacs-ide.html">Using Emacs as an IDE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chapters/win32.html">Using the Win32 API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chapters/testing.html">Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chapters/misc.html">Miscellaneous</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="clos-tutorial/index.html">CLOS (the Common Lisp Object System)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="clos-tutorial/index.html#introduction">`1. Introduction &lt;&gt;`__</a></li>
+<li class="toctree-l2"><a class="reference internal" href="clos-tutorial/index.html#background">`2. Background &lt;&gt;`__</a></li>
+<li class="toctree-l2"><a class="reference internal" href="clos-tutorial/index.html#classes-and-instances">`3. Classes and instances &lt;&gt;`__</a></li>
+<li class="toctree-l2"><a class="reference internal" href="clos-tutorial/index.html#methods">`4. Methods &lt;&gt;`__</a></li>
+<li class="toctree-l2"><a class="reference internal" href="clos-tutorial/index.html#a-references">`A. References &lt;&gt;`__</a></li>
+<li class="toctree-l2"><a class="reference internal" href="clos-tutorial/index.html#b-document-history">`B. Document History &lt;&gt;`__</a></li>
+<li class="toctree-l2"><a class="reference internal" href="clos-tutorial/index.html#c-partial-class-hierarchy">`C. Partial class hierarchy &lt;&gt;`__</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contributors.html">Contributors</a></li>
+</ul>
+</div>
+<div class="section" id="other-cl-resources">
+<h3>Other CL Resources<a class="headerlink" href="#other-cl-resources" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Front/index.htm">The Common Lisp
+HyperSpec</a>
+by Kent M. Pitman</li>
+<li><a class="reference external" href="http://www.gigamonkeys.com/book/">Practical Common Lisp</a> by Peter
+Seibel</li>
+<li><a class="reference external" href="http://en.wikibooks.org/wiki/Programming:Common_Lisp">Programming:Common
+Lisp</a> from
+Wikibooks</li>
+<li>Daniel Barlow&#8217;s <a class="reference external" href="http://ww.telent.net/cliki">CLiki</a></li>
+<li><a class="reference external" href="http://www-jcsu.jesus.cam.ac.uk/~csr21/lispfaq.html">The new comp.lang.lisp
+FAQ</a> by
+Christophe Rhodes</li>
+<li><a class="reference external" href="http://www-2.cs.cmu.edu/Groups//AI/html/faqs/lang/lisp/top.html">The old comp.lang.lisp
+FAQ</a>
+by Mark Kantrowitz</li>
+<li><a class="reference external" href="http://www.lisp.org/">The Association of Lisp Users</a></li>
+<li><a class="reference external" href="http://www-2.cs.cmu.edu/~dst/LispBook/">Common Lisp: A Gentle Introduction to Symbolic
+Computation</a> by David S.
+Touretzky</li>
+<li><a class="reference external" href="http://www.psg.com/~dlamkins/sl/cover.html">Successful Lisp: How to Understand and Use Common
+Lisp</a> by David B.
+Lamkins</li>
+<li><a class="reference external" href="http://www.paulgraham.com/onlisptext.html">On Lisp</a> by Paul
+Graham</li>
+<li><a class="reference external" href="http://www-2.cs.cmu.edu/Groups/AI/html/cltl/cltl2.html">Common Lisp the Language, 2nd
+Edition</a>
+by Guy L. Steele</li>
+<li><a class="reference external" href="http://www.apl.jhu.edu/~hall/lisp.html">An Introduction and Tutorial for Common
+Lisp</a> by Marty Hall</li>
+<li><a class="reference external" href="http://www.n-a-n-o.com/lisp/cmucl-tutorials/LISP-tutorial.html">Common Lisp
+Hints</a>
+by Geoffrey J. Gordon</li>
+<li><a class="reference external" href="http://www.aiai.ed.ac.uk/~jeff/clos-guide.html">A Guide to CLOS</a>
+by Jeff Dalton</li>
+<li><a class="reference external" href="http://www.aiai.ed.ac.uk/~jeff/lisp/cl-pitfalls">Common Lisp
+Pitfalls</a> by Jeff
+Dalton</li>
+<li><a class="reference external" href="http://www.ai.sri.com/~pkarp/loop.html">Tutorial for the Common Lisp Loop
+Macro</a> by Peter D. Karp</li>
+<li><a class="reference external" href="http://iris.usc.edu/home/raycharles/price/lisp/doc/lisp-utilities.ps">Portable Utilities for Common
+Lisp</a>
+by Mark Kantrowitz</li>
+<li><a class="reference external" href="http://www.cc.gatech.edu/computing/classes/cs2360/ghall/style/Good-Lisp-Style.ps">A Guide to Good Lisp
+Style</a>
+by Peter Norvig and Kent M. Pitman</li>
+<li><a class="reference external" href="http://www.nicklevine.org/declarative/lectures/">Lisp and Elements of
+Style</a> by Nick
+Levine</li>
+<li>Pascal Costanza&#8217;s <a class="reference external" href="http://www.p-cos.net/lisp/guide.html">Highly Opinionated Guide to
+Lisp</a></li>
+<li><a class="reference external" href="http://www.markwatson.com/opencontent/lisp_lic.htm">Loving Lisp - the Savy Programmer&#8217;s Secret
+Weapon</a> by
+Mark Watson</li>
+<li><a class="reference external" href="http://www.dynamiclearningcenter.com/">The Dynamic Learning
+Center</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
+<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
+<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">The Common Lisp Cookbook</a><ul>
+<li><a class="reference internal" href="#contents">Contents</a><ul>
+<li><a class="reference internal" href="#other-cl-resources">Other CL Resources</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="chapters/index.html" title="next chapter">Chapters</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, cl-cookbook contributors.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/index.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

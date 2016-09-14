@@ -1,0 +1,624 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Sockets &#8212; The Common Lisp Cookbook 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="The Common Lisp Cookbook 0.1 documentation" href="../index.html" />
+    <link rel="up" title="Chapters" href="index.html" />
+    <link rel="next" title="Interfacing with your OS" href="os.html" />
+    <link rel="prev" title="Macros" href="macros.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="sockets">
+<h1>Sockets<a class="headerlink" href="#sockets" title="Permalink to this headline">¶</a></h1>
+<div class="line-block">
+<div class="line">ANSI Common Lisp does not provide standard functions to operate on
+sockets, but</div>
+<div class="line">all major CL implementations have added socket support to their</div>
+<div class="line">environments. Although all socket packages offer roughly the same</div>
+<div class="line">functionalities, they use slightly different names for functions,
+making it hard</div>
+<div class="line">to provide a standardized description. In this chapter, we will use
+the socket</div>
+<div class="line">library contained in
+<a class="reference external" href="http://clocc.sourceforge.net/dist/port.html">PORT</a>, that</div>
+<div class="line">in turn is part of the</div>
+<div class="line"><a class="reference external" href="http://clocc.sourceforge.net/">Common Lisp Open Code Collection</a>
+(CLOCC). The</div>
+<div class="line">socket functions provided by PORT currently work without modifications
+on a wide</div>
+<div class="line">range of Common Lisp implementations (Allegro, Lispworks, CLISP, CMU
+CL, SBCL,</div>
+<div class="line">GCL). Therefore, this section does not contain pointers to the Common
+Lisp</div>
+<div class="line">HyperSpec. We refer you to the documentation of the PORT package for
+more</div>
+<div class="line">information. Even if you do not use port, the concepts described here
+will most</div>
+<div class="line">likely apply to your Lisp implementation, and it should not be hard to
+find out</div>
+<div class="line">what the equivalent functions are in it.</div>
+</div>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<div class="line-block">
+<div class="line">First of all, some theory. If you are interested in using sockets you
+probably</div>
+<div class="line">already know this stuff, but it is useful to go through it anyway to
+establish</div>
+<div class="line">our terminology. A <strong>socket</strong> is a communication channel between two
+processes,</div>
+<div class="line">usually (but not necessarily) running on different computers. Several
+types of</div>
+<div class="line">sockets exist, but in the following we are only going to describe
+<strong>TCP</strong></div>
+<div class="line">sockets, that implement a reliable, two-way communication stream. A
+socket</div>
+<div class="line">connection originates from a <strong>port</strong> on a <strong>client</strong> machine, and
+reaches</div>
+<div class="line">another port on a <strong>server</strong> machine. Therefore, a connected socket is</div>
+<div class="line">identified by four data elements: the address of the client computer,
+the port</div>
+<div class="line">on the client computer, the address of the server computer and the
+port on the</div>
+<div class="line">server computer. This particular way of using sockets is referred to
+as the</div>
+<div class="line">&#8220;Internet&#8221; address family. Under Unix, there is also an alternative
+address</div>
+<div class="line">family (&#8220;Unix&#8221;) that uses local files as sockets. In the following we
+will</div>
+<div class="line">describe how to implement both TCP clients and servers in Common Lisp.
+Of</div>
+<div class="line">course, nothing prevents you from using a CL client to connect to a
+server</div>
+<div class="line">written in a different language, and vice-versa.</div>
+</div>
+<div class="line-block">
+<div class="line">Addresses can be represented in three different ways. The one you are
+probably</div>
+<div class="line">most familiar with is the human-readable form, such as www.lisp.org.
+We</div>
+<div class="line">will call this a <strong>hostname</strong>. Each hostname may be associated with
+one or more</div>
+<div class="line"><strong>IP addresses</strong>, each represented by four bytes. These are usually
+written in</div>
+<div class="line"><strong>dotted</strong> notation: 128.18.65.4. The translation between a hostname</div>
+<div class="line">and a dotted IP address is called a <strong>DNS lookup</strong>, and normally
+occurs behind</div>
+<div class="line">the scenes in modern systems. Finally, an address can be easily
+converted from</div>
+<div class="line">dotted notation to an <strong>ipaddr</strong>, which is simply the long integer
+formed by the</div>
+<div class="line">four bytes in the dotted address. The ipaddr corresponding to the
+above example</div>
+<div class="line">is 2148679940. To summarize: humans use hostnames that are easier to
+memorize</div>
+<div class="line">and type; software uses IP addresses that are stored as ipaddrs but
+are usually</div>
+<div class="line">printed in dotted notation.</div>
+</div>
+<div class="line-block">
+<div class="line">Ports are represented as integer numbers in the range 1-65535. In
+general,</div>
+<div class="line">ports can be chosen arbitrarily (except that some ports might only be
+available</div>
+<div class="line">to privileged users on Unix and similar operating systems), but two
+processes</div>
+<div class="line">that need to communicate through sockets should have a way of knowing
+which port</div>
+<div class="line">to use. Let&#8217;s look at how sockets are normally used, in order to make
+this point</div>
+<div class="line">clear.</div>
+</div>
+<ol class="arabic simple">
+<li>A process on computer A (the server) <strong>opens</strong> TCP port X and
+prepares to
+<strong>accept</strong> connections.</li>
+<li>A process on computer B (the client) <strong>creates</strong> a socket connecting
+port Y
+on B to port X on A. (Note that B needs to know that A opened port X,
+but A
+does not need to know that the socket originates from port Y on B. Y
+is
+usually chosen randomly by the TCP implementation.)</li>
+<li>The server process accepts the socket connection, and spawns a thread
+or a
+sub-process to <strong>handle</strong> it.</li>
+<li>A and B can freely exchange data over the socket, until either the
+client or
+the server closes it.</li>
+</ol>
+</div>
+<div class="section" id="addresses">
+<h2>Addresses<a class="headerlink" href="#addresses" title="Permalink to this headline">¶</a></h2>
+<div class="line-block">
+<div class="line">A prerequisite for working with sockets is the ability to convert
+hostnames to</div>
+<div class="line">IP addresses and vice versa. The function RESOLVE-HOST-IPADDR takes a
+hostname</div>
+<div class="line">as its argument and returns a HOSTENT structure. For example:</div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="p">(</span><span class="n">resolve</span><span class="o">-</span><span class="n">host</span><span class="o">-</span><span class="n">ipaddr</span> <span class="s2">&quot;www.lisp.org&quot;</span><span class="p">)</span>
+<span class="c1">#S(HOSTENT :NAME &quot;bibop.alu.org&quot; :ALIASES NIL :ADDR-LIST (&quot;128.18.65.4&quot;) :ADDR-TYPE 2)</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line">This structure contains four fields, but the only ones we are
+interested in are</div>
+<div class="line">NAME and ADDR-LIST. NAME contains the <em>canonical</em> hostname of the
+machine (that</div>
+<div class="line">might or might not be the same as the argument), while ADDR-LIST
+contains the IP</div>
+<div class="line">address corresponding to the given hostname (in some cases a hostname
+is mapped</div>
+<div class="line">to more than one IP address for load-balancing purposes, but not all</div>
+<div class="line">implementations return the additional addresses). You can also use
+this function</div>
+<div class="line">to perform the reverse mapping:</div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="p">(</span><span class="n">resolve</span><span class="o">-</span><span class="n">host</span><span class="o">-</span><span class="n">ipaddr</span> <span class="s2">&quot;128.18.65.4&quot;</span><span class="p">)</span>
+<span class="c1">#S(HOSTENT :NAME &quot;bibop.alu.org&quot; :ALIASES NIL :ADDR-LIST (&quot;128.18.65.4&quot;) :ADDR-TYPE 2)</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line">The functions DOTTED-TO-IPADDR and IPADDR-TO-DOTTED are used to
+convert from</div>
+<div class="line">dotted notation to ipaddrs:</div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="p">(</span><span class="n">dotted</span><span class="o">-</span><span class="n">to</span><span class="o">-</span><span class="n">ipaddr</span> <span class="s2">&quot;128.18.65.4&quot;</span><span class="p">)</span>
+<span class="mi">2148679940</span>
+<span class="o">&gt;</span> <span class="p">(</span><span class="n">ipaddr</span><span class="o">-</span><span class="n">to</span><span class="o">-</span><span class="n">dotted</span> <span class="mi">2148679940</span><span class="p">)</span>
+<span class="s2">&quot;128.18.65.4&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="server-sockets">
+<h2>Server sockets<a class="headerlink" href="#server-sockets" title="Permalink to this headline">¶</a></h2>
+<div class="line-block">
+<div class="line">As we saw earlier, the first step in setting up a socket consists in
+the server</div>
+<div class="line">process <em>opening a port</em>. This is accomplished with the
+OPEN-SOCKET-SERVER</div>
+<div class="line">function, that takes the port number (an integer) as its argument and
+returns an</div>
+<div class="line">object representing the open socket port. There are two ways that
+things could</div>
+<div class="line">go wrong at this stage: either your process does not have sufficient
+privileges</div>
+<div class="line">to open the desired port (for example, you are trying to open a port
+below 1024</div>
+<div class="line">without being root under unix), or the port you have chosen has
+already been</div>
+<div class="line">opened by another process. In both cases, Lisp will signal an error.</div>
+</div>
+<div class="line-block">
+<div class="line">Assuming you have successfully opened the server port, your process
+should now</div>
+<div class="line">start waiting for incoming connections. The function SOCKET-ACCEPT
+takes the</div>
+<div class="line">&#8220;open port&#8221; structure returned by OPEN-SOCKET-SERVER as input, and
+waits until a</div>
+<div class="line">connection attempt is received on the port. The keyword argument :WAIT
+controls</div>
+<div class="line">how the waiting happens exactly: if it is specified and is a positive
+number,</div>
+<div class="line">the function will wait for a connection for the specified number of
+seconds at</div>
+<div class="line">most. If a connection is not received before timeout, the function
+returns</div>
+<div class="line">NIL. If :WAIT is not specified, the function waits forever. When a
+connection is</div>
+<div class="line">received, the function returns a &#8220;socket-stream&#8221; object, and the
+server process</div>
+<div class="line">turns to handling the connection.</div>
+</div>
+<div class="line-block">
+<div class="line">If the Lisp environment you are using supports multiple processes or
+threads,</div>
+<div class="line">you can take advantage of this feature to avoid tying up the server
+when</div>
+<div class="line">handling a connection. The problem is that while it is executing code
+to handle</div>
+<div class="line">a connection, the server cannot call SOCKET-ACCEPT, and therefore
+other clients</div>
+<div class="line">trying to connect will not be served. Using multiprocessing, you can
+prevent</div>
+<div class="line">this from happening by spawning a new process to handle each request,
+so that</div>
+<div class="line">the main process is always available to accept new connections. For
+example:</div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">;;</span> <span class="n">Open</span> <span class="n">the</span> <span class="n">server</span> <span class="n">socket</span>
+<span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">server</span> <span class="p">(</span><span class="nb">open</span><span class="o">-</span><span class="n">socket</span><span class="o">-</span><span class="n">server</span> <span class="mi">4141</span><span class="p">)))</span>
+  <span class="p">(</span><span class="n">loop</span>
+
+    <span class="p">;;</span> <span class="n">Listen</span> <span class="k">for</span> <span class="n">incoming</span> <span class="n">connections</span>
+    <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">socket</span> <span class="p">(</span><span class="n">socket</span><span class="o">-</span><span class="n">accept</span> <span class="n">server</span><span class="p">)))</span>
+
+      <span class="p">;;</span> <span class="n">Spawn</span> <span class="n">a</span> <span class="n">process</span> <span class="n">to</span> <span class="n">handle</span> <span class="n">the</span> <span class="n">connection</span>
+      <span class="p">(</span><span class="n">make</span><span class="o">-</span><span class="n">process</span> <span class="s2">&quot;Connection handler&quot;</span>
+                    <span class="c1">#&#39;handle-connection</span>
+                    <span class="n">socket</span><span class="p">))</span>
+
+    <span class="p">;;</span> <span class="n">The</span> <span class="n">main</span> <span class="n">process</span> <span class="ow">is</span> <span class="n">now</span> <span class="n">free</span> <span class="n">to</span> <span class="n">accept</span> <span class="n">a</span> <span class="n">new</span> <span class="n">connection</span>
+    <span class="p">))</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line">We assumed the existence of a function called MAKE-PROCESS that
+creates a new</div>
+<div class="line">Lisp thread to run a function call. In this case the thread runs a
+user-defined</div>
+<div class="line">function called HANDLE-CONNECTION that takes the socket stream as its
+only</div>
+<div class="line">argument and operates on it. After handing the connection to the
+subprocess, the</div>
+<div class="line">main process immediately returns to the SOCKET-ACCEPT call to wait for
+another</div>
+<div class="line">incoming connection. This basic structure could be extended to limit
+the number</div>
+<div class="line">of concurrent processes, to perform load balancing, request logging,
+etc.</div>
+</div>
+</div>
+<div class="section" id="client-sockets">
+<h2>Client sockets<a class="headerlink" href="#client-sockets" title="Permalink to this headline">¶</a></h2>
+<div class="line-block">
+<div class="line">Let&#8217;s now look at the other side of the story. On the client machine,
+the Lisp</div>
+<div class="line">process should call OPEN-SOCKET, specifying both the host to connect
+to and the</div>
+<div class="line">port number. The host can be specified in any of the formats we saw
+above, while</div>
+<div class="line">the port should be an integer. Several scenarios are possible now:</div>
+</div>
+<ul class="simple">
+<li>The destination port is open and the server process is listening. In
+this
+case the connection is established, and OPEN-SOCKET returns a
+&#8220;socket-stream&#8221; structure.</li>
+<li>The destination port was opened but the server process did not call
+SOCKET-ACCEPT. In this case the connection will be established and
+put in a
+backlog queue by the operating system (provided there is still room
+in the
+queue), until the server process gets around to calling
+SOCKET-ACCEPT. Things then proceed as in the previous case.</li>
+<li>The specified port was not opened on the remote machine. In this case
+OPEN-SOCKET returns immediately with a &#8220;connection refused&#8221; error.</li>
+</ul>
+<div class="line-block">
+<div class="line">Note that the socket-stream structures returned to the server and
+client</div>
+<div class="line">processes when a connection is successfully established are
+simmetrical: each of</div>
+<div class="line">them contains two pairs (IP address, port number) for both the local
+and the</div>
+<div class="line">remote end of the socket. The roles of the two pairs will be reversed
+in the two</div>
+<div class="line">structures, that is:</div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="c1">#&lt;SOCKET-STREAM [A:X] to [B:Y]&gt; (on A)</span>
+<span class="c1">#&lt;SOCKET-STREAM [B:Y] to [A:X]&gt; (on B)</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line">The function SOCKET-HOST/PORT returns the four pieces of information
+in a</div>
+<div class="line">socket-stream structure as multiple values.</div>
+</div>
+</div>
+<div class="section" id="communication">
+<h2>Communication<a class="headerlink" href="#communication" title="Permalink to this headline">¶</a></h2>
+<div class="line-block">
+<div class="line">Once both the client and the server are in possession of an open
+socket stream,</div>
+<div class="line">they can start communicating. Since socket streams are a type of
+streams, the</div>
+<div class="line">two agents can communicate by writing to them (e.g., using FORMAT) and
+reading</div>
+<div class="line">from them (e.g. using READ-LINE or READ). This is, for example, how
+the client</div>
+<div class="line">would send a string to the server:</div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="p">(</span><span class="nb">format</span> <span class="n">client</span><span class="o">-</span><span class="n">stream</span> <span class="s2">&quot;Username: user1~%&quot;</span><span class="p">)</span>
+<span class="o">&gt;</span> <span class="p">(</span><span class="n">force</span><span class="o">-</span><span class="n">output</span> <span class="n">client</span><span class="o">-</span><span class="n">stream</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>And the server would do the following to read the message:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="p">(</span><span class="n">read</span><span class="o">-</span><span class="n">line</span> <span class="n">server</span><span class="o">-</span><span class="n">stream</span><span class="p">)</span>
+<span class="s2">&quot;Username: user1&quot;</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line">Note that since socket streams are usually buffered, the data is
+actually sent</div>
+<div class="line">over the network only when the buffer is full, when the stream is
+closed or when</div>
+<div class="line">you call FORCE-OUTPUT on the stream. If you need to be sure that the
+data is</div>
+<div class="line">sent out (for example, because you are then expecting an answer), it
+is a good</div>
+<div class="line">idea to call FORCE-OUTPUT after all output operations. Note also that</div>
+<div class="line">communication can take place in both directions at once. Finally, what
+we said</div>
+<div class="line">so far applies to text data. In some implementations you can send
+binary data</div>
+<div class="line">over a socket using the same techniques, in other implementations you
+have to</div>
+<div class="line">specify whether the socket is going to be used for text or binary
+data.</div>
+</div>
+</div>
+<div class="section" id="closing">
+<h2>Closing<a class="headerlink" href="#closing" title="Permalink to this headline">¶</a></h2>
+<div class="line-block">
+<div class="line">The socket can be closed by either party, by calling the regular CL
+function</div>
+<div class="line">CLOSE on the sockets. The server can close the server socket with the
+function</div>
+<div class="line">SOCKET-SERVER-CLOSE.</div>
+</div>
+</div>
+<div class="section" id="a-complete-example">
+<h2>A complete example<a class="headerlink" href="#a-complete-example" title="Permalink to this headline">¶</a></h2>
+<div class="line-block">
+<div class="line">In this section we will implement a very simple HTTP/0.9 server and</div>
+<div class="line">client. HTTP/0.9 is a primitive version of the HTTP protocol currently
+used by</div>
+<div class="line">all Web servers and clients. It is a very simple query-response
+protocol whose</div>
+<div class="line">only purpose is to allow a client to retrieve a document from a
+server. The</div>
+<div class="line">client sends a request line with the following format:</div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">GET</span> <span class="o">/</span><span class="n">pathname</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">file</span> <span class="n">HTTP</span><span class="o">/</span><span class="mf">0.9</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line">followed by a blank line, and the server replies with the contents of
+the</div>
+<div class="line">specified file. Here is the code:</div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span>--------------------------cut here------------------------------------
+(in-package :port)
+
+;;; Utilities
+
+(defun http-send-line (stream line)
+  &quot;Send a line of text to the HTTP stream, terminating it with CR+LF.&quot;
+  (princ line stream)
+  (princ (code-char 13) stream)  ;; carriage-return
+  (princ (code-char 10) stream)) ;; linefeed
+;;; Server
+
+(defun http-0.9-server (port root)
+  &quot;Run an HTTP/0.9 server on `port&#39;. `root&#39; is the pathname to the
+directory where the HTML pages are stored.&quot;
+  (let ((server (open-socket-server port)))
+    (format t &quot;&gt; Started server on port ~d~%&quot; port)
+    (unwind-protect
+        (loop
+          (let ((socket (socket-accept server)))
+            (unwind-protect
+                (process-request socket
+                                 (read-request socket)
+                                 root)
+              ;; Close connection when done
+              (close socket))))
+
+      ;; Close server before exiting
+      (socket-server-close server))))
+
+(defun read-request (socket)
+  &quot;Read an HTTP/0.9 request from `socket&#39; and determine the
+corresponding filename. An HTTP/0.9 request has the form:
+
+GET /filename HTTP/0.9
+
+Returns the filename, or NIL if the request is incorrect.&quot;
+
+  (let ((request (read-line socket nil nil)))
+    (when request
+      (let ((p1 (position #\Space request))
+            (p2 (position #\Space request :from-end t)))
+        (when (and p1 p2)
+          (subseq request (1+ p1) p2))))))
+
+(defun process-request (socket filename root)
+  (format t &quot;&gt; Received request from host ~a~%&quot;
+          (socket-host/port socket))
+  ;; discard empty line
+  (read-line socket)
+  (if filename
+      ;; Correct request, serve file
+      (serve-file socket
+                  (concatenate &#39;string root filename))
+    ;; Incorrect request, return error
+    (http-send-line socket &quot;HTTP/0.9 400 Invalid HTTP Request.&quot;))
+
+  ;; Make sure the client sees the output - not really
+  ;; necessary since we close the socket right after this.
+  (force-output socket))
+
+(defun serve-file (socket pathname)
+  &quot;Write the contents of the file `pathname&#39; to `socket&#39;.&quot;
+  ;; Does file exist?
+  (if (probe-file pathname)
+
+      ;; Yes, write it out to the socket
+      (with-open-file (in pathname)
+        (format t &quot;&gt; Serving file ~a...~%&quot; pathname)
+        (loop
+          (let ((line (read-line in nil nil)))
+            (unless line (return))
+            (http-send-line socket line))))
+
+    ;; No, return error
+    (format socket &quot;HTTP/0.9 401 Not found.~%&quot;)))
+
+;;; Client
+
+(defun http-get (server port path)
+  &quot;Send a request for file `path&#39; to an HTTP/0.9 server on host
+`server&#39;, port number `port&#39;. Print the contents of the returned file
+to standard output.&quot;
+  ;; Open connection
+  (let ((socket (open-socket server port)))
+    (unwind-protect
+        (progn
+          (format t &quot;&gt; Sending request to ~a:~a...~%&quot; server port)
+          ;; Send request
+          (http-send-line socket (format nil &quot;GET ~a HTTP/0.9~%~%&quot; path))
+          (force-output socket)
+
+          ;; Read response and output it
+          (format t &quot;&gt; Received response:~%&quot;)
+          (loop
+            (let ((line (read-line socket nil nil)))
+              (unless line (return))
+              (format t &quot;~a~%&quot; line))))
+
+      ;; Close socket before exiting.
+      (close socket))))
+--------------------------cut here------------------------------------
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line">To run this example you should open two Lisp listeners, and load the
+PORT</div>
+<div class="line">package followed by the above code into both of them. On one of them
+(the</div>
+<div class="line">server) call:</div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">http</span><span class="o">-</span><span class="mf">0.9</span><span class="o">-</span><span class="n">server</span> <span class="mi">8080</span> <span class="s2">&quot;/etc/&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line">(You can select any directory as the root, and exposing the contents
+of /etc is</div>
+<div class="line">usually not a good idea, but of course this is just an example). You
+will not</div>
+<div class="line">see anything happening, meaning that the server is idle waiting for</div>
+<div class="line">connection. Then in the second listener (the client) call:</div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">http</span><span class="o">-</span><span class="n">get</span> <span class="s2">&quot;localhost&quot;</span> <span class="mi">8080</span> <span class="s2">&quot;/hosts&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line">and you should see the contents of your /etc/hosts file printed to
+standard</div>
+<div class="line">output. In this case we used &#8220;localhost&#8221; as the server&#8217;s hostname
+because we are</div>
+<div class="line">running both the client and the server on the same machine for
+simplicity, but</div>
+<div class="line">of course they could be on two different machines. Note that the
+server runs</div>
+<div class="line">forever, you will have to interrupt it manually after you have
+finished trying</div>
+<div class="line">it.</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Sockets</a><ul>
+<li><a class="reference internal" href="#introduction">Introduction</a></li>
+<li><a class="reference internal" href="#addresses">Addresses</a></li>
+<li><a class="reference internal" href="#server-sockets">Server sockets</a></li>
+<li><a class="reference internal" href="#client-sockets">Client sockets</a></li>
+<li><a class="reference internal" href="#communication">Communication</a></li>
+<li><a class="reference internal" href="#closing">Closing</a></li>
+<li><a class="reference internal" href="#a-complete-example">A complete example</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Chapters</a><ul>
+      <li>Previous: <a href="macros.html" title="previous chapter">Macros</a></li>
+      <li>Next: <a href="os.html" title="next chapter">Interfacing with your OS</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/chapters/sockets.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, cl-cookbook contributors.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="../_sources/chapters/sockets.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

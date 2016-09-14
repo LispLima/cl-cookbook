@@ -1,0 +1,679 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Using Emacs as an IDE &#8212; The Common Lisp Cookbook 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="The Common Lisp Cookbook 0.1 documentation" href="../index.html" />
+    <link rel="up" title="Chapters" href="index.html" />
+    <link rel="next" title="Using the Win32 API" href="win32.html" />
+    <link rel="prev" title="Setting up Emacs on Windows or Mac" href="windows.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="using-emacs-as-an-ide">
+<h1>Using Emacs as an IDE<a class="headerlink" href="#using-emacs-as-an-ide" title="Permalink to this headline">¶</a></h1>
+<p>This page is meant to provide an introduction to using Emacs as a Lisp
+IDE. The key bindings used in the example code snippets assume an Emacs
+configuration similar to that provided by the
+<a class="reference external" href="https://github.com/LispCookbook/cl-cookbook/blob/master/.emacs">.emacs</a>
+file that is included as part of the <a class="reference external" href="windows.html">Setting up an IDE with Emacs on
+Windows or Mac OS X</a> page. If you use ILISP, the key
+bindings reflect the bindings that are present in the current CVS
+version of ILISP.</p>
+<div class="section" id="why-use-emacs">
+<h2>Why Use Emacs?<a class="headerlink" href="#why-use-emacs" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Emacs has fantastic support for working with Lisp code</li>
+<li>Not tying yourself into a single CL vendor&#8217;s editor</li>
+<li>Runs on virtually every OS and CL implementation</li>
+<li>Extensible</li>
+<li>Can be customized to do many common tasks</li>
+<li>Built-in support for different source code version control systems</li>
+<li>Vast number of add-on packages</li>
+<li>Emacs will probably always be around</li>
+<li>Emacs works well either with a mouse or without a mouse</li>
+<li>Emacs has a large user base with multiple newsgroups</li>
+<li>Benefits of using Emacs far outweigh the effort spent in learning it</li>
+</ul>
+</div>
+<div class="section" id="emacs-lisp-vs-common-lisp">
+<h2>Emacs Lisp vs Common Lisp<a class="headerlink" href="#emacs-lisp-vs-common-lisp" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Learning Emacs Lisp is useful and similar (but different from CL):<ul>
+<li>Dynamic scope is everywhere</li>
+<li>No package system</li>
+<li>There are no reader (or reader-related) functions</li>
+<li>Does not support all the types that are supported in CL</li>
+<li>Incomplete implementation of CLOS (with the add-on EIEIO package)</li>
+<li>Not all of CL is supported</li>
+<li>No numerical tower support</li>
+</ul>
+</li>
+<li>Some good Emacs Lisp learning resources:<ul>
+<li><a class="reference external" href="http://www.gnu.org/manual/emacs-lisp-intro/emacs-lisp-intro.html">An Introduction to Programming in Emacs
+Lisp</a></li>
+<li><a class="reference external" href="http://www.oreilly.com/catalog/gnuext/">Writing GNU Emacs
+Extensions</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="lisp-modes-in-emacs">
+<h2>Lisp Modes in Emacs<a class="headerlink" href="#lisp-modes-in-emacs" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>There are 4 different alternative major modes to use for CL
+programming:<ul>
+<li>Inferior Lisp Mode</li>
+<li><a class="reference external" href="http://sourceforge.net/projects/ilisp/">ILISP</a></li>
+<li><a class="reference external" href="http://www.franz.com/">ELI</a></li>
+<li><a class="reference external" href="http://common-lisp.net/project/slime/">SLIME</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="inferior-lisp-mode">
+<h2>Inferior Lisp Mode<a class="headerlink" href="#inferior-lisp-mode" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Pros:<ul>
+<li>Comes with Emacs</li>
+<li>Fast start-up, easy setup</li>
+<li>Supports many Lisp implementations</li>
+</ul>
+</li>
+<li>Cons:<ul>
+<li>Limited functionality (compared to ILISP and ELI)</li>
+<li>No multiprocessing support</li>
+<li>Some conflicts with comint mode</li>
+</ul>
+</li>
+<li>Setup:<ul>
+<li>Included with Emacs, so no separate installation required</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="ilisp">
+<h2>ILISP<a class="headerlink" href="#ilisp" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Pros:<ul>
+<li>Vastly superior to Inferior Lisp Mode in functionality</li>
+<li>Supports many Lisp implementations</li>
+</ul>
+</li>
+<li>Cons:<ul>
+<li>No multiprocessing support</li>
+<li>Some conflicts with comint mode</li>
+</ul>
+</li>
+<li>Setup:<ul>
+<li>A basic installation involves downloading the ILISP package from
+the web building it and configuring it</li>
+<li>Customization can be complex, useful to use instructions on <a class="reference external" href="windows.html">CL
+Cookbook</a> to get started</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="eli-emacs-lisp-interface">
+<h2>ELI: Emacs-Lisp Interface<a class="headerlink" href="#eli-emacs-lisp-interface" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Pros:<ul>
+<li>Supports multiprocessing (this is a big pro)</li>
+<li>Has commands that allow you to work with changed definitions</li>
+<li>Standard, consistent set of options for managing output</li>
+<li>Support for ACL and support from Franz is very good</li>
+</ul>
+</li>
+<li>Cons:<ul>
+<li>For CMUCL and SBCL, only limited functionality is available</li>
+<li>No built-in support for accessing either Franz or CL documentation</li>
+</ul>
+</li>
+<li>Setup:<ul>
+<li>Basic ELI setup is very straight-forward for ACL</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="slime-superior-lisp-interaction-mode-for-emacs">
+<h2>SLIME: Superior Lisp Interaction Mode for Emacs<a class="headerlink" href="#slime-superior-lisp-interaction-mode-for-emacs" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Pros:<ul>
+<li>Provides REPL which is hooked to implementation directly in Emacs</li>
+<li>Has integrated Common Lisp debugger with Emacs interface</li>
+<li>Interactive object-inspector in Emacs buffer</li>
+<li>Has own minor mode which enhances lisp-mode in many ways</li>
+<li>Supports every common Common Lisp implementation</li>
+<li>Readily available from MELPA</li>
+<li>Actively maintained</li>
+<li>Symbol completion</li>
+<li>Cross-referencing</li>
+<li>Can perform macroexpansions</li>
+</ul>
+</li>
+<li>Cons:<ul>
+<li>Installing SLIME without MELPA can be tricky</li>
+</ul>
+</li>
+<li>Setup:<ul>
+<li>Installing it from MELPA is straightforward. Search
+package-list-packages for &#8216;slime&#8217; and click to install. If MELPA
+is configured correctly, it will install itself and all
+dependencies.</li>
+<li>Run slime with M-x slime</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="lisp-modes-in-emacs-which-one-to-choose">
+<h2>Lisp Modes in Emacs - Which One to Choose?<a class="headerlink" href="#lisp-modes-in-emacs-which-one-to-choose" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>My Recommendation:<ul>
+<li>Inferior Lisp Mode for casual CL programming only</li>
+<li>ELI if you use ACL</li>
+<li>SLIME otherwise</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="working-with-lisp-code">
+<h2>Working with Lisp Code<a class="headerlink" href="#working-with-lisp-code" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Lisp Editing</li>
+<li>Evaluating and Compiling Lisp</li>
+<li>Searching Lisp Code</li>
+<li>Note: Example code assumes you are using a setup similar to what is
+defined in the <a class="reference external" href="https://github.com/LispCookbook/cl-cookbook/blob/master/.emacs">.emacs
+file</a>
+from the <a class="reference external" href="windows.html">CL Cookbook</a> site</li>
+</ul>
+</div>
+<div class="section" id="working-with-lisp-code-editing">
+<h2>Working with Lisp Code - Editing<a class="headerlink" href="#working-with-lisp-code-editing" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="forward-backward-up-down-movement-and-selection-by-s-expressions-s1-lisp">
+<h3>Forward/Backward/Up/Down movement and selection by s-expressions (<a class="reference external" href="s1.lisp">s1.lisp</a> )<a class="headerlink" href="#forward-backward-up-down-movement-and-selection-by-s-expressions-s1-lisp" title="Permalink to this headline">¶</a></h3>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span><span class="o">%</span> <span class="n">include</span> <span class="n">code</span><span class="o">/</span><span class="n">s1</span><span class="o">.</span><span class="n">lisp</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="deleting-s-expressions-s2-lisp">
+<h3>Deleting s-expressions ( <a class="reference external" href="s2.lisp">s2.lisp</a> )<a class="headerlink" href="#deleting-s-expressions-s2-lisp" title="Permalink to this headline">¶</a></h3>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span><span class="o">%</span> <span class="n">include</span> <span class="n">code</span><span class="o">/</span><span class="n">s2</span><span class="o">.</span><span class="n">lisp</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="indenting-s-expressions-s3-lisp">
+<h3>Indenting s-expressions ( <a class="reference external" href="s3.lisp">s3.lisp</a> )<a class="headerlink" href="#indenting-s-expressions-s3-lisp" title="Permalink to this headline">¶</a></h3>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span><span class="o">%</span> <span class="n">include</span> <span class="n">code</span><span class="o">/</span><span class="n">s3</span><span class="o">.</span><span class="n">lisp</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="support-for-parenthesis-s4-lisp">
+<h3>Support for parenthesis ( <a class="reference external" href="s4.lisp">s4.lisp</a> )<a class="headerlink" href="#support-for-parenthesis-s4-lisp" title="Permalink to this headline">¶</a></h3>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span><span class="o">%</span> <span class="n">include</span> <span class="n">code</span><span class="o">/</span><span class="n">s4</span><span class="o">.</span><span class="n">lisp</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="automatic-code-indentation-cl-vs-elisp-s5-lisp">
+<h3>Automatic code indentation (CL vs Elisp) ( <a class="reference external" href="s5.lisp">s5.lisp</a> )<a class="headerlink" href="#automatic-code-indentation-cl-vs-elisp-s5-lisp" title="Permalink to this headline">¶</a></h3>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span><span class="o">%</span> <span class="n">include</span> <span class="n">code</span><span class="o">/</span><span class="n">s5</span><span class="o">.</span><span class="n">lisp</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="close-all-parenthesis-s6-lisp">
+<h3>Close all parenthesis ( <a class="reference external" href="s6.lisp">s6.lisp</a> )<a class="headerlink" href="#close-all-parenthesis-s6-lisp" title="Permalink to this headline">¶</a></h3>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span><span class="o">%</span> <span class="n">include</span> <span class="n">code</span><span class="o">/</span><span class="n">s6</span><span class="o">.</span><span class="n">lisp</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="code-completion-s7-lisp">
+<h3>Code completion ( <a class="reference external" href="s7.lisp">s7.lisp</a> )<a class="headerlink" href="#code-completion-s7-lisp" title="Permalink to this headline">¶</a></h3>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span><span class="o">%</span> <span class="n">include</span> <span class="n">code</span><span class="o">/</span><span class="n">s7</span><span class="o">.</span><span class="n">lisp</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="hiding-showing-code-s8-lisp">
+<h3>Hiding/showing code ( <a class="reference external" href="s8.lisp">s8.lisp</a> )<a class="headerlink" href="#hiding-showing-code-s8-lisp" title="Permalink to this headline">¶</a></h3>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span><span class="o">%</span> <span class="n">include</span> <span class="n">code</span><span class="o">/</span><span class="n">s8</span><span class="o">.</span><span class="n">lisp</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="comments-s9-lisp">
+<h3>Comments ( <a class="reference external" href="s9.lisp">s9.lisp</a> )<a class="headerlink" href="#comments-s9-lisp" title="Permalink to this headline">¶</a></h3>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span><span class="o">%</span> <span class="n">include</span> <span class="n">code</span><span class="o">/</span><span class="n">s9</span><span class="o">.</span><span class="n">lisp</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="working-with-lisp-code-evaluating-and-compiling-lisp">
+<h2>Working with Lisp Code - Evaluating and Compiling Lisp<a class="headerlink" href="#working-with-lisp-code-evaluating-and-compiling-lisp" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>buffer</li>
+<li>region</li>
+<li>defun</li>
+<li>sexp (previous/next)</li>
+<li>DWIM</li>
+<li>Example code ( <a class="reference external" href="s11.lisp">s11.lisp</a> )</li>
+</ul>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span><span class="o">%</span> <span class="n">include</span> <span class="n">code</span><span class="o">/</span><span class="n">s11</span><span class="o">.</span><span class="n">lisp</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="working-with-lisp-code-searching-lisp-code">
+<h2>Working with Lisp Code - Searching Lisp Code<a class="headerlink" href="#working-with-lisp-code-searching-lisp-code" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="standard-emacs-text-search-isearch-forward-backward-regexp-searches-search-replace-s12-lisp">
+<h3>Standard Emacs text search (isearch forward/backward, regexp searches, search/replace) ( <a class="reference external" href="s12.lisp">s12.lisp</a> )<a class="headerlink" href="#standard-emacs-text-search-isearch-forward-backward-regexp-searches-search-replace-s12-lisp" title="Permalink to this headline">¶</a></h3>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span><span class="o">%</span> <span class="n">include</span> <span class="n">code</span><span class="o">/</span><span class="n">s12</span><span class="o">.</span><span class="n">lisp</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="finding-occurances-occur-grep-s13-lisp">
+<h3>Finding occurances (occur, grep) ( <a class="reference external" href="s13.lisp">s13.lisp</a> )<a class="headerlink" href="#finding-occurances-occur-grep-s13-lisp" title="Permalink to this headline">¶</a></h3>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span><span class="o">%</span> <span class="n">include</span> <span class="n">code</span><span class="o">/</span><span class="n">s13</span><span class="o">.</span><span class="n">lisp</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="lisp-symbols-in-current-source-imenu-s14-lisp">
+<h3>Lisp symbols in current source (imenu) ( <a class="reference external" href="s14.lisp">s14.lisp</a> )<a class="headerlink" href="#lisp-symbols-in-current-source-imenu-s14-lisp" title="Permalink to this headline">¶</a></h3>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span><span class="o">%</span> <span class="n">include</span> <span class="n">code</span><span class="o">/</span><span class="n">s14</span><span class="o">.</span><span class="n">lisp</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="lisp-symbols-using-lisp-s15-lisp">
+<h3>Lisp symbols using Lisp ( <a class="reference external" href="s15.lisp">s15.lisp</a> )<a class="headerlink" href="#lisp-symbols-using-lisp-s15-lisp" title="Permalink to this headline">¶</a></h3>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span><span class="o">%</span> <span class="n">include</span> <span class="n">code</span><span class="o">/</span><span class="n">s15</span><span class="o">.</span><span class="n">lisp</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="lisp-symbols-in-multiple-source-files-etags-s16-lisp">
+<h3>Lisp symbols in multiple source files (etags) ( <a class="reference external" href="s16.lisp">s16.lisp</a> )<a class="headerlink" href="#lisp-symbols-in-multiple-source-files-etags-s16-lisp" title="Permalink to this headline">¶</a></h3>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span><span class="o">%</span> <span class="n">include</span> <span class="n">code</span><span class="o">/</span><span class="n">s16</span><span class="o">.</span><span class="n">lisp</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="lisp-symbols-using-ecb-s17-lisp">
+<h3>Lisp symbols using <a class="reference external" href="http://ecb.sourceforge.net/">ECB</a> ( <a class="reference external" href="s17.lisp">s17.lisp</a> )<a class="headerlink" href="#lisp-symbols-using-ecb-s17-lisp" title="Permalink to this headline">¶</a></h3>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span><span class="o">%</span> <span class="n">include</span> <span class="n">code</span><span class="o">/</span><span class="n">s17</span><span class="o">.</span><span class="n">lisp</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="lisp-documentation-in-emacs-learning-about-lisp-symbols">
+<h2>Lisp Documentation in Emacs - Learning About Lisp Symbols<a class="headerlink" href="#lisp-documentation-in-emacs-learning-about-lisp-symbols" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="argument-lists-s18-lisp">
+<h3>Argument lists ( <a class="reference external" href="s18.lisp">s18.lisp</a> )<a class="headerlink" href="#argument-lists-s18-lisp" title="Permalink to this headline">¶</a></h3>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span><span class="o">%</span> <span class="n">include</span> <span class="n">code</span><span class="o">/</span><span class="n">s18</span><span class="o">.</span><span class="n">lisp</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="documentation-s19-lisp">
+<h3>Documentation ( <a class="reference external" href="s19.lisp">s19.lisp</a> )<a class="headerlink" href="#documentation-s19-lisp" title="Permalink to this headline">¶</a></h3>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span><span class="o">%</span> <span class="n">include</span> <span class="n">code</span><span class="o">/</span><span class="n">s19</span><span class="o">.</span><span class="n">lisp</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="describe-s20-lisp">
+<h3>Describe ( <a class="reference external" href="s20.lisp">s20.lisp</a> )<a class="headerlink" href="#describe-s20-lisp" title="Permalink to this headline">¶</a></h3>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span><span class="o">%</span> <span class="n">include</span> <span class="n">code</span><span class="o">/</span><span class="n">s20</span><span class="o">.</span><span class="n">lisp</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="inspect-s21-lisp">
+<h3>Inspect ( <a class="reference external" href="s21.lisp">s21.lisp</a> )<a class="headerlink" href="#inspect-s21-lisp" title="Permalink to this headline">¶</a></h3>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span><span class="o">%</span> <span class="n">include</span> <span class="n">code</span><span class="o">/</span><span class="n">s21</span><span class="o">.</span><span class="n">lisp</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="macroexpand-s22-lisp">
+<h3>Macroexpand ( <a class="reference external" href="s22.lisp">s22.lisp</a> )<a class="headerlink" href="#macroexpand-s22-lisp" title="Permalink to this headline">¶</a></h3>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span><span class="o">%</span> <span class="n">include</span> <span class="n">code</span><span class="o">/</span><span class="n">s22</span><span class="o">.</span><span class="n">lisp</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="lisp-documentation-in-emacs-lisp-documentation">
+<h2>Lisp Documentation in Emacs - Lisp Documentation<a class="headerlink" href="#lisp-documentation-in-emacs-lisp-documentation" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><a class="reference external" href="ftp://ftp.lispworks.com/pub/software_tools/documentation/HyperSpec-7-0.tar.gz">CL
+HyperSpec</a></li>
+<li><a class="reference external" href="http://www-2.cs.cmu.edu/afs/cs.cmu.edu/project/ai-repository/ai/lang/lisp/doc/cltl/cltl_ht.tgz">CLtL2</a></li>
+<li><a class="reference external" href="http://www.franz.com/support/documentation/">ACL Documenation</a></li>
+<li>Example code ( <a class="reference external" href="s23.lisp">s23.lisp</a> )</li>
+</ul>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span><span class="o">%</span> <span class="n">include</span> <span class="n">code</span><span class="o">/</span><span class="n">s23</span><span class="o">.</span><span class="n">lisp</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="miscellaneous">
+<h2>Miscellaneous<a class="headerlink" href="#miscellaneous" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="lisp-listener-s24-lisp">
+<h3>Lisp Listener ( <a class="reference external" href="s24.lisp">s24.lisp</a> )<a class="headerlink" href="#lisp-listener-s24-lisp" title="Permalink to this headline">¶</a></h3>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span><span class="o">%</span> <span class="n">include</span> <span class="n">code</span><span class="o">/</span><span class="n">s24</span><span class="o">.</span><span class="n">lisp</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="project-management">
+<h3>Project Management<a class="headerlink" href="#project-management" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><a class="reference external" href="http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/cclan/asdf/">asdf</a></li>
+<li><a class="reference external" href="http://sourceforge.net/projects/clocc">mk-defsystem</a></li>
+</ul>
+</div>
+<div class="section" id="debugging">
+<h3>Debugging<a class="headerlink" href="#debugging" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>ILISP has a standarized set of key bindings for debugging across
+implementations (&#8220;C-c C-b C-h&#8221; for a list of them).</li>
+</ul>
+</div>
+<div class="section" id="comparing-versions-of-code-s10-lisp-s10a-lisp-s10b-lisp">
+<h3>Comparing versions of code ( <a class="reference external" href="s10.lisp">s10.lisp</a> , <a class="reference external" href="s10a.lisp">s10a.lisp</a> , <a class="reference external" href="s10b.lisp">s10b.lisp</a> )<a class="headerlink" href="#comparing-versions-of-code-s10-lisp-s10a-lisp-s10b-lisp" title="Permalink to this headline">¶</a></h3>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span><span class="o">%</span> <span class="n">include</span> <span class="n">code</span><span class="o">/</span><span class="n">s10</span><span class="o">.</span><span class="n">lisp</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="questions-answers">
+<h2>Questions/Answers<a class="headerlink" href="#questions-answers" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="controlling-evaluation-output">
+<h3>Controlling evaluation output<a class="headerlink" href="#controlling-evaluation-output" title="Permalink to this headline">¶</a></h3>
+<p><em>I get irritated by ELI&#8217;s switching to an output buffer when I
+evaluate a sexp in a Lisp source buffer.</em></p>
+<div class="line-block">
+<div class="line">You can control where ELI output goes to by setting the</div>
+<div class="line"><code class="docutils literal"><span class="pre">fi:pop-up-temp-window-behavior</span></code> variable. Alternatively, you can
+use</div>
+<div class="line">my copy-eval-dwim-lisp function (bound to &#8220;C-c x&#8221;). It copies Lisp</div>
+<div class="line">code from the source buffer to the listener buffer and evaluates it</div>
+<div class="line">there. Both buffers stay visible and focus remains in the source</div>
+<div class="line">buffer. The code works for ILISP, ELI and Emacs Lisp.</div>
+</div>
+</div>
+<div class="section" id="viewing-hyperspec-from-within-emacs">
+<h3>Viewing HyperSpec from within Emacs<a class="headerlink" href="#viewing-hyperspec-from-within-emacs" title="Permalink to this headline">¶</a></h3>
+<p><em>I like having access to the HyperSpec when I&#8217;m in Emacs, but why does
+it have to use an external browser? Why can&#8217;t I just see the HyperSpec
+in Emacs?</em></p>
+<div class="line-block">
+<div class="line">If you use the Emacs add-on package W3 (or W3M which provides</div>
+<div class="line">similar functionality), you can display HTML pages inside of</div>
+<div class="line">Emacs. Once you have W3 and the HyperSpec both installed, use code</div>
+<div class="line">similar to the following to access the HyperSpec from the Shift-F1</div>
+<div class="line">key:</div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="k">global</span><span class="o">-</span><span class="nb">set</span><span class="o">-</span><span class="n">key</span> <span class="p">[(</span><span class="n">shift</span> <span class="n">f1</span><span class="p">)]</span>
+                <span class="s1">&#39;(lambda ()</span>
+                  <span class="p">(</span><span class="n">interactive</span><span class="p">)</span>
+                  <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">browse</span><span class="o">-</span><span class="n">url</span><span class="o">-</span><span class="n">browser</span><span class="o">-</span><span class="n">function</span>
+                         <span class="s1">&#39;browse-url-w3)</span>
+                        <span class="p">(</span><span class="n">common</span><span class="o">-</span><span class="n">lisp</span><span class="o">-</span><span class="n">hyperspec</span><span class="o">-</span><span class="n">root</span>
+                         <span class="s2">&quot;file://c:/home/docs/Hyperspec/&quot;</span><span class="p">)</span>
+                        <span class="p">(</span><span class="n">common</span><span class="o">-</span><span class="n">lisp</span><span class="o">-</span><span class="n">hyperspec</span><span class="o">-</span><span class="n">symbol</span><span class="o">-</span><span class="n">table</span>
+                         <span class="p">(</span><span class="n">concat</span> <span class="n">common</span><span class="o">-</span><span class="n">lisp</span><span class="o">-</span><span class="n">hyperspec</span><span class="o">-</span><span class="n">root</span>
+                                 <span class="s2">&quot;Data/Map_Sym.txt&quot;</span><span class="p">))</span>
+                        <span class="p">(</span><span class="n">hyperspec</span><span class="o">-</span><span class="n">prog</span>
+                         <span class="s2">&quot;c:/home/site/ilisp/extra/hyperspec&quot;</span><span class="p">))</span>
+                    <span class="p">(</span><span class="n">load</span><span class="o">-</span><span class="n">library</span> <span class="n">hyperspec</span><span class="o">-</span><span class="n">prog</span><span class="p">)</span>
+                    <span class="p">(</span><span class="n">common</span><span class="o">-</span><span class="n">lisp</span><span class="o">-</span><span class="n">hyperspec</span>
+                     <span class="p">(</span><span class="n">thing</span><span class="o">-</span><span class="n">at</span><span class="o">-</span><span class="n">point</span> <span class="s1">&#39;symbol)))))</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line">Note that the &#8220;let&#8221; in the above code sets the</div>
+<div class="line">browse-url-browser-function to W3 for just the HyperSpec. You can</div>
+<div class="line">either set the variable globally (if you want to always use W3 or some</div>
+<div class="line">other specific browser) or locally (if you want to use a specific</div>
+<div class="line">browser and not the default one).</div>
+</div>
+</div>
+<div class="section" id="standard-shell">
+<h3>Standard shell<a class="headerlink" href="#standard-shell" title="Permalink to this headline">¶</a></h3>
+<p><em>I switch between UNIX® and Windows environments and, although
+Emacs makes this switch a lot easier, I find it inconvenient having to
+use different Shell environments on different operating systems.</em></p>
+<div class="line-block">
+<div class="line">On Windows, the <a class="reference external" href="http://www.cygwin.com/">Cygwin tools</a> provide a</div>
+<div class="line">lot of the same tools that are available under UNIX® as well as a BASH</div>
+<div class="line">shell. Alternatively, you might want to consider using eshell, a shell</div>
+<div class="line">written in Emacs Lisp that comes as a standard feature in later</div>
+<div class="line">releases of Emacs. You can access eshell by pressing &#8220;F12&#8221;.</div>
+</div>
+</div>
+<div class="section" id="using-acl-tools-with-emacs">
+<h3>Using ACL tools with Emacs<a class="headerlink" href="#using-acl-tools-with-emacs" title="Permalink to this headline">¶</a></h3>
+<p><em>I would like to use Emacs with Franz&#8217;s ACL but find that I use the
+Franz tools so much that I can&#8217;t afford to not load their IDE.</em></p>
+<div class="line-block">
+<div class="line">It doesn&#8217;t have to be an either/or decision. On Windows, Franz</div>
+<div class="line">allows you to specify (under Options) that Emacs is to be the default</div>
+<div class="line">editor in place of their built-in editor. On UNIX®, Emacs also works</div>
+<div class="line">very well together with the Franz tools.*</div>
+</div>
+</div>
+<div class="section" id="windows-style-cut-copy-paste">
+<h3>Windows-style cut/copy/paste<a class="headerlink" href="#windows-style-cut-copy-paste" title="Permalink to this headline">¶</a></h3>
+<p><em>I want to use Emacs on a Windows machine. Unfortunately, I have
+the Windows cut/copy/paste key bindings burned into my fingertips and
+would find it very difficult to switch back and forth between the
+Windows standard for these shortcut keys and the Emacs standard.</em></p>
+<div class="line-block">
+<div class="line">Luckily, you don&#8217;t have to! Download
+<a class="reference external" href="http://www.emacswiki.org/cgi-bin/wiki.pl?CuaMode">cua.el</a> and you
+can continue to use the Windows</div>
+<div class="line">defaults. In fact, you may find that the following commands in your
+.emacs file will make Emacs more</div>
+<div class="line">Windows-like:</div>
+</div>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">;;</span> <span class="n">Windows</span><span class="o">-</span><span class="n">like</span> <span class="n">mouse</span><span class="o">/</span><span class="n">arrow</span> <span class="n">movement</span> <span class="o">&amp;</span> <span class="n">selection</span> <span class="p">(</span><span class="n">pc</span><span class="o">-</span><span class="n">selection</span><span class="o">-</span><span class="n">mode</span><span class="p">)</span>
+<span class="p">(</span><span class="n">delete</span><span class="o">-</span><span class="n">selection</span><span class="o">-</span><span class="n">mode</span> <span class="n">t</span><span class="p">)</span>
+<span class="p">;;</span> <span class="n">C</span><span class="o">-</span><span class="n">z</span><span class="o">=</span><span class="n">Undo</span><span class="p">,</span> <span class="n">C</span><span class="o">-</span><span class="n">c</span><span class="o">=</span><span class="n">Copy</span><span class="p">,</span> <span class="n">C</span><span class="o">-</span><span class="n">x</span><span class="o">=</span><span class="n">Cut</span><span class="p">,</span> <span class="n">C</span><span class="o">-</span><span class="n">v</span><span class="o">=</span><span class="n">Paste</span> <span class="p">(</span><span class="n">needs</span> <span class="n">cua</span><span class="o">.</span><span class="n">el</span><span class="p">)</span>
+<span class="p">(</span><span class="n">require</span> <span class="s1">&#39;cua) (CUA-mode t)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="simplified-emacs-setup">
+<h3>Simplified Emacs setup<a class="headerlink" href="#simplified-emacs-setup" title="Permalink to this headline">¶</a></h3>
+<p><em>There was a lot of Emacs Lisp code presented in this paper. Do I
+really have to type in all this stuff to get started with Emacs and
+Lisp?</em></p>
+<div class="line-block">
+<div class="line">No, there is a</div>
+<div class="line"><a class="reference external" href="https://github.com/LispCookbook/cl-cookbook/blob/master/.emacs">sample .emacs
+file</a></div>
+<div class="line">that can be used to get started. It contains all of the configurations</div>
+<div class="line">that have been described in this page and (hopefully) should work with</div>
+<div class="line">some minor tweaking. See the</div>
+<div class="line"><a class="reference external" href="http://lispcookbook.github.io/cl-cookbook/">CL-Cookbook</a> page on</div>
+<div class="line">&#8220;<a class="reference external" href="windows.html">Setting up an IDE with Emacs on Windows or Mac OS
+X</a>&#8221;.</div>
+</div>
+</div>
+<div class="section" id="alternatives-to-emacs-for-cl-programming">
+<h3>Alternatives to Emacs for CL programming<a class="headerlink" href="#alternatives-to-emacs-for-cl-programming" title="Permalink to this headline">¶</a></h3>
+<p><em>I&#8217;ve tried out Emacs and I just can&#8217;t get used to it. What other
+Lisp-friendly alternative are there?</em></p>
+<ul class="simple">
+<li>The <a class="reference external" href="http://www.franz.com/">Franz</a>,
+<a class="reference external" href="http://www.lispworks.com/">LispWorks</a>,
+<a class="reference external" href="http://www.cormanlisp.com/">Corman</a>, and
+<a class="reference external" href="http://www.digitool.com/">Digitool</a> commercial Lisp
+offerings all have Lisp-aware editors.</li>
+<li>CMUCL has <a class="reference external" href="http://www.cons.org/cmucl/hemlock/index.html">Hemlock</a>,
+which is also <a class="reference external" href="http://www.stud.uni-karlsruhe.de/~unk6/hemlock/">being adapted for other
+Lisps</a>.</li>
+<li><a class="reference external" href="http://www.xemacs.org/">XEmacs</a> is an alternative to GNU Emacs
+that works with many of the same Elisp libraries. Some people prefer
+it to GNU Emacs.</li>
+<li>Vim can be used to edit Lisp code. An
+<a class="reference external" href="http://lisp-p.org/15-vim/">article</a> by Larry Clapp gives some
+pointers on how to use Vim with Lisp.</li>
+<li><a class="reference external" href="http://jabberwocky.sourceforge.net/">Jabberwocky</a> is a Lisp
+editor/debugger written in Java.</li>
+<li>Lastly, for true masochists, notepad on Windows or ed on UNIX® can
+also be used. ;-)</li>
+</ul>
+</div>
+</div>
+<div class="section" id="disclaimer">
+<h2>Disclaimer<a class="headerlink" href="#disclaimer" title="Permalink to this headline">¶</a></h2>
+<p>The original material on this page was originally presented at the <a class="reference external" href="http://www.international-lisp-conference.org/index.html">ILC
+2003
+conference</a>.
+A paper with more in-depth coverage of some of the material on this page
+can be found on <a class="reference external" href="https://web.archive.org/web/20040213103100/http://home.comcast.net/~b.clementson/ilc_2003.htm">Bill Clementson&#8217;s
+ILC2003</a>
+page, which is now archived.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Using Emacs as an IDE</a><ul>
+<li><a class="reference internal" href="#why-use-emacs">Why Use Emacs?</a></li>
+<li><a class="reference internal" href="#emacs-lisp-vs-common-lisp">Emacs Lisp vs Common Lisp</a></li>
+<li><a class="reference internal" href="#lisp-modes-in-emacs">Lisp Modes in Emacs</a></li>
+<li><a class="reference internal" href="#inferior-lisp-mode">Inferior Lisp Mode</a></li>
+<li><a class="reference internal" href="#ilisp">ILISP</a></li>
+<li><a class="reference internal" href="#eli-emacs-lisp-interface">ELI: Emacs-Lisp Interface</a></li>
+<li><a class="reference internal" href="#slime-superior-lisp-interaction-mode-for-emacs">SLIME: Superior Lisp Interaction Mode for Emacs</a></li>
+<li><a class="reference internal" href="#lisp-modes-in-emacs-which-one-to-choose">Lisp Modes in Emacs - Which One to Choose?</a></li>
+<li><a class="reference internal" href="#working-with-lisp-code">Working with Lisp Code</a></li>
+<li><a class="reference internal" href="#working-with-lisp-code-editing">Working with Lisp Code - Editing</a><ul>
+<li><a class="reference internal" href="#forward-backward-up-down-movement-and-selection-by-s-expressions-s1-lisp">Forward/Backward/Up/Down movement and selection by s-expressions (s1.lisp )</a></li>
+<li><a class="reference internal" href="#deleting-s-expressions-s2-lisp">Deleting s-expressions ( s2.lisp )</a></li>
+<li><a class="reference internal" href="#indenting-s-expressions-s3-lisp">Indenting s-expressions ( s3.lisp )</a></li>
+<li><a class="reference internal" href="#support-for-parenthesis-s4-lisp">Support for parenthesis ( s4.lisp )</a></li>
+<li><a class="reference internal" href="#automatic-code-indentation-cl-vs-elisp-s5-lisp">Automatic code indentation (CL vs Elisp) ( s5.lisp )</a></li>
+<li><a class="reference internal" href="#close-all-parenthesis-s6-lisp">Close all parenthesis ( s6.lisp )</a></li>
+<li><a class="reference internal" href="#code-completion-s7-lisp">Code completion ( s7.lisp )</a></li>
+<li><a class="reference internal" href="#hiding-showing-code-s8-lisp">Hiding/showing code ( s8.lisp )</a></li>
+<li><a class="reference internal" href="#comments-s9-lisp">Comments ( s9.lisp )</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#working-with-lisp-code-evaluating-and-compiling-lisp">Working with Lisp Code - Evaluating and Compiling Lisp</a></li>
+<li><a class="reference internal" href="#working-with-lisp-code-searching-lisp-code">Working with Lisp Code - Searching Lisp Code</a><ul>
+<li><a class="reference internal" href="#standard-emacs-text-search-isearch-forward-backward-regexp-searches-search-replace-s12-lisp">Standard Emacs text search (isearch forward/backward, regexp searches, search/replace) ( s12.lisp )</a></li>
+<li><a class="reference internal" href="#finding-occurances-occur-grep-s13-lisp">Finding occurances (occur, grep) ( s13.lisp )</a></li>
+<li><a class="reference internal" href="#lisp-symbols-in-current-source-imenu-s14-lisp">Lisp symbols in current source (imenu) ( s14.lisp )</a></li>
+<li><a class="reference internal" href="#lisp-symbols-using-lisp-s15-lisp">Lisp symbols using Lisp ( s15.lisp )</a></li>
+<li><a class="reference internal" href="#lisp-symbols-in-multiple-source-files-etags-s16-lisp">Lisp symbols in multiple source files (etags) ( s16.lisp )</a></li>
+<li><a class="reference internal" href="#lisp-symbols-using-ecb-s17-lisp">Lisp symbols using ECB ( s17.lisp )</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#lisp-documentation-in-emacs-learning-about-lisp-symbols">Lisp Documentation in Emacs - Learning About Lisp Symbols</a><ul>
+<li><a class="reference internal" href="#argument-lists-s18-lisp">Argument lists ( s18.lisp )</a></li>
+<li><a class="reference internal" href="#documentation-s19-lisp">Documentation ( s19.lisp )</a></li>
+<li><a class="reference internal" href="#describe-s20-lisp">Describe ( s20.lisp )</a></li>
+<li><a class="reference internal" href="#inspect-s21-lisp">Inspect ( s21.lisp )</a></li>
+<li><a class="reference internal" href="#macroexpand-s22-lisp">Macroexpand ( s22.lisp )</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#lisp-documentation-in-emacs-lisp-documentation">Lisp Documentation in Emacs - Lisp Documentation</a></li>
+<li><a class="reference internal" href="#miscellaneous">Miscellaneous</a><ul>
+<li><a class="reference internal" href="#lisp-listener-s24-lisp">Lisp Listener ( s24.lisp )</a></li>
+<li><a class="reference internal" href="#project-management">Project Management</a></li>
+<li><a class="reference internal" href="#debugging">Debugging</a></li>
+<li><a class="reference internal" href="#comparing-versions-of-code-s10-lisp-s10a-lisp-s10b-lisp">Comparing versions of code ( s10.lisp , s10a.lisp , s10b.lisp )</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#questions-answers">Questions/Answers</a><ul>
+<li><a class="reference internal" href="#controlling-evaluation-output">Controlling evaluation output</a></li>
+<li><a class="reference internal" href="#viewing-hyperspec-from-within-emacs">Viewing HyperSpec from within Emacs</a></li>
+<li><a class="reference internal" href="#standard-shell">Standard shell</a></li>
+<li><a class="reference internal" href="#using-acl-tools-with-emacs">Using ACL tools with Emacs</a></li>
+<li><a class="reference internal" href="#windows-style-cut-copy-paste">Windows-style cut/copy/paste</a></li>
+<li><a class="reference internal" href="#simplified-emacs-setup">Simplified Emacs setup</a></li>
+<li><a class="reference internal" href="#alternatives-to-emacs-for-cl-programming">Alternatives to Emacs for CL programming</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#disclaimer">Disclaimer</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Chapters</a><ul>
+      <li>Previous: <a href="windows.html" title="previous chapter">Setting up Emacs on Windows or Mac</a></li>
+      <li>Next: <a href="win32.html" title="next chapter">Using the Win32 API</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/chapters/emacs-ide.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, cl-cookbook contributors.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="../_sources/chapters/emacs-ide.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

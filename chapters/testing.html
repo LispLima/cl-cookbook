@@ -1,0 +1,256 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Testing &#8212; The Common Lisp Cookbook 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="The Common Lisp Cookbook 0.1 documentation" href="../index.html" />
+    <link rel="up" title="Chapters" href="index.html" />
+    <link rel="next" title="Miscellaneous" href="misc.html" />
+    <link rel="prev" title="Using the Win32 API" href="win32.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="testing">
+<h1>Testing<a class="headerlink" href="#testing" title="Permalink to this headline">¶</a></h1>
+<p>So you want to easily test the code your writing? The following recipes
+cover how to write automated tests. We will use an established and
+well-designed regression testing framework called &#8216;RT&#8217;. In the last
+recipe we will discuss other options.</p>
+<div class="section" id="install-rt">
+<h2>Install RT<a class="headerlink" href="#install-rt" title="Permalink to this headline">¶</a></h2>
+<p>You can learn more about Dr. Richard C. Waters&#8217; <a class="reference external" href="http://www.cliki.net/RT">RT on
+CLiki</a>. We will get up and running quickly,
+by doing a standard asdf-install which will pull down Kevin Rosenburg&#8217;s
+packaged version. <strong>Note: sbcl users can simply use sb-rt which is
+prebundled with their system</strong>.</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">;;</span> <span class="n">Install</span> <span class="n">rt</span> <span class="kn">from</span> <span class="nn">cliki</span>
+<span class="p">(</span><span class="n">asdf</span><span class="o">-</span><span class="n">install</span><span class="p">:</span><span class="n">install</span> <span class="p">:</span><span class="n">rt</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This command downloads and installs the RT package. This step only needs
+to be done once. If you just did the install then you can skip the next
+step.</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">asdf</span><span class="p">:</span><span class="n">operate</span> <span class="s1">&#39;asdf:load-op :rt)</span>
+</pre></div>
+</div>
+<p>This line loads the RT package into your Lisp image.</p>
+</div>
+<div class="section" id="write-a-test">
+<h2>Write a Test<a class="headerlink" href="#write-a-test" title="Permalink to this headline">¶</a></h2>
+<p>Normally we would be writing tests against our own code, but for clarity
+let&#8217;s write some tests against operations from the <a class="reference external" href="strings.html#substrings">String
+recipes</a> sections.</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">;</span> <span class="n">using</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="n">string</span><span class="o">*</span> <span class="kn">from</span> <span class="nn">the</span> <span class="n">substrings</span> <span class="n">recipe</span> <span class="s2">&quot;Groucho Marx&quot;</span>
+<span class="p">(</span><span class="n">rt</span><span class="p">:</span><span class="n">deftest</span> <span class="n">test</span><span class="o">-</span><span class="n">subseq</span><span class="o">-</span><span class="n">one</span><span class="o">-</span><span class="n">index</span> <span class="p">(</span><span class="n">subseq</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="n">string</span><span class="o">*</span> <span class="mi">8</span><span class="p">)</span> <span class="s2">&quot;Marx&quot;</span><span class="p">)</span>
+<span class="n">TEST</span><span class="o">-</span><span class="n">SUBSEQ</span><span class="o">-</span><span class="n">ONE</span><span class="o">-</span><span class="n">INDEX</span>
+</pre></div>
+</div>
+<p>That substring recipe told us that we could expect &#8220;Marx&#8221; if we ask for
+substring to 8. We use the deftest macro, naming our test
+<code class="docutils literal"><span class="pre">test-subseq-one-index</span></code>. In the body of the test we specify the code
+we want to test, followed by the expected results. The code
+<code class="docutils literal"><span class="pre">(subseq</span> <span class="pre">*my-string*</span> <span class="pre">8)</span></code>is evaluated and the number of values return
+must match the number of expected results. In this example their is only
+one value returned and it matches the one expected value <code class="docutils literal"><span class="pre">&quot;Marx&quot;</span></code>. For
+each actual, expected pair, they must be <strong>``equal``</strong>. Note that the
+REPL prints the test name and under the covers this test is added to the
+current test suite.</p>
+</div>
+<div class="section" id="run-a-test">
+<h2>Run a Test<a class="headerlink" href="#run-a-test" title="Permalink to this headline">¶</a></h2>
+<p>We have defined a test, let&#8217;s run it.</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">rt</span><span class="p">:</span><span class="n">do</span><span class="o">-</span><span class="n">test</span> <span class="s1">&#39;test-subseq-one-index)</span>
+<span class="n">TEST</span><span class="o">-</span><span class="n">SUBSEQ</span><span class="o">-</span><span class="n">ONE</span><span class="o">-</span><span class="n">INDEX</span>
+</pre></div>
+</div>
+<p>We have RT test our assertion for how <code class="docutils literal"><span class="pre">subseq</span></code> should behave. The test
+passes, so no errors are reported. <code class="docutils literal"><span class="pre">do-test</span></code> simply returns the name
+of the test. In the next example we will see how RT behaves with failing
+tests.</p>
+<p>Tests can be run one at a time with <code class="docutils literal"><span class="pre">do-test</span></code> as you incrementally
+build up your system, or they can be run all at once with <code class="docutils literal"><span class="pre">do-tests</span></code>.
+For our second test, let&#8217;s define and run a failing test.</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">rt</span><span class="p">:</span><span class="n">deftest</span> <span class="n">test</span><span class="o">-</span><span class="n">subseq</span><span class="o">-</span><span class="n">two</span><span class="o">-</span><span class="n">indicies</span> <span class="p">(</span><span class="n">subseq</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="n">string</span><span class="o">*</span> <span class="mi">0</span> <span class="mi">7</span><span class="p">)</span> <span class="s2">&quot;Xroucho&quot;</span><span class="p">)</span>
+<span class="n">TEST</span><span class="o">-</span><span class="n">SUBSEQ</span><span class="o">-</span><span class="n">TWO</span><span class="o">-</span><span class="n">INDICIES</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">rt</span><span class="p">:</span><span class="n">do</span><span class="o">-</span><span class="n">test</span> <span class="s1">&#39;test-subseq-two-indicies)</span>
+<span class="n">Test</span> <span class="n">TEST</span><span class="o">-</span><span class="n">SUBSEQ</span><span class="o">-</span><span class="n">TWO</span><span class="o">-</span><span class="n">INDICIES</span> <span class="n">failed</span>
+<span class="n">Form</span><span class="p">:</span> <span class="p">(</span><span class="n">SUBSEQ</span> <span class="o">*</span><span class="n">MY</span><span class="o">-</span><span class="n">STRING</span><span class="o">*</span> <span class="mi">0</span> <span class="mi">7</span><span class="p">)</span>
+<span class="n">Expected</span> <span class="n">value</span><span class="p">:</span> <span class="s2">&quot;Xroucho&quot;</span>
+<span class="n">Actual</span> <span class="n">value</span><span class="p">:</span> <span class="s2">&quot;Groucho&quot;</span><span class="o">.</span>
+<span class="n">NIL</span>
+</pre></div>
+</div>
+<p>We purposely provide an expected value which is wrong, so that the test
+will fail. Notice RT describes a failed test to standard output. Also
+the <code class="docutils literal"><span class="pre">do-test</span></code> function returns <code class="docutils literal"><span class="pre">NIL</span></code> instead of the test as before.</p>
+<p>The great value of test code is running it automatically and frequently
+to find issues early in development. RT provides the <code class="docutils literal"><span class="pre">do-tests</span></code>
+function to regress all of the tests.</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">rt</span><span class="p">:</span><span class="n">do</span><span class="o">-</span><span class="n">tests</span><span class="p">)</span>
+<span class="n">Doing</span> <span class="mi">2</span> <span class="n">pending</span> <span class="n">tests</span> <span class="n">of</span> <span class="mi">2</span> <span class="n">tests</span> <span class="n">total</span><span class="o">.</span>
+ <span class="n">TEST</span><span class="o">-</span><span class="n">SUBSEQ</span><span class="o">-</span><span class="n">ONE</span><span class="o">-</span><span class="n">INDEX</span>
+<span class="n">Test</span> <span class="n">TEST</span><span class="o">-</span><span class="n">SUBSEQ</span><span class="o">-</span><span class="n">TWO</span><span class="o">-</span><span class="n">INDICIES</span> <span class="n">failed</span>
+<span class="n">Form</span><span class="p">:</span> <span class="p">(</span><span class="n">SUBSEQ</span> <span class="o">*</span><span class="n">MY</span><span class="o">-</span><span class="n">STRING</span><span class="o">*</span> <span class="mi">0</span> <span class="mi">7</span><span class="p">)</span>
+<span class="n">Expected</span> <span class="n">value</span><span class="p">:</span> <span class="s2">&quot;Xroucho&quot;</span>
+<span class="n">Actual</span> <span class="n">value</span><span class="p">:</span> <span class="s2">&quot;Groucho&quot;</span><span class="o">.</span>
+<span class="mi">1</span> <span class="n">out</span> <span class="n">of</span> <span class="mi">2</span> <span class="n">total</span> <span class="n">tests</span> <span class="n">failed</span><span class="p">:</span> <span class="n">TEST</span><span class="o">-</span><span class="n">SUBSEQ</span><span class="o">-</span><span class="n">TWO</span><span class="o">-</span><span class="n">INDICIES</span><span class="o">.</span>
+<span class="n">NIL</span>
+</pre></div>
+</div>
+<p>Let&#8217;s redefine <code class="docutils literal"><span class="pre">test-subseq-two-indicies</span></code> with a passing expected
+value. Additionally let&#8217;s define a third test.</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">rt</span><span class="p">:</span><span class="n">deftest</span> <span class="n">test</span><span class="o">-</span><span class="n">subseq</span><span class="o">-</span><span class="n">two</span><span class="o">-</span><span class="n">indicies</span> <span class="p">(</span><span class="n">subseq</span> <span class="o">*</span><span class="n">my</span><span class="o">-</span><span class="n">string</span><span class="o">*</span> <span class="mi">0</span> <span class="mi">7</span><span class="p">)</span> <span class="s2">&quot;Groucho&quot;</span><span class="p">)</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">Redefining</span> <span class="n">test</span> <span class="n">TEST</span><span class="o">-</span><span class="n">SUBSEQ</span><span class="o">-</span><span class="n">TWO</span><span class="o">-</span><span class="n">INDICIES</span>
+<span class="n">TEST</span><span class="o">-</span><span class="n">SUBSEQ</span><span class="o">-</span><span class="n">TWO</span><span class="o">-</span><span class="n">INDICIES</span>
+<span class="p">(</span><span class="n">rt</span><span class="p">:</span><span class="n">deftest</span> <span class="n">test</span><span class="o">-</span><span class="n">concatenate</span><span class="o">-</span><span class="n">three</span><span class="o">-</span><span class="n">strings</span>
+    <span class="p">(</span><span class="n">concatenate</span> <span class="s1">&#39;string &quot;Karl&quot; &quot; &quot; &quot;Marx&quot;) &quot;Karl Marx&quot;)</span>
+<span class="n">TEST</span><span class="o">-</span><span class="n">CONCATENATE</span><span class="o">-</span><span class="n">THREE</span><span class="o">-</span><span class="n">STRINGS</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">rt</span><span class="p">:</span><span class="n">do</span><span class="o">-</span><span class="n">tests</span><span class="p">)</span>
+<span class="n">Doing</span> <span class="mi">3</span> <span class="n">pending</span> <span class="n">tests</span> <span class="n">of</span> <span class="mi">3</span> <span class="n">tests</span> <span class="n">total</span><span class="o">.</span>
+ <span class="n">TEST</span><span class="o">-</span><span class="n">SUBSEQ</span><span class="o">-</span><span class="n">ONE</span><span class="o">-</span><span class="n">INDEX</span> <span class="n">TEST</span><span class="o">-</span><span class="n">SUBSEQ</span><span class="o">-</span><span class="n">TWO</span><span class="o">-</span><span class="n">INDICIES</span>
+ <span class="n">TEST</span><span class="o">-</span><span class="n">CONCATENATE</span><span class="o">-</span><span class="n">THREE</span><span class="o">-</span><span class="n">STRINGS</span>
+<span class="n">No</span> <span class="n">tests</span> <span class="n">failed</span><span class="o">.</span>
+<span class="n">T</span>
+</pre></div>
+</div>
+<p>Note that <code class="docutils literal"><span class="pre">do-tests</span></code> picks up our third test
+<code class="docutils literal"><span class="pre">test-concatenate-three-strings</span></code> because it runs the entire test suite
+and prints a report to standard out that no tests have failed. The value
+<code class="docutils literal"><span class="pre">T</span></code> is returned to signal a successful test run.</p>
+</div>
+<div class="section" id="rt-odds-and-ends">
+<h2>RT Odds and Ends<a class="headerlink" href="#rt-odds-and-ends" title="Permalink to this headline">¶</a></h2>
+<p>If we pretend for a moment that <code class="docutils literal"><span class="pre">subseq</span></code> and <code class="docutils literal"><span class="pre">concatenate</span></code> are Lisp
+operations which we have written, you can see how easy it is to build up
+a collection of tests to exercise and regress code as we write and
+maintain it.</p>
+<p>If you like using RT so far, you will want to read up on the
+documentation which comes with it, or read the <a class="reference external" href="http://www.merl.com/publications/TR1991-004/">original
+paper</a> from 1991 which
+covers RT and COVER (a code coverage framework). At a minimum you will
+want to add</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">rem</span><span class="o">-</span><span class="nb">all</span><span class="o">-</span><span class="n">tests</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>to the beginning of your test code for the current project. You can use
+<code class="docutils literal"><span class="pre">continue-testing</span></code> to run all of the tests which have either failed,
+or are newly defined.</p>
+</div>
+<div class="section" id="other-test-frameworks">
+<h2>Other Test Frameworks<a class="headerlink" href="#other-test-frameworks" title="Permalink to this headline">¶</a></h2>
+<p>Test Driven Development, xUnit testing frameworks, Automated Acceptance
+Tests, etc are quite the rage in some areas of contemporary programming.
+If RT doesn&#8217;t fit your needs, or you would like to see what else is out
+there, please see the following:</p>
+<ul class="simple">
+<li><a class="reference external" href="http://www.cliki.net/test%20framework">CLiki Test Frameworks</a></li>
+<li><a class="reference external" href="http://wiki.alu.org/Test_Frameworks">ALU Wiki Test Frameworks</a></li>
+<li><a class="reference external" href="http://www.cl-user.net/asp/tags/unit-testing">Unit Testing</a> on
+The Common Lisp Directory</li>
+</ul>
+<p>and one of many which is a good choice to look at is:</p>
+<ul class="simple">
+<li><a class="reference external" href="http://common-lisp.net/project/bese/FiveAM.html">FiveAM</a> -
+Contemporary and very Lisp</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Testing</a><ul>
+<li><a class="reference internal" href="#install-rt">Install RT</a></li>
+<li><a class="reference internal" href="#write-a-test">Write a Test</a></li>
+<li><a class="reference internal" href="#run-a-test">Run a Test</a></li>
+<li><a class="reference internal" href="#rt-odds-and-ends">RT Odds and Ends</a></li>
+<li><a class="reference internal" href="#other-test-frameworks">Other Test Frameworks</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Chapters</a><ul>
+      <li>Previous: <a href="win32.html" title="previous chapter">Using the Win32 API</a></li>
+      <li>Next: <a href="misc.html" title="next chapter">Miscellaneous</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/chapters/testing.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, cl-cookbook contributors.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="../_sources/chapters/testing.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

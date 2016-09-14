@@ -1,0 +1,743 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Macros &#8212; The Common Lisp Cookbook 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="The Common Lisp Cookbook 0.1 documentation" href="../index.html" />
+    <link rel="up" title="Chapters" href="index.html" />
+    <link rel="next" title="Sockets" href="sockets.html" />
+    <link rel="prev" title="Packages" href="packages.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="macros">
+<h1>Macros<a class="headerlink" href="#macros" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="how-macros-work">
+<h2>How Macros Work<a class="headerlink" href="#how-macros-work" title="Permalink to this headline">¶</a></h2>
+<p>The word <em>macro</em> is used generally in computer science to mean a
+syntactic extension to a programming language. (Note: The name comes
+from the word &#8220;macro-instruction,&#8221; which was a useful feature of many
+second-generation assembly languages. A macro-instruction looked like a
+single instruction, but expanded into a sequence of actual instructions.
+The basic idea has since been used many times, notably in the C
+preprocessor. The name &#8220;macro&#8221; is perhaps not ideal, since it connotes
+nothing relevant to what it names, but we&#8217;re stuck with it.) Although
+many languages have a macro facility, none of them are as powerful as
+Lisp&#8217;s. The basic mechanism of Lisp macros is simple, but has subtle
+complexities, so learning your way around it takes a bit of practice.</p>
+<p>A macro is an ordinary piece of Lisp code that operates on <em>another
+piece of putative Lisp code,</em> translating it into (a version closer to)
+executable Lisp. That may sound a bit complicated, so let&#8217;s give a
+simple example. Suppose you want a version of
+<code class="docutils literal"><span class="pre">`setq</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/s_setq.htm">http://www.lispworks.com/documentation/HyperSpec/Body/s_setq.htm</a>&gt;`__
+that sets two variables to the same value. So if you write</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">setq2</span> <span class="n">x</span> <span class="n">y</span> <span class="p">(</span><span class="o">+</span> <span class="n">z</span> <span class="mi">3</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>when <code class="docutils literal"><span class="pre">z</span></code>=8 both <code class="docutils literal"><span class="pre">x</span></code> and <code class="docutils literal"><span class="pre">y</span></code> are set to 11. (I can&#8217;t think of any
+use for this, but it&#8217;s just an example.)</p>
+<p>It should be obvious that we can&#8217;t define <code class="docutils literal"><span class="pre">setq2</span></code> as a function. If
+<code class="docutils literal"><span class="pre">x</span></code>=50 and <code class="docutils literal"><span class="pre">y</span></code>=<em>-5</em>, this function would receive the values
+50, <em>-5</em>, and 11; it would have no knowledge of what variables were
+supposed to be set. What we really want to say is, When you (the Lisp
+system) see (setq2 v1 v2 e), treat it as equivalent to (progn (setq v1
+e) (setq v2 e)). Actually, this isn&#8217;t quite right, but it will do for
+now. A macro allows us to do precisely this, by specifying a program for
+transforming the input pattern (setq2 v1 v2 e) into the output pattern
+<code class="docutils literal"><span class="pre">(progn</span> <span class="pre">...)</span></code>.</p>
+<p>Here&#8217;s how we could define the <code class="docutils literal"><span class="pre">setq2</span></code> macro:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">defmacro</span> <span class="n">setq2</span> <span class="p">(</span><span class="n">v1</span> <span class="n">v2</span> <span class="n">e</span><span class="p">)</span>
+  <span class="p">(</span><span class="nb">list</span> <span class="s1">&#39;progn (list &#39;</span><span class="n">setq</span> <span class="n">v1</span> <span class="n">e</span><span class="p">)</span> <span class="p">(</span><span class="nb">list</span> <span class="s1">&#39;setq v2 e)))</span>
+</pre></div>
+</div>
+<p>This is very close to the following function definition:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">defun</span> <span class="n">setq2F</span> <span class="p">(</span><span class="n">v1</span> <span class="n">v2</span> <span class="n">e</span><span class="p">)</span>
+  <span class="p">(</span><span class="nb">list</span> <span class="s1">&#39;progn (list &#39;</span><span class="n">setq</span> <span class="n">v1</span> <span class="n">e</span><span class="p">)</span> <span class="p">(</span><span class="nb">list</span> <span class="s1">&#39;setq v2 e)))</span>
+</pre></div>
+</div>
+<p>If we evaluated <code class="docutils literal"><span class="pre">(setq2F</span> <span class="pre">'x</span> <span class="pre">'y</span> <span class="pre">'(+</span> <span class="pre">z</span> <span class="pre">3))</span></code>, we would get
+<code class="docutils literal"><span class="pre">(progn</span> <span class="pre">(setq</span> <span class="pre">x</span> <span class="pre">(+</span> <span class="pre">z</span> <span class="pre">3))</span> <span class="pre">(setq</span> <span class="pre">y</span> <span class="pre">(+</span> <span class="pre">z</span> <span class="pre">3)))</span></code>. This is a perfectly
+ordinary Lisp computation, whose sole point of interest is that its
+output is a piece of executable Lisp code. What <code class="docutils literal"><span class="pre">defmacro</span></code> does is
+create this function implicitly and arrange that whenever an expression
+of the form <code class="docutils literal"><span class="pre">(setq2</span> <span class="pre">x</span> <span class="pre">y</span> <span class="pre">(+</span> <span class="pre">z</span> <span class="pre">3))</span></code> is seen, <code class="docutils literal"><span class="pre">setq2F</span></code> is called with
+the pieces of the form as arguments, namely <code class="docutils literal"><span class="pre">x</span></code>, <code class="docutils literal"><span class="pre">y</span></code>, and
+<code class="docutils literal"><span class="pre">(+</span> <span class="pre">z</span> <span class="pre">3)</span></code>. The resulting piece of code then replaces the call to
+<code class="docutils literal"><span class="pre">setq2</span></code>, and execution resumes as if the new piece of code had
+occurred in the first place. The macro form is said to <em>expand</em> into the
+new piece of code.</p>
+<p>This is all there is to it, except, of course, for the myriad subtle
+consequences. The main consequence is that <em>run time for the ``setq2``
+macro is compile time for its context.</em> That is, suppose the Lisp system
+is compiling a function, and midway through it finds the expression
+<code class="docutils literal"><span class="pre">(setq2</span> <span class="pre">x</span> <span class="pre">y</span> <span class="pre">(+</span> <span class="pre">z</span> <span class="pre">3))</span></code>. The job of the compiler is, of course, to
+translate source code into something executable, such as machine
+language or perhaps byte code. Hence it doesn&#8217;t execute the source code,
+but operates on it in various mysterious ways. However, once the
+compiler sees the <code class="docutils literal"><span class="pre">setq2</span></code> expression, it must suddenly switch to
+executing the body of the <code class="docutils literal"><span class="pre">setq2</span></code> macro. As I said, this is an
+ordinary piece of Lisp code, which can in principle do anything any
+other piece of Lisp code can do. That means that when the compiler is
+running, the entire Lisp (run-time) system must be present.</p>
+<p>Novices often make the following sort of mistake. Suppose that the
+<code class="docutils literal"><span class="pre">setq2</span></code> macro needs to do some complex transformation on its <code class="docutils literal"><span class="pre">e</span></code>
+argument before plugging it into the result. Suppose this transformation
+can be written as a Lisp procedure <code class="docutils literal"><span class="pre">comtran</span></code>. The novice will often
+write:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span>(defmacro setq2 (v1 v2 e)
+  (let ((e1 (comtran e)))
+    (list &#39;progn (list &#39;setq v1 e1) (list &#39;setq v2 e1))))
+
+(defmacro comtran (exp) ...) ;; _Wrong!_
+</pre></div>
+</div>
+<p>The mistake is to suppose that once a macro is called, the Lisp system
+enters a &#8220;macro world,&#8221; so naturally everything in that world must be
+defined using <code class="docutils literal"><span class="pre">defmacro</span></code>. This is the wrong picture. The right picture
+is that <code class="docutils literal"><span class="pre">defmacro</span></code> enables a step into the <em>ordinary Lisp world</em>, but
+in which the principal object of manipulation is Lisp code. Once that
+step is taken, one uses ordinary Lisp function definitions:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span>(defmacro setq2 (v1 v2 e)
+  (let ((e1 (comtran e)))
+    (list &#39;progn (list &#39;setq v1 e1) (list &#39;setq v2 e1))))
+
+(defun comtran (exp) ...) ;; _Right!_
+</pre></div>
+</div>
+<p>One possible explanation for this mistake may be that in other
+languages, such as C, invoking a preprocessor macro <em>does</em> get you into
+a different world; you can&#8217;t run an arbitrary C program. It might be
+worth pausing to think about what it might mean to be able to.</p>
+<p>Another subtle consequence is that we must spell out how the arguments
+to the macro get distributed to the hypothetical behind-the-scenes
+function (called <code class="docutils literal"><span class="pre">setq2F</span></code> in my example). In most cases, it is easy to
+do so: In defining a macro, we use all the usual <code class="docutils literal"><span class="pre">lambda</span></code>-list syntax,
+such as <code class="docutils literal"><span class="pre">&amp;optional</span></code>, <code class="docutils literal"><span class="pre">&amp;rest</span></code>, <code class="docutils literal"><span class="pre">&amp;key</span></code>, but what gets bound to the
+formal parameters are pieces of the macro form, not their values (which
+are mostly unknown, this being compile time for the macro form). So if
+we defined a macro thus:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">defmacro</span> <span class="n">foo</span> <span class="p">(</span><span class="n">x</span> <span class="o">&amp;</span><span class="n">optional</span> <span class="n">y</span> <span class="o">&amp;</span><span class="n">key</span> <span class="p">(</span><span class="n">cxt</span> <span class="s1">&#39;null)) ...)</span>
+</pre></div>
+</div>
+<p>then</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="46%" />
+<col width="54%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head"><em>If we call it thus ...</em></th>
+<th class="head"><em>The parameters&#8217; values are ...</em></th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">(foo</span> <span class="pre">a)</span></code></td>
+<td><code class="docutils literal"><span class="pre">x=a,</span> <span class="pre">y=nil,</span> <span class="pre">cxt=null</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">(foo</span> <span class="pre">(+</span> <span class="pre">a</span> <span class="pre">1)</span> <span class="pre">(-</span> <span class="pre">y</span> <span class="pre">1))</span></code></td>
+<td><code class="docutils literal"><span class="pre">x=(+</span> <span class="pre">a</span> <span class="pre">1),</span> <span class="pre">y=(-</span> <span class="pre">y</span> <span class="pre">1),</span> <span class="pre">cxt=null</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">(foo</span> <span class="pre">a</span> <span class="pre">b</span> <span class="pre">:cxt</span> <span class="pre">(zap</span> <span class="pre">zip))</span></code></td>
+<td><code class="docutils literal"><span class="pre">x=a,</span> <span class="pre">y=b,</span> <span class="pre">cxt=(zap</span> <span class="pre">zip)</span></code></td>
+</tr>
+</tbody>
+</table>
+<p>Note that the values of the variables are the actual expressions
+<code class="docutils literal"><span class="pre">(+</span> <span class="pre">a</span> <span class="pre">1)</span></code> and <code class="docutils literal"><span class="pre">(zap</span> <span class="pre">zip)</span></code>. There is no requirement that these
+expressions&#8217; values be known, or even that they have values. The macro
+can do anything it likes with them. For instance, here&#8217;s an even more
+useless variant of <code class="docutils literal"><span class="pre">setq</span></code>: (setq-reversible e1 e2 d) behaves like
+(setq e1 e2) if d=:normal, and behaves like (setq e2 e1) if
+<em>d=</em><code class="docutils literal"><span class="pre">:backward</span></code>. It could be defined thus:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">defmacro</span> <span class="n">setq</span><span class="o">-</span><span class="n">reversible</span> <span class="p">(</span><span class="n">e1</span> <span class="n">e2</span> <span class="n">d</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">case</span> <span class="n">d</span>
+    <span class="p">(:</span><span class="n">normal</span> <span class="p">(</span><span class="nb">list</span> <span class="s1">&#39;setq e1 e2))</span>
+    <span class="p">(:</span><span class="n">backward</span> <span class="p">(</span><span class="nb">list</span> <span class="s1">&#39;setq e2 e1))</span>
+    <span class="p">(</span><span class="n">t</span> <span class="p">(</span><span class="n">error</span> <span class="o">...</span><span class="p">))))</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="backquote">
+<h2>Backquote<a class="headerlink" href="#backquote" title="Permalink to this headline">¶</a></h2>
+<p>Before taking another step, we need to introduce a piece of Lisp
+notation that is indispensable to defining macros, even though
+technically it is quite independent of macros. This is the <em>backquote
+facility</em>. As we saw above, the main job of a macro, when all is said
+and done, is to define a piece of Lisp code, and that means evaluating
+expressions such as <code class="docutils literal"><span class="pre">(list</span> <span class="pre">'prog</span> <span class="pre">(list</span> <span class="pre">'setq</span> <span class="pre">...)</span> <span class="pre">...)</span></code>. As these
+expressions grow in complexity, it becomes hard to read them and write
+them. What we find ourselves wanting is a notation that provides the
+skeleton of an expression, with some of the pieces filled in with new
+expressions. That&#8217;s what backquote provides. Instead of the the <code class="docutils literal"><span class="pre">list</span></code>
+expression given above, one writes</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span>`(progn (setq ,v1 ,e) (setg ,v2 ,e))
+</pre></div>
+</div>
+<p>The backquote (`) character signals that in the expression that
+follows, every subexpression <em>not</em> preceded by a comma is to be quoted,
+and every subexpression preceded by a comma is to be evaluated.</p>
+<p>That&#8217;s mostly all there is to backquote. There are just two extra items
+to point out. First, if you write &#8220;<code class="docutils literal"><span class="pre">,&#64;e</span></code>&#8221; instead of &#8220;<code class="docutils literal"><span class="pre">,e</span></code>&#8221; then the
+value of <em>e</em> is <em>spliced</em> into the result. So if <code class="docutils literal"><span class="pre">v=(oh</span> <span class="pre">boy)</span></code>, then
+<code class="docutils literal"><span class="pre">(zap</span> <span class="pre">,&#64;v</span> <span class="pre">,v)</span></code> evaluates to <code class="docutils literal"><span class="pre">(zap</span> <span class="pre">oh</span> <span class="pre">boy</span> <span class="pre">(oh</span> <span class="pre">boy))</span></code>. The second
+occurrence of <code class="docutils literal"><span class="pre">v</span></code> is replaced by its value. The first is replaced by
+the elements of its value. If <code class="docutils literal"><span class="pre">v</span></code> had had value <code class="docutils literal"><span class="pre">()</span></code>, it would have
+disappeared entirely: the value of <code class="docutils literal"><span class="pre">(zap</span> <span class="pre">,&#64;v</span> <span class="pre">,v)</span></code> would have been
+<code class="docutils literal"><span class="pre">(zap</span> <span class="pre">())</span></code>, which is the same as <code class="docutils literal"><span class="pre">(zap</span> <span class="pre">nil)</span></code>.</p>
+<p>Second, one might wonder what happens if a backquote expression occurs
+inside another backquote. The answer is that the backquote becomes
+essentially unreadable and unwriteable; using nested backquote is
+usually a tedious debugging exercise. The reason, in my not-so-humble
+opinion, is that backquote is defined wrong. A comma pairs up with the
+innermost backquote when the default should be that it pairs up with the
+outermost. But this is not the place for a rant or tutorial; consult
+your favorite Lisp reference for the exact behavior of nested backquote
+plus some examples.</p>
+<p>One problem with backquote is that once you learn it you tend to use for
+every list-building occasion. For instance, you might write</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span>(mapcan (lambda (x)
+          (cond ((symbolp x) `((,x)))
+                ((&gt; x 10) `(,x ,x))
+                (t &#39;())))
+        some-list)
+</pre></div>
+</div>
+<p>which yields <code class="docutils literal"><span class="pre">((a)</span> <span class="pre">15</span> <span class="pre">15)</span></code> when <code class="docutils literal"><span class="pre">some-list</span></code> = <code class="docutils literal"><span class="pre">(a</span> <span class="pre">6</span> <span class="pre">15)</span></code>. The
+problem is that
+<code class="docutils literal"><span class="pre">`mapcan</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/">http://www.lispworks.com/documentation/HyperSpec/Body/</a><a href="#id1"><span class="problematic" id="id2">f_mapc_</span></a>.htm&gt;`__
+destructively alters the results returned by the
+<code class="docutils literal"><span class="pre">`lambda</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/s_lambda.htm">http://www.lispworks.com/documentation/HyperSpec/Body/s_lambda.htm</a>&gt;`__-expression.
+Can we be sure that the lists returned by that expression are
+&#8220;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_f.htm#fresh">fresh</a>,&#8221;
+that is, they are different (in the
+<code class="docutils literal"><span class="pre">`eq</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/f_eq.htm">http://www.lispworks.com/documentation/HyperSpec/Body/f_eq.htm</a>&gt;`__
+sense) from the structures returned on other calls of that <code class="docutils literal"><span class="pre">lambda</span></code>
+expression? In the present case, close analysis will show that they must
+be fresh, but in general backquote is not obligated to return a fresh
+list every time (whether it does or not is implementation-dependent). If
+the example above got changed to</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span>(mapcan (lambda (x)
+          (cond ((symbolp x) `((,x)))
+                ((&gt; x 10) `(,x ,x))
+                ((&gt;= x 0) `(low))
+                (t &#39;())))
+        some-list)
+</pre></div>
+</div>
+<p>then backquote may well treat
+<code class="docutils literal"><span class="pre">(low)&lt;/code&gt;</span> <span class="pre">as</span> <span class="pre">if</span> <span class="pre">it</span> <span class="pre">were</span></code>&#8216;(low)``; the list will be allocated at load time, and every time the``lambda<code class="docutils literal"><span class="pre">is</span> <span class="pre">evaluated,</span> <span class="pre">that</span> <span class="pre">same</span> <span class="pre">chunk</span> <span class="pre">of</span> <span class="pre">storage</span> <span class="pre">will</span> <span class="pre">be</span> <span class="pre">returned.</span> <span class="pre">So</span> <span class="pre">if</span> <span class="pre">we</span> <span class="pre">evaluate</span> <span class="pre">the</span> <span class="pre">expression</span> <span class="pre">with</span></code>some-list<code class="docutils literal"><span class="pre">=</span></code>(a
+6 15)<code class="docutils literal"><span class="pre">,</span> <span class="pre">we</span> <span class="pre">will</span> <span class="pre">get</span></code>((a) low 15
+15)<code class="docutils literal"><span class="pre">,</span> <span class="pre">but</span> <span class="pre">as</span> <span class="pre">a</span> <span class="pre">side</span> <span class="pre">effect</span> <span class="pre">the</span> <span class="pre">constant</span></code>(low)``will get clobbered to become``(low
+15
+15)<code class="docutils literal"><span class="pre">.</span> <span class="pre">If</span> <span class="pre">we</span> <span class="pre">then</span> <span class="pre">evaluate</span> <span class="pre">the</span> <span class="pre">expression</span> <span class="pre">with,</span> <span class="pre">say,</span></code>some-list<code class="docutils literal"><span class="pre">=</span></code>(8
+oops)<code class="docutils literal"><span class="pre">,</span> <span class="pre">the</span> <span class="pre">result</span> <span class="pre">will</span> <span class="pre">be</span></code>(low 15 15
+(oops))``, and now the &#8220;constant&#8221; that started off as``&#8217;(low)``will be``(low
+15 15
+(oops))``. (Note: The bug exemplified here takes other forms, and has often bit newbies - as well as experienced programmers - in the ass. The general form is that a constant list is produced as the value of something that is later destructively altered. The first line of defense against this bug is never to destructively alter any list. For newbies, this is also the last line of defense. For those of us who imagine we&#8217;re more sophisticated, the next line of defense is to think very carefully any time you use [<code class="docutils literal"><span class="pre">\</span> <span class="pre">nconc\</span> <span class="pre">``](http://www.lispworks.com/documentation/HyperSpec/Body/f_nconc.htm)</span> <span class="pre">or</span></code>mapcan`.)</p>
+<p>To fix the bug, you can write <code class="docutils literal"><span class="pre">(map</span> <span class="pre">'list</span> <span class="pre">...)</span></code> instead of <code class="docutils literal"><span class="pre">mapcan</span></code>.
+However, if you are determined to use <code class="docutils literal"><span class="pre">mapcan</span></code>, write the expression
+this way:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span>(mapcan (lambda (x)
+          (cond ((symbolp x) (list `(,x)))
+                ((&gt; x 10) (list x x))
+                ((&gt;= x 0) (list &#39;low))
+                (t &#39;())))
+        some-list)
+</pre></div>
+</div>
+<p>My personal preference is to use backquote <em>only</em> to build
+S-expressions, that is, hierarchical expressions that consist of
+symbols, numbers, and strings, and that are not conceptualized as
+changing in length. For instance, I would never write</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span>(setq sk `(,x ,@sk))
+</pre></div>
+</div>
+<p>If <code class="docutils literal"><span class="pre">sk</span></code> is being used as a stack, that is, it&#8217;s going to be
+<code class="docutils literal"><span class="pre">`pop</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/m_pop.htm">http://www.lispworks.com/documentation/HyperSpec/Body/m_pop.htm</a>&gt;`__ped
+in the normal course of things, I would write tt (push x sk). If not, I
+would write <code class="docutils literal"><span class="pre">(setq</span> <span class="pre">sk</span> <span class="pre">(cons</span> <span class="pre">x</span> <span class="pre">sk))</span></code>.</p>
+</div>
+<div class="section" id="getting-macros-right">
+<h2>Getting Macros Right<a class="headerlink" href="#getting-macros-right" title="Permalink to this headline">¶</a></h2>
+<p>I said in <a class="reference external" href="#LtohTOCentry-1">the first section</a> that my definition of
+<code class="docutils literal"><span class="pre">setq2</span></code> wasn&#8217;t quite right, and now it&#8217;s time to fix it.</p>
+<p>Suppose we write <code class="docutils literal"><span class="pre">(setq2</span> <span class="pre">x</span> <span class="pre">y</span> <span class="pre">(+</span> <span class="pre">x</span> <span class="pre">3))</span></code>, when <code class="docutils literal"><span class="pre">x</span></code><em>=8</em>. Then
+according to the definition given above, this form will expand into
+<code class="docutils literal"><span class="pre">(progn</span> <span class="pre">(setq</span> <span class="pre">x</span> <span class="pre">(+</span> <span class="pre">x</span> <span class="pre">3))</span> <span class="pre">(setq</span> <span class="pre">y</span> <span class="pre">(+</span> <span class="pre">x</span> <span class="pre">3)))</span></code>, so that <code class="docutils literal"><span class="pre">x</span></code> will have
+value 11 and <code class="docutils literal"><span class="pre">y</span></code> will have value 14. Chances are that isn&#8217;t what the
+macro is expected to do (although you never know). Another problematic
+case is <code class="docutils literal"><span class="pre">(setq2</span> <span class="pre">x</span> <span class="pre">y</span> <span class="pre">(pop</span> <span class="pre">l))</span></code>, which causes <code class="docutils literal"><span class="pre">l</span></code> to be popped twice;
+again, probably not right.</p>
+<p>The solution is to evaluate <code class="docutils literal"><span class="pre">e</span></code> just once, save it in a temporary
+variable, and then set <code class="docutils literal"><span class="pre">v1</span></code> and <code class="docutils literal"><span class="pre">v2</span></code> to it. To make temporary
+variables, we use the <code class="docutils literal"><span class="pre">gensym</span></code> function, which returns a fresh
+variable guaranteed to appear nowhere else. Here is what the macro
+should look like:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span>(defmacro setq2 (v1 v2 e)
+  (let ((tempvar (gensym)))
+    `(let ((,tempvar ,e))
+       (progn (setq ,v1 ,tempvar)
+              (setq ,v2 ,tempvar)))))
+</pre></div>
+</div>
+<p>Now <code class="docutils literal"><span class="pre">(setq2</span> <span class="pre">x</span> <span class="pre">y</span> <span class="pre">(+</span> <span class="pre">x</span> <span class="pre">3))</span></code> expands to</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="c1">#:g2003 (+ x 3)))</span>
+  <span class="p">(</span><span class="n">progn</span> <span class="p">(</span><span class="n">setq</span> <span class="n">x</span> <span class="c1">#:g2003) (setq y #:g2003)))</span>
+</pre></div>
+</div>
+<p>Here <code class="docutils literal"><span class="pre">gensym</span></code> has returned the symbol <code class="docutils literal"><span class="pre">#:g2003</span></code>, which prints in
+this funny way because it won&#8217;t be recognized by the reader. (Nor is
+there any need for the reader to recognize it, since it exists only long
+enough for the code that contains it to be compiled.)</p>
+<p>Exercise: Verify that this new version works correctly for the case
+<code class="docutils literal"><span class="pre">(setq2</span> <span class="pre">x</span> <span class="pre">y</span> <span class="pre">(pop</span> <span class="pre">l1))</span></code>.</p>
+<p>Exercise: Try writing the new version of the macro without using
+backquote. If you can&#8217;t do it, you have done the exercise correctly, and
+learned what backquote is for!</p>
+<p>The moral of this section is to think carefully about which expressions
+in a macro get evaluated and when. Be on the lookout for situations
+where the same expression gets plugged into the output twice (as <code class="docutils literal"><span class="pre">e</span></code>
+was in my original macro design). For complex macros, watch out for
+cases where the order that expressions are evaluated differs from the
+order in which they are written. This is sure to trip up some user of
+the macro - even if you are the only user.</p>
+<div class="section" id="what-macros-are-for">
+<h3>What Macros are For<a class="headerlink" href="#what-macros-are-for" title="Permalink to this headline">¶</a></h3>
+<p>Macros are for making syntactic extensions to Lisp. One often hears it
+said that macros are a bad idea, that users can&#8217;t be trusted with them,
+and so forth. Balderdash. It is just as reasonable to extend a language
+syntactically as to extend it by defining your own procedures. It may be
+true that the casual reader of your code can&#8217;t understand the code
+without seeing the macro definitions, but then the casual reader can&#8217;t
+understand it without seeing function definitions either. Having
+<code class="docutils literal"><span class="pre">`defmethod</span></code> &lt;<a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/m_defmet.htm">http://www.lispworks.com/documentation/HyperSpec/Body/m_defmet.htm</a>&gt;`__s
+strewn around several files contributes far more to unclarity than
+macros ever have, but that&#8217;s a different diatribe.</p>
+<p>Before surveying what sorts of syntactic extensions I have found useful,
+let me point out what sorts of syntactic extensions are generally <em>not</em>
+useful, or best accomplished using means other than macros. Some novices
+think macros are useful for open-coding functions. So, instead of
+defining</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">defun</span> <span class="n">sqone</span> <span class="p">(</span><span class="n">x</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">y</span> <span class="p">(</span><span class="o">+</span> <span class="n">x</span> <span class="mi">1</span><span class="p">)))</span> <span class="p">(</span><span class="o">*</span> <span class="n">y</span> <span class="n">y</span><span class="p">)))</span>
+</pre></div>
+</div>
+<p>they might define</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span>(defmacro sqone (x)
+  `(let ((y (+ ,x 1))) (* y y)))
+</pre></div>
+</div>
+<p>So that <code class="docutils literal"><span class="pre">(sqone</span> <span class="pre">(*</span> <span class="pre">z</span> <span class="pre">13))</span></code> might expand into</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">y</span> <span class="p">(</span><span class="o">+</span> <span class="p">(</span><span class="o">*</span> <span class="n">z</span> <span class="mi">13</span><span class="p">)</span> <span class="mi">1</span><span class="p">)))</span>
+  <span class="p">(</span><span class="o">*</span> <span class="n">y</span> <span class="n">y</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>This is correct, but a waste of effort. For one thing, the amount of
+time saved is almost certainly negligible. If it&#8217;s really important that
+<code class="docutils literal"><span class="pre">sqone</span></code> be expanded inline, one can put <code class="docutils literal"><span class="pre">(declaim</span> <span class="pre">(inline</span> <span class="pre">sqone))</span></code>
+before <code class="docutils literal"><span class="pre">sqone</span></code> is defined (although the compiler is not obligated to
+honor this declaration). For another, once <code class="docutils literal"><span class="pre">sqone</span></code> is defined as a
+macro, it becomes impossible to write <code class="docutils literal"><span class="pre">(mapcar</span> <span class="pre">#'sqone</span> <span class="pre">ll)</span></code>, or to do
+anything else with it except call it.</p>
+<p>But macros have a thousand and one legitimate uses. Why write
+<code class="docutils literal"><span class="pre">(lambda</span> <span class="pre">(x)</span> <span class="pre">...)</span></code> when you can write <code class="docutils literal"><span class="pre">(\\</span> <span class="pre">(x)</span> <span class="pre">...)</span></code>? Just define
+<code class="docutils literal"><span class="pre">\\</span></code> as a macro: (defmacro \ (&amp;rest l) `(lambda ,&#64;l)).</p>
+<p>Many people find <code class="docutils literal"><span class="pre">mapcar</span></code> and <code class="docutils literal"><span class="pre">mapcan</span></code> a bit too obscure, especially
+when used with large <code class="docutils literal"><span class="pre">lambda</span></code> expressions. Rather than write something
+like</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">mapcar</span> <span class="p">(</span><span class="k">lambda</span> <span class="p">(</span><span class="n">x</span><span class="p">)</span>
+          <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">y</span> <span class="p">(</span><span class="n">hairy</span><span class="o">-</span><span class="n">fun1</span> <span class="n">x</span><span class="p">))</span> <span class="p">(</span><span class="n">z</span> <span class="p">(</span><span class="n">hairy</span><span class="o">-</span><span class="n">fun2</span> <span class="n">x</span><span class="p">)))</span>
+            <span class="p">(</span><span class="n">dolist</span> <span class="p">(</span><span class="n">y1</span> <span class="n">y</span><span class="p">)</span>
+              <span class="p">(</span><span class="n">dolist</span> <span class="p">(</span><span class="n">z1</span> <span class="n">z</span><span class="p">)</span>
+                <span class="n">_</span><span class="o">...</span> <span class="ow">and</span> <span class="n">further</span> <span class="n">meaningless_</span>
+                <span class="n">_space</span><span class="o">-</span><span class="n">filling</span> <span class="n">nonsense</span><span class="o">...</span><span class="n">_</span>
+                <span class="p">))))</span>
+        <span class="n">l</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>we might prefer to write</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="k">for</span> <span class="p">(</span><span class="n">x</span> <span class="p">:</span><span class="ow">in</span> <span class="n">l</span><span class="p">)</span>
+     <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">y</span> <span class="p">(</span><span class="n">hairy</span><span class="o">-</span><span class="n">fun1</span> <span class="n">x</span><span class="p">))</span> <span class="p">(</span><span class="n">z</span> <span class="p">(</span><span class="n">hairy</span><span class="o">-</span><span class="n">fun2</span> <span class="n">x</span><span class="p">)))</span>
+       <span class="p">(</span><span class="n">dolist</span> <span class="p">(</span><span class="n">y1</span> <span class="n">y</span><span class="p">)</span>
+         <span class="p">(</span><span class="n">dolist</span> <span class="p">(</span><span class="n">z1</span> <span class="n">z</span><span class="p">)</span>
+           <span class="n">_</span><span class="o">...</span> <span class="ow">and</span> <span class="n">further</span> <span class="n">meaningless_</span>
+           <span class="n">_space</span><span class="o">-</span><span class="n">filling</span> <span class="n">nonsense</span><span class="o">...</span><span class="n">_</span>
+           <span class="p">))))</span>
+</pre></div>
+</div>
+<p>This macro might be defined thus:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span>(defmacro for (listspec exp)
+  (cond ((and (= (length listspec) 3)
+              (symbolp (car listspec))
+              (eq (cadr listspec) &#39;:in))
+         `(mapcar (lambda (,(car listspec))
+                    ,exp)
+                  ,(caddr listspec)))
+        (t (error &quot;Ill-formed: %s&quot; `(for ,listspec ,exp)))))
+</pre></div>
+</div>
+<p>(This is a simplified version of a macro by Chris Riesbeck.)</p>
+<p>It&#8217;s worth stopping for a second to discuss the role the keyword <code class="docutils literal"><span class="pre">:in</span></code>
+plays in this macro. It serves as a sort of &#8220;local syntax marker,&#8221; in
+that it has no meaning as far as Lisp is concerned, but does serve as a
+syntactic guidepost for the macro itself. I will refer to these markers
+as <em>guide symbols</em>. (Here its job may seem trivial, but if we
+generalized the <code class="docutils literal"><span class="pre">for</span></code> macro to allow multiple list arguments and an
+implicit <code class="docutils literal"><span class="pre">progn</span></code> in the body the <code class="docutils literal"><span class="pre">:in</span></code>s would be crucial in
+telling us where the arguments stopped and the body began.)</p>
+<p>It is not strictly necessary for the guide symbols of a macro to be in
+the <a class="reference external" href="http://www.lispworks.com/documentation/HyperSpec/Body/11_abc.htm">keyword
+package</a>,
+but it is a good idea, for two reasons. First, they highlight to the
+reader that something idiosyncratic is going on. A form like
+<code class="docutils literal"><span class="pre">(for</span> <span class="pre">((x</span> <span class="pre">in</span> <span class="pre">(foobar</span> <span class="pre">a</span> <span class="pre">b</span> <span class="pre">'oof)))</span> <span class="pre">(something-hairy</span> <span class="pre">x</span> <span class="pre">(list</span> <span class="pre">x)))</span></code> looks
+a bit wrong already, because of the double parentheses before the <code class="docutils literal"><span class="pre">x</span></code>.
+But using &#8220;<code class="docutils literal"><span class="pre">:in</span></code>&#8221; makes it more obvious.</p>
+<p>Second, notice that I wrote <code class="docutils literal"><span class="pre">(eq</span> <span class="pre">(cadr</span> <span class="pre">listspec)</span> <span class="pre">':in)</span></code> in the macro
+definition to check for the presence of the guide symbol. If I had used
+<code class="docutils literal"><span class="pre">in</span></code> instead, I would have had to think about which package <em>my</em>
+<code class="docutils literal"><span class="pre">in</span></code> lives in and which package the macro user&#8217;s <code class="docutils literal"><span class="pre">in</span></code> lives in. One
+way to avoid trouble would be to write</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="ow">and</span> <span class="p">(</span><span class="n">symbolp</span> <span class="p">(</span><span class="n">cadr</span> <span class="n">listspec</span><span class="p">))</span>
+     <span class="p">(</span><span class="n">eq</span> <span class="p">(</span><span class="n">intern</span> <span class="p">(</span><span class="n">symbol</span><span class="o">-</span><span class="n">name</span> <span class="p">(</span><span class="n">cadr</span> <span class="n">listspec</span><span class="p">))</span>
+                 <span class="p">:</span><span class="n">keyword</span><span class="p">)</span>
+         <span class="s1">&#39;:in))</span>
+</pre></div>
+</div>
+<p>Another would be to write</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="ow">and</span> <span class="p">(</span><span class="n">symbolp</span> <span class="p">(</span><span class="n">cadr</span> <span class="n">listspec</span><span class="p">))</span>
+     <span class="p">(</span><span class="n">string</span><span class="o">=</span> <span class="p">(</span><span class="n">symbol</span><span class="o">-</span><span class="n">name</span> <span class="p">(</span><span class="n">cadr</span> <span class="n">listspec</span><span class="p">))</span> <span class="p">(</span><span class="n">symbol</span><span class="o">-</span><span class="n">name</span> <span class="s1">&#39;in)))</span>
+</pre></div>
+</div>
+<p>which neither of which is particularly clear or aesthetic. The keyword
+package is there to provide a home for symbols whose home is not per se
+relevant to anything; you might as well use it. (Note: In ANSI Lisp, I
+could have written <code class="docutils literal"><span class="pre">&quot;IN&quot;</span></code> instead of <code class="docutils literal"><span class="pre">(symbol-name</span> <span class="pre">'in)</span></code>, but there
+are Lisp implementations that do not convert symbols&#8217; names to
+uppercase. Since I think the whole uppercase conversion idea is an
+embarrassing relic, I try to write code that is portable to those
+implementations.)</p>
+<p>Let&#8217;s look at another example, both to illustrate a nice macro, and to
+provide an auxiliary function for some of the discussion below. One
+often wants to create new symbols in Lisp, and <code class="docutils literal"><span class="pre">gensym</span></code> is not always
+adequate for building them. Here is a description of an alternative
+facility called <code class="docutils literal"><span class="pre">build-symbol</span></code>:</p>
+<blockquote>
+<div><p>(build-symbol [(:package p)] -pieces-) builds a symbol by
+concatenating the given <em>pieces</em> and interns it as specified by <em>p</em>.
+For each element of <em>pieces</em>, if it is a ...</p>
+<ul class="simple">
+<li>... string: The string is added to the new symbol&#8217;s name.</li>
+<li>... symbol: The name of the symbol is added to the new symbol&#8217;s
+name.</li>
+<li>... expression of the form (:&lt; e): <em>e</em> should evaluate to a
+string, symbol, or number; the characters of the value of <em>e</em> (as
+printed by <code class="docutils literal"><span class="pre">princ</span></code>) are concatenated into the new symbol&#8217;s
+name.</li>
+<li>... expression of the form (:++ p): <em>p</em> should be a place
+expression (i.e., appropriate as the first argument to <code class="docutils literal"><span class="pre">setf</span></code>),
+whose value is an integer; the value is incremented by 1, and the
+new value is concatenated intot he new symbol&#8217;s name.</li>
+</ul>
+<p>If the <code class="docutils literal"><span class="pre">:package</span></code> specification is omitted, it defaults to the
+value of <code class="docutils literal"><span class="pre">*package*</span></code>. If <em>p</em> is <code class="docutils literal"><span class="pre">nil</span></code>, the symbol is interned
+nowhere. Otherwise, it should evaluate to a package designator
+(usually, a keyword whose name is the same of a package).</p>
+</div></blockquote>
+<p>For example, <code class="docutils literal"><span class="pre">(build-symbol</span> <span class="pre">(:&lt;</span> <span class="pre">x)</span> <span class="pre">&quot;-&quot;</span> <span class="pre">(:++</span> <span class="pre">*x-num*))</span></code>, when <code class="docutils literal"><span class="pre">x</span></code> =
+<code class="docutils literal"><span class="pre">foo</span></code> and <code class="docutils literal"><span class="pre">*x-num*</span></code> = 8, sets <code class="docutils literal"><span class="pre">*x-num*</span></code> to 9 and evaluates to
+<code class="docutils literal"><span class="pre">FOO-9</span></code>. If evaluated again, the result will be <code class="docutils literal"><span class="pre">FOO-10</span></code>, and so
+forth.</p>
+<p>Obviously, <code class="docutils literal"><span class="pre">build-symbol</span></code> can&#8217;t be implemented as a function; it has
+to be a macro. Here is an implementation:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span>(defmacro build-symbol (&amp;rest l)
+  (let ((p (find-if (lambda (x) (and (consp x) (eq (car x) &#39;:package)))
+                    l)))
+    (cond (p
+           (setq l (remove p l))))
+    (let ((pkg (cond ((eq (cadr p) &#39;nil)
+                      nil)
+                     (t `(find-package &#39;,(cadr p))))))
+      (cond (p
+             (cond (pkg
+                    `(values (intern ,(symstuff l) ,pkg)))
+                   (t
+                    `(make-symbol ,(symstuff l)))))
+            (t
+             `(values (intern ,(symstuff l))))))))
+
+(defun symstuff (l)
+  `(concatenate &#39;string
+                ,@(for (x :in l)
+                       (cond ((stringp x)
+                              `&#39;,x)
+                             ((atom x)
+                              `&#39;,(format nil &quot;~a&quot; x))
+                             ((eq (car x) &#39;:&lt;)
+                              `(format nil &quot;~a&quot; ,(cadr x)))
+                             ((eq (car x) &#39;:++)
+                              `(format nil &quot;~a&quot; (incf ,(cadr x))))
+                             (t
+                              `(format nil &quot;~a&quot; ,x))))))
+</pre></div>
+</div>
+<p>(Another approach would be have <code class="docutils literal"><span class="pre">symstuff</span></code> return a single call of the
+form (format nil format-string -forms-), where the <em>forms</em> are derived
+from the <em>pieces</em>, and the <em>format-string</em> consists of interleaved ~a&#8217;s
+and strings.)</p>
+<p>Sometimes a macro is needed only temporarily, as a sort of syntactic
+scaffolding. Suppose you need to define 12 functions, but they fall into
+3 stereotyped groups of 4:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">defun</span> <span class="n">make</span><span class="o">-</span><span class="n">a</span><span class="o">-</span><span class="nb">zip</span> <span class="p">(</span><span class="n">y</span> <span class="n">z</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">vector</span> <span class="mi">2</span> <span class="s1">&#39;zip y z))</span>
+<span class="p">(</span><span class="n">defun</span> <span class="n">test</span><span class="o">-</span><span class="n">whether</span><span class="o">-</span><span class="nb">zip</span> <span class="p">(</span><span class="n">x</span><span class="p">)</span>
+  <span class="p">(</span><span class="ow">and</span> <span class="p">(</span><span class="n">vectorp</span> <span class="n">x</span><span class="p">)</span> <span class="p">(</span><span class="n">eq</span> <span class="p">(</span><span class="n">aref</span> <span class="n">x</span> <span class="mi">1</span><span class="p">)</span> <span class="s1">&#39;zip)))</span>
+<span class="p">(</span><span class="n">defun</span> <span class="nb">zip</span><span class="o">-</span><span class="n">copy</span> <span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">...</span><span class="p">)</span>
+<span class="p">(</span><span class="n">defun</span> <span class="nb">zip</span><span class="o">-</span><span class="n">deactivate</span> <span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">...</span><span class="p">)</span>
+
+<span class="p">(</span><span class="n">defun</span> <span class="n">make</span><span class="o">-</span><span class="n">a</span><span class="o">-</span><span class="n">zap</span> <span class="p">(</span><span class="n">u</span> <span class="n">v</span> <span class="n">w</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">vector</span> <span class="mi">3</span> <span class="s1">&#39;zap u v w))</span>
+<span class="p">(</span><span class="n">defun</span> <span class="n">test</span><span class="o">-</span><span class="n">whether</span><span class="o">-</span><span class="n">zap</span> <span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">...</span><span class="p">)</span>
+<span class="p">(</span><span class="n">defun</span> <span class="n">zap</span><span class="o">-</span><span class="n">copy</span> <span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">...</span><span class="p">)</span>
+<span class="p">(</span><span class="n">defun</span> <span class="n">zap</span><span class="o">-</span><span class="n">deactivate</span> <span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">...</span><span class="p">)</span>
+
+<span class="p">(</span><span class="n">defun</span> <span class="n">make</span><span class="o">-</span><span class="n">a</span><span class="o">-</span><span class="n">zep</span> <span class="p">()</span>
+  <span class="p">(</span><span class="n">vector</span> <span class="mi">0</span> <span class="s1">&#39;zep))</span>
+<span class="p">(</span><span class="n">defun</span> <span class="n">test</span><span class="o">-</span><span class="n">whether</span><span class="o">-</span><span class="n">zep</span> <span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">...</span><span class="p">)</span>
+<span class="p">(</span><span class="n">defun</span> <span class="n">zep</span><span class="o">-</span><span class="n">copy</span> <span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">...</span><span class="p">)</span>
+<span class="p">(</span><span class="n">defun</span> <span class="n">zep</span><span class="o">-</span><span class="n">deactivate</span> <span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">...</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Where the omitted pieces are the same in all similarly named functions.
+(That is, the &#8221;...&#8221; in <code class="docutils literal"><span class="pre">zep-deactivate</span></code> is the same code as the &#8221;...&#8221;
+in <code class="docutils literal"><span class="pre">zip-deactivate</span></code>, and so forth.) Here, for the sake of
+concreteness, if not plausibility, <code class="docutils literal"><span class="pre">zip</span></code>, <code class="docutils literal"><span class="pre">zap</span></code>, and <code class="docutils literal"><span class="pre">zep</span></code> are
+behaving like odd little data structures. The functions could be rather
+large, and it would get tedious keeping them all in synch as they are
+debugged. An alternative would be to use a macro:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span>(defmacro odd-define (name buildargs)
+  `(progn (defun ,(build-symbol make-a- (:&lt; name))
+                                ,buildargs
+            (vector ,(length buildargs) &#39;,name ,@buildargs))
+          (defun ,(build-symbol test-whether- (:&lt; name)) (x)
+            (and (vectorp x) (eq (aref x 1) &#39;,name))
+          (defun ,(build-symbol (:&lt; name) -copy) (x)
+            ...)
+          (defun ,(build-symbol (:&lt; name) -deactivate) (x)
+            ...))))
+
+(odd-define zip (y z))
+(odd-define zap (u v w))
+(odd-define zep ())
+</pre></div>
+</div>
+<p>If all the uses of this macro are collected in this one place, it might
+be clearer to make it a local macro using <code class="docutils literal"><span class="pre">macrolet</span></code>:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span>(macrolet ((odd-define (name buildargs)
+             `(progn (defun ,(build-symbol make-a- (:&lt; name))
+                                           ,buildargs
+                       (vector ,(length buildargs)
+                               &#39;,name
+                                ,@buildargs))
+                     (defun ,(build-symbol test-whether- (:&lt; name))
+                            (x)
+                       (and (vectorp x) (eq (aref x 1) &#39;,name))
+                     (defun ,(build-symbol (:&lt; name) -copy) (x)
+                       ...)
+                     (defun ,(build-symbol (:&lt; name) -deactivate) (x)
+                       ...)))))
+(odd-define zip (y z))
+(odd-define zap (u v w))
+(odd-define zep ()))
+</pre></div>
+</div>
+<p>Finally, macros are essential for defining &#8220;command languages.&#8221; A
+<em>command</em> is a function with a short name for use by users in
+interacting with Lisp&#8217;s read-eval-print loop. A short name is useful and
+possible because we want it to be easy to type and we don&#8217;t care much
+whether the name clashes some other command; if two command names clash,
+we can change one of them.</p>
+<p>As an example, let&#8217;s define a little command language for debugging
+macros. (You may actually find this useful.) There are just two
+commands, <code class="docutils literal"><span class="pre">ex</span></code> and <code class="docutils literal"><span class="pre">fi</span></code>. They keep track of a &#8220;current form,&#8221; the
+thing to be macro-expanded or the result of such an expansion:</p>
+<ol class="arabic simple">
+<li>(ex [form]): Apply <code class="docutils literal"><span class="pre">macro-expand1</span></code> to <em>form</em> (if supplied) or the
+current form, and make the result the current form. Then pretty-print
+the current form.</li>
+<li>(fi s [k]): Find the <em>k</em>&#8216;th subexpression of the current form whose
+<code class="docutils literal"><span class="pre">car</span></code> is <em>s</em>. (<em>k</em> defaults to 0.) Make that subexpression the
+current form and pretty-print it.</li>
+</ol>
+<p>Suppose you&#8217;re trying to debug a macro <code class="docutils literal"><span class="pre">hair-squared</span></code> that expands
+into something complex containing a subform that is itself a macro form
+beginning with the symbol <code class="docutils literal"><span class="pre">odd-define</span></code>. You suspect there is a bug in
+the subform. You might issue the following commands:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="p">(</span><span class="n">ex</span> <span class="p">(</span><span class="n">hair</span><span class="o">-</span><span class="n">squared</span> <span class="o">...</span><span class="p">))</span>
+<span class="p">(</span><span class="n">PROGN</span> <span class="p">(</span><span class="n">DEFUN</span> <span class="o">...</span><span class="p">)</span>
+         <span class="p">(</span><span class="n">ODD</span><span class="o">-</span><span class="n">DEFINE</span> <span class="n">ZIP</span> <span class="p">(</span><span class="n">U</span> <span class="n">V</span> <span class="n">W</span><span class="p">))</span>
+         <span class="o">...</span><span class="p">)</span>
+<span class="o">&gt;</span> <span class="p">(</span><span class="n">fi</span> <span class="n">odd</span><span class="o">-</span><span class="n">define</span><span class="p">)</span>
+<span class="p">(</span><span class="n">ODD</span><span class="o">-</span><span class="n">DEFINE</span> <span class="n">ZIP</span> <span class="p">(</span><span class="n">U</span> <span class="n">V</span> <span class="n">W</span><span class="p">))</span>
+<span class="o">&gt;</span> <span class="p">(</span><span class="n">ex</span><span class="p">)</span>
+<span class="p">(</span><span class="n">PROGN</span> <span class="p">(</span><span class="n">DEFUN</span> <span class="n">MAKE</span><span class="o">-</span><span class="n">A</span><span class="o">-</span><span class="n">ZIP</span> <span class="p">(</span><span class="n">U</span> <span class="n">V</span> <span class="n">W</span><span class="p">)</span> <span class="o">...</span><span class="p">)</span>
+   <span class="o">...</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Once again, it is clear that <code class="docutils literal"><span class="pre">ex</span></code> and <code class="docutils literal"><span class="pre">fi</span></code> cannot be functions,
+although they could easily be made into functions if we were willing to
+type a quote before their arguments. But using &#8220;quote&#8221; often seems
+inappropriate in commands. For one thing, having to type it is a
+nuisance in a context where we are trying to save keystrokes, especially
+if the argument in question is always quoted. For another, in many cases
+it just seems inappropriate. If we had a command that took a symbol as
+one of its arguments and set it to a value, it would just be strange to
+write (command &#8216;x ...) instead of (command x ...), because we want to
+think of the command as a variant of <code class="docutils literal"><span class="pre">setq</span></code>.</p>
+<p>Here is how <code class="docutils literal"><span class="pre">ex</span></code> and <code class="docutils literal"><span class="pre">fi</span></code> might be defined:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span>(defvar *current-form*)
+
+(defmacro ex (&amp;optional (form nil form-supplied))
+  `(progn
+     (pprint (setq *current-form*
+                   (macroexpand-1
+                    ,(cond (form-supplied
+                            `&#39;,form)
+                           (t &#39;*current-form*)))))
+     (values)))
+
+(defmacro fi (s &amp;optional (k 0))
+  `(progn
+     (pprint (setq *current-form*
+                   (find-nth-occurrence &#39;,s *current-form* ,k)))
+     (values)))
+</pre></div>
+</div>
+<p>The <code class="docutils literal"><span class="pre">ex</span></code> macro expands to a form containing a call to
+<code class="docutils literal"><span class="pre">macroexpand-1</span></code>, a built-in function that does one step of macro
+expansion to a form whose <code class="docutils literal"><span class="pre">car</span></code> is the name of a macro. (If given some
+other form, it returns the form unchanged.) <code class="docutils literal"><span class="pre">pprint</span></code> is a built-in
+function that pretty-prints its argument. Because we are using <code class="docutils literal"><span class="pre">ex</span></code>
+and <code class="docutils literal"><span class="pre">fi</span></code> at a read-eval-print loop, any value returned by their
+expansions will be printed. Here the expansion is executed for side
+effect, so we arrange to return no values at all by having the expansion
+return <code class="docutils literal"><span class="pre">(values)</span></code>.</p>
+<p>In some Lisp implementations, read-eval-print loops routinely print
+results using <code class="docutils literal"><span class="pre">pprint</span></code>. In those implementations we could simplify
+<code class="docutils literal"><span class="pre">ex</span></code> and <code class="docutils literal"><span class="pre">fi</span></code> by having them print nothing, but just return the
+value of <code class="docutils literal"><span class="pre">*current-form*</span></code>, which the read-eval-print loop will then
+print prettily. Use your judgment.</p>
+<p>I leave the definition of <code class="docutils literal"><span class="pre">find-nth-occurrence</span></code> as an exercise. You
+might also want to define a command that just sets and prints the
+current form: (cf e).</p>
+<p>One caution: In general, command languages will consist of a mixture of
+macros and functions, with convenience for their definer (and usually
+sole user) being the main consideration. If a command seems to &#8220;want&#8221; to
+evaluate some of its arguments sometimes, you have to decide whether to
+define two (or more) versions of it, or just one, a function whose
+arguments must be quoted to prevent their being evaluated. For the
+<code class="docutils literal"><span class="pre">cf</span></code> command mentioned in the prevous paragraph, some users might
+prefer <code class="docutils literal"><span class="pre">cf</span></code> to be a function, some a macro.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Macros</a><ul>
+<li><a class="reference internal" href="#how-macros-work">How Macros Work</a></li>
+<li><a class="reference internal" href="#backquote">Backquote</a></li>
+<li><a class="reference internal" href="#getting-macros-right">Getting Macros Right</a><ul>
+<li><a class="reference internal" href="#what-macros-are-for">What Macros are For</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Chapters</a><ul>
+      <li>Previous: <a href="packages.html" title="previous chapter">Packages</a></li>
+      <li>Next: <a href="sockets.html" title="next chapter">Sockets</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/chapters/macros.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, cl-cookbook contributors.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="../_sources/chapters/macros.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

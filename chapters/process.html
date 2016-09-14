@@ -1,0 +1,866 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Threads &#8212; The Common Lisp Cookbook 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="The Common Lisp Cookbook 0.1 documentation" href="../index.html" />
+    <link rel="up" title="Chapters" href="index.html" />
+    <link rel="next" title="Defining Systems" href="systems.html" />
+    <link rel="prev" title="Foreign Function Interfaces" href="ffi.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="threads">
+<h1>Threads<a class="headerlink" href="#threads" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>By <em>threads</em>, I mean separate execution strands within a single Lisp
+process, sharing the same address space. Typically, execution is
+automatically switched between these strands by the system (either by
+the lisp kernel or by the operating system) so that tasks appear to be
+completed in parallel (asynchronously). This page discusses the creation
+and management of threads and some aspects of interactions between them.
+For information about the interaction between lisp and other
+<em>processes</em>, see <a class="reference external" href="os.html">Interfacing with your OS</a>.</p>
+<p>Unfortunately, an instant pitfall for the unwary is that most
+implementations refer (in nomenclature) to threads as <em>processes</em> - this
+is a historical feature of a language which has been around for much
+longer than the term <em>thread</em>. Call this maturity a sign of stable
+implementations, if you will.</p>
+<p>The ANSI Common Lisp standard doesn&#8217;t mention this topic. So almost
+everything that can be said here depends on your OS and your
+implementation. It&#8217;s not just a question of different symbols in
+different packages (although that might be enough to get you started, so
+see the
+<a class="reference external" href="http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/portableaserve/portableaserve/acl-compat/">acl-compat</a>
+package at Sourceforge and in particular the files whose names match
+&#8220;acl-mp-*.lisp&#8221;) - concepts can vary too.</p>
+<p>Speaking of implementations, the following discussion currently refers
+only to <a class="reference external" href="http://www.lispworks.com/">LispWorks</a>. It has been tested on
+LispWorks for Windows Professional version 4.2.6 running on Windows NT
+(SP 6). All the examples below (apart from those few which require
+resaving the lisp image) should work without difficulty on the (free)
+Personal edition running under either Linux or Windows.</p>
+<p>Your mileage may vary. I will add &#8220;support&#8221; for other implementations
+and operating systems to this page later, if I have the time and access
+to the appropriate materials.</p>
+<p>In any case, read the manual! In this instance, the manual concerned is
+the chapter on &#8220;The MP Package&#8221; in the &#8220;LispWorks Reference Manual&#8221;.</p>
+<p>Pre-requisite: I assume familiarity with Common Lisp, in particular with
+closures, the loop macro, and lambda forms.</p>
+</div>
+<div class="section" id="why-bother">
+<h2>Why bother?<a class="headerlink" href="#why-bother" title="Permalink to this headline">¶</a></h2>
+<p>The first question to resolve is: why bother with threads? Sometimes
+your answer will simply be that your application is so straightforward
+that you need not concern yourself with threads at all. But in many
+other cases it&#8217;s difficult to imagine how a sophisticated application
+can be written without multi-threading. For example:</p>
+<ul class="simple">
+<li>you might be writing a server which needs to be able to respond to
+more than one user / connection at a time (for instance: a web server
+- see <a class="reference external" href="./sockets.html#server">this example</a> on the Sockets page);</li>
+<li>you might want to perform some background activity, without halting
+the main application while this is going on;</li>
+<li>you might want your application to be notified when a certain time
+has elapsed;</li>
+<li>you might want to keep the application running and active while
+waiting for some system resource to become available;</li>
+<li>you might need to interface with some other system which requires
+multithreading (for example, &#8220;windows&#8221; under Windows which generally
+run in their own threads);</li>
+<li>you might want to associate different contexts (e.g. different
+dynamic bindings) with different parts of the application;</li>
+<li>you might even have the simple need to do two things at once.</li>
+</ul>
+</div>
+<div class="section" id="emergency-exits">
+<h2>Emergency exits<a class="headerlink" href="#emergency-exits" title="Permalink to this headline">¶</a></h2>
+<p>It&#8217;s fairly likely when you&#8217;re learning to work with threads that -
+every now and again - one of them will run away from you and either fall
+motionless at your feet or make some CPU-intensive break for freedom. If
+you&#8217;ve managed to get your lisp tangled you may be short on options for
+halting a runaway thread, short of killing the lisp altogether.</p>
+<p>Before you go any further, you might want to locate the &#8220;Process
+Browser&#8221;. Aptly enough, you&#8217;ll find it on the LispWorks podium under the
+icon of somebody running away. Open one <strong>before</strong> you get into trouble.
+To kill a process which won&#8217;t respond to polite coercion, select it in
+the Process Browser and then click the &#8220;skull and crossbones&#8221; icon.</p>
+<p><strong>Exercise:</strong> Type
+<code class="docutils literal"><span class="pre">(mp:process-run-function</span> <span class="pre">&quot;Foo&quot;</span> <span class="pre">()</span> <span class="pre">(lambda</span> <span class="pre">()</span> <span class="pre">(loop)))</span></code> into a
+listener and use the Process Browser to kill the thread.</p>
+</div>
+<div class="section" id="basics">
+<h2>Basics<a class="headerlink" href="#basics" title="Permalink to this headline">¶</a></h2>
+<p>In order to run a function in a separate thread, you need to do two
+things.</p>
+<ol class="arabic">
+<li><p class="first">Make sure that multithreading is running. By default, multithreading
+is always running in the LispWorks for Windows environment so in this
+case there is nothing to do. See <a class="reference external" href="#initializing">initializing
+multithreading</a> below to find out how to get
+threads running on other platforms.</p>
+</li>
+<li><p class="first">Now call your function, in its new thread. For example:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">defvar</span> <span class="o">*</span><span class="n">foo</span><span class="o">*</span> <span class="mi">0</span><span class="p">)</span>
+<span class="p">(</span><span class="n">defun</span> <span class="n">foo</span> <span class="p">()</span> <span class="p">(</span><span class="n">incf</span> <span class="o">*</span><span class="n">foo</span><span class="o">*</span><span class="p">))</span>
+<span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">process</span><span class="o">-</span><span class="n">run</span><span class="o">-</span><span class="n">function</span> <span class="s2">&quot;Incrementing *foo*&quot;</span> <span class="n">nil</span> <span class="s1">&#39;foo)</span>
+<span class="o">*</span><span class="n">foo</span><span class="o">*</span>  <span class="o">=&gt;</span> <span class="mi">1</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<p>In the above example, you created a new thread called
+<code class="docutils literal"><span class="pre">&quot;Incrementing</span> <span class="pre">*foo*&quot;</span></code>. The function <code class="docutils literal"><span class="pre">foo</span></code> was invoked (with no
+arguments) in that thread. When <code class="docutils literal"><span class="pre">foo</span></code> returned, the thread no longer
+had any work to do and so was terminated.</p>
+<p>Note the following:</p>
+<ul class="simple">
+<li>The first argument to <code class="docutils literal"><span class="pre">mp:process-run-function</span></code> is a string naming
+the thread. You don&#8217;t have to make the names unique, but it&#8217;s a smart
+move if you do in actual code, as it&#8217;s a great way to tell your
+threads apart when you&#8217;re debugging them. When playing around in the
+listener, you&#8217;ll often find no harm in using an empty string here.</li>
+<li>The second argument to <code class="docutils literal"><span class="pre">mp:process-run-function</span></code> is a list of
+<em>process initialization keywords</em>. You&#8217;ll almost always leave this
+empty (so you needn&#8217;t bother about any details).</li>
+<li>The third argument is the function to invoke in the new thread. This
+can be any function designator, for example, an <code class="docutils literal"><span class="pre">fboundp</span></code> symbol or
+a <code class="docutils literal"><span class="pre">lambda</span></code> form.</li>
+<li>Any remaining arguments to <code class="docutils literal"><span class="pre">mp:process-run-function</span></code> are passed to
+your function. So calls to <code class="docutils literal"><span class="pre">mp:process-run-function</span></code> look like
+calls to <code class="docutils literal"><span class="pre">funcall</span></code> with two additional arguments at the beginning.</li>
+<li>A call to <code class="docutils literal"><span class="pre">mp:process-run-function</span></code> returns immediately (the return
+value is of type <code class="docutils literal"><span class="pre">mp:process</span></code>), while the new thread executes
+asynchronously.</li>
+</ul>
+<p>Another simple example:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">15</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">process</span><span class="o">-</span><span class="n">run</span><span class="o">-</span><span class="n">function</span> <span class="s2">&quot;sleep in the background&quot;</span> <span class="n">nil</span> <span class="s1">&#39;sleep 10)</span>
+<span class="c1">#&lt;MP:PROCESS Name &quot;sleep in the background&quot; Priority 850000 State &quot;Running&quot;&gt;</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">16</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">find</span><span class="o">-</span><span class="n">process</span><span class="o">-</span><span class="n">from</span><span class="o">-</span><span class="n">name</span> <span class="s2">&quot;sleep in the background&quot;</span><span class="p">)</span>
+<span class="c1">#&lt;MP:PROCESS Name &quot;sleep in the background&quot; Priority 0 State &quot;Sleeping on mailbox&quot;&gt;</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">17</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">sleep</span> <span class="mi">10</span><span class="p">)</span>  <span class="p">;;</span> <span class="n">At</span> <span class="n">this</span> <span class="n">point</span> <span class="n">the</span> <span class="n">listener</span> <span class="n">sleeps</span> <span class="k">for</span> <span class="n">ten</span> <span class="n">seconds</span> <span class="o">-</span>
+<span class="n">NIL</span>                      <span class="p">;;</span> <span class="n">long</span> <span class="n">enough</span> <span class="k">for</span> <span class="n">the</span> <span class="n">new</span> <span class="n">thread</span> <span class="n">to</span> <span class="n">run</span> <span class="n">to</span> <span class="n">completion</span><span class="o">.</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">18</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">find</span><span class="o">-</span><span class="n">process</span><span class="o">-</span><span class="n">from</span><span class="o">-</span><span class="n">name</span> <span class="s2">&quot;sleep in the background&quot;</span><span class="p">)</span>
+<span class="n">NIL</span>                      <span class="p">;;</span> <span class="n">The</span> <span class="n">sleeping</span> <span class="n">thread</span> <span class="n">has</span> <span class="n">finished</span> <span class="n">its</span> <span class="n">job</span> <span class="ow">and</span> <span class="n">terminated</span><span class="o">.</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">19</span> <span class="o">&gt;</span>
+</pre></div>
+</div>
+<p><strong>Closures! Warning!</strong> Note the difference between:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">dotimes</span> <span class="p">(</span><span class="n">i</span> <span class="mi">20</span><span class="p">)</span>
+<span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">process</span><span class="o">-</span><span class="n">run</span><span class="o">-</span><span class="n">function</span> <span class="s2">&quot;One closure&quot;</span> <span class="p">()</span>
+<span class="p">(</span><span class="k">lambda</span> <span class="p">()</span> <span class="p">(</span><span class="nb">print</span> <span class="n">i</span> <span class="c1">#.*standard-output*))))</span>
+</pre></div>
+</div>
+<p>and</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">dotimes</span> <span class="p">(</span><span class="n">i</span> <span class="mi">20</span><span class="p">)</span>
+<span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">process</span><span class="o">-</span><span class="n">run</span><span class="o">-</span><span class="n">function</span> <span class="s2">&quot;Twenty different bindings&quot;</span> <span class="p">()</span>
+                         <span class="p">(</span><span class="k">lambda</span> <span class="p">(</span><span class="n">j</span><span class="p">)</span> <span class="p">(</span><span class="nb">print</span> <span class="n">j</span> <span class="c1">#.*standard-output*))</span>
+                         <span class="n">i</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>In the first case, all twenty threads share the same closure variable
+<code class="docutils literal"><span class="pre">i</span></code>. The threads execute <em>asynchronously</em> - in other words there&#8217;s no
+way to tell exactly when or in what order they&#8217;ll execute, or how
+they&#8217;ll interleave with the thread which created them. In this case (try
+it!) you will observe that LispWorks initialises all 20 threads before
+any of them have a chance to start running. By far the easiest way of
+dealing with this is to ensure that variables which need to be private
+to each thread are bound on a per-thread basis.</p>
+<p><strong>Exercise:</strong> get two or three new threads running simultaneously, and
+convince yourself they&#8217;re all there.</p>
+</div>
+<div class="section" id="where-s-my-output">
+<h2>Where&#8217;s my output?<a class="headerlink" href="#where-s-my-output" title="Permalink to this headline">¶</a></h2>
+<p>An obvious way to test whether threads are behaving as you imagine they
+ought, is to get them to print messages to the listener. For example,
+you might feel justified in trying something like:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">23</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">process</span><span class="o">-</span><span class="n">run</span><span class="o">-</span><span class="n">function</span> <span class="s2">&quot;test&quot;</span> <span class="p">()</span> <span class="p">(</span><span class="k">lambda</span> <span class="p">()</span> <span class="p">(</span><span class="nb">print</span> <span class="mi">99</span><span class="p">)))</span>
+<span class="c1">#&lt;MP:PROCESS Name &quot;test&quot; Priority 850000 State &quot;Running&quot;&gt;</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">24</span> <span class="o">&gt;</span> <span class="p">;;</span> <span class="n">Where</span><span class="s1">&#39;s my output?</span>
+</pre></div>
+</div>
+<p>Where indeed is your output? The answer is that your new thread has a
+different <code class="docutils literal"><span class="pre">*standard-output*</span></code> to the listener, and that&#8217;s where your
+output has gone to. Here is how you might find out where precisely that
+is:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">25</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">process</span><span class="o">-</span><span class="n">run</span><span class="o">-</span><span class="n">function</span>
+              <span class="s2">&quot;&quot;</span> <span class="p">()</span>
+              <span class="p">(</span><span class="k">lambda</span> <span class="p">()</span>
+                <span class="p">(</span><span class="nb">print</span> <span class="o">*</span><span class="n">standard</span><span class="o">-</span><span class="n">output</span><span class="o">*</span> <span class="c1">#.*standard-output*)))</span>
+<span class="c1">#&lt;MP:PROCESS Name &quot;&quot; Priority 850000 State &quot;Running&quot;&gt;</span>
+
+<span class="c1">#&lt;Synonym stream to *TERMINAL-IO*&gt;</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">26</span> <span class="o">&gt;</span>
+</pre></div>
+</div>
+<p><strong>Exercise:</strong> Open the console (i.e. <code class="docutils literal"><span class="pre">*terminal-io*</span></code>) by evaluating
+<code class="docutils literal"><span class="pre">(read-char</span> <span class="pre">*terminal-io*)</span></code>; type a <code class="docutils literal"><span class="pre">#\Newline</span></code> into the console to
+return from <code class="docutils literal"><span class="pre">read-char</span></code>. Now you can prove directly where a thread&#8217;s
+output goes (by sending something there). <strong>Warning!</strong> Don&#8217;t be tempted
+to close the console window, or you&#8217;ll lose your lisp.</p>
+</div>
+<div class="section" id="waiting">
+<h2>Waiting<a class="headerlink" href="#waiting" title="Permalink to this headline">¶</a></h2>
+<p>In all the above examples, a thread is created to run a simple function
+and then halt. In a typical application at least some of your threads
+will run an <em>event loop</em> of some sort. An event loop is a function which
+repeatedly waits for an external event to occur. When an event is
+noticed, it is dispatched (maybe to another thread) for processing and
+the event loop cycles back to its waiting state. The &#8220;other thread&#8221; here
+might already exist (perhaps running an event loop of its own) or might
+be created specifically to perform this task (i.e. handle a single
+event) and then terminate.</p>
+<p>It might be tempting to construct an event loop using <code class="docutils literal"><span class="pre">cl:sleep</span></code>. For
+example:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">defun</span> <span class="n">bogus</span><span class="o">-</span><span class="n">event</span><span class="o">-</span><span class="n">loop</span> <span class="p">()</span>
+<span class="p">(</span><span class="n">loop</span>
+   <span class="p">(</span><span class="n">sleep</span> <span class="mi">1</span><span class="p">)</span>                            <span class="p">;</span> <span class="n">THIS</span> <span class="n">IS</span> <span class="n">WRONG</span>
+<span class="p">(</span><span class="n">when</span> <span class="p">(</span><span class="n">something</span><span class="o">-</span><span class="n">has</span><span class="o">-</span><span class="n">happened</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">act</span><span class="o">-</span><span class="n">on</span><span class="o">-</span><span class="n">that</span><span class="o">-</span><span class="n">thing</span><span class="p">))))</span>
+
+<span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">process</span><span class="o">-</span><span class="n">run</span><span class="o">-</span><span class="n">function</span> <span class="s2">&quot;Bogus event loop&quot;</span> <span class="p">()</span>
+                         <span class="s1">&#39;bogus-event-loop)</span>
+</pre></div>
+</div>
+<p>This is a poor choice, because you&#8217;re condemned to waiting for the
+<code class="docutils literal"><span class="pre">sleep</span></code> to return before you can perform the wake-up test. (Also, it&#8217;s
+possible that your implementation cannot sleep one single thread without
+sleeping the whole lisp process. In such cases, any processing required
+before the predicate <code class="docutils literal"><span class="pre">something-has-happened</span></code> can return true will
+never happen.)</p>
+<p>Consider instead:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">defun</span> <span class="n">improved</span><span class="o">-</span><span class="n">event</span><span class="o">-</span><span class="n">loop</span> <span class="p">()</span>
+  <span class="p">(</span><span class="n">loop</span>
+     <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">process</span><span class="o">-</span><span class="n">wait</span> <span class="s2">&quot;Waiting for something to happen&quot;</span>
+                      <span class="s1">&#39;something-has-happened)</span>
+     <span class="p">(</span><span class="n">act</span><span class="o">-</span><span class="n">on</span><span class="o">-</span><span class="n">that</span><span class="o">-</span><span class="n">thing</span><span class="p">)))</span>
+</pre></div>
+</div>
+<p>The arguments to <code class="docutils literal"><span class="pre">mp:process-wait</span></code> are a string (which you should use
+for describing what this thread is waiting for), a function and
+optionally arguments to that function. The current thread will
+effectively sleep until the function returns true. The function can
+watch either internal state...</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">defun</span> <span class="n">flush</span><span class="o">-</span><span class="n">entries</span><span class="o">-</span><span class="n">to</span><span class="o">-</span><span class="n">file</span> <span class="p">(</span><span class="n">entries</span><span class="o">-</span><span class="n">symbol</span> <span class="nb">max</span><span class="o">-</span><span class="n">length</span> <span class="n">file</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">loop</span>
+     <span class="p">;;</span> <span class="n">Wait</span> <span class="n">until</span> <span class="n">we</span> <span class="n">have</span> <span class="n">enough</span> <span class="n">entries</span> <span class="n">to</span> <span class="n">justify</span> <span class="n">going</span> <span class="n">to</span> <span class="n">disk</span><span class="o">.</span>
+     <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">process</span><span class="o">-</span><span class="n">wait</span> <span class="p">(</span><span class="nb">format</span> <span class="n">nil</span> <span class="s2">&quot;Waiting for ~a entr~:@p&quot;</span> <span class="nb">max</span><span class="o">-</span><span class="n">length</span><span class="p">)</span>
+                      <span class="p">(</span><span class="k">lambda</span> <span class="p">()</span>
+                        <span class="p">(</span><span class="o">&gt;=</span> <span class="p">(</span><span class="n">length</span> <span class="p">(</span><span class="n">symbol</span><span class="o">-</span><span class="n">value</span> <span class="n">entries</span><span class="o">-</span><span class="n">symbol</span><span class="p">))</span> <span class="nb">max</span><span class="o">-</span><span class="n">length</span><span class="p">)))</span>
+     <span class="p">;;</span> <span class="n">In</span> <span class="n">this</span> <span class="n">example</span><span class="p">,</span> <span class="n">don</span><span class="s1">&#39;t bother to spawn off a new thread to</span>
+     <span class="p">;;</span> <span class="n">perform</span> <span class="n">the</span> <span class="n">task</span><span class="o">.</span>
+     <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">entries</span> <span class="p">(</span><span class="n">shiftf</span> <span class="p">(</span><span class="n">symbol</span><span class="o">-</span><span class="n">value</span> <span class="n">entries</span><span class="o">-</span><span class="n">symbol</span><span class="p">)</span> <span class="n">nil</span><span class="p">)))</span>
+       <span class="p">(</span><span class="k">with</span><span class="o">-</span><span class="nb">open</span><span class="o">-</span><span class="n">file</span> <span class="p">(</span><span class="n">ostream</span> <span class="n">file</span>
+                                <span class="p">:</span><span class="n">direction</span> <span class="p">:</span><span class="n">output</span>
+                                <span class="p">:</span><span class="k">if</span><span class="o">-</span><span class="n">exists</span> <span class="p">:</span><span class="n">append</span>
+                                <span class="p">:</span><span class="k">if</span><span class="o">-</span><span class="n">does</span><span class="o">-</span><span class="ow">not</span><span class="o">-</span><span class="n">exist</span> <span class="p">:</span><span class="n">create</span><span class="p">)</span>
+         <span class="p">(</span><span class="nb">format</span> <span class="n">ostream</span> <span class="s2">&quot;~</span><span class="si">%F</span><span class="s2">lushing entries:&quot;</span><span class="p">)</span>
+         <span class="p">(</span><span class="n">dolist</span> <span class="p">(</span><span class="n">entry</span> <span class="p">(</span><span class="n">reverse</span> <span class="n">entries</span><span class="p">))</span>
+           <span class="p">(</span><span class="nb">print</span> <span class="n">entry</span> <span class="n">ostream</span><span class="p">))))))</span>
+
+<span class="p">;;</span> <span class="n">Test</span> <span class="n">bed</span> <span class="n">to</span> <span class="n">drive</span> <span class="n">the</span> <span class="n">event</span> <span class="n">loop</span>
+<span class="p">(</span><span class="n">defvar</span> <span class="o">*</span><span class="n">test</span><span class="o">-</span><span class="n">entries</span><span class="o">*</span> <span class="n">nil</span><span class="p">)</span>
+<span class="p">(</span><span class="n">defvar</span> <span class="o">*</span><span class="n">test</span><span class="o">-</span><span class="n">file</span><span class="o">*</span> <span class="s2">&quot;c:/temp/test-flush-entries.txt&quot;</span><span class="p">)</span>
+<span class="p">(</span><span class="n">defun</span> <span class="n">test</span><span class="o">-</span><span class="n">flush</span><span class="o">-</span><span class="n">entries</span><span class="o">-</span><span class="n">to</span><span class="o">-</span><span class="n">file</span> <span class="p">()</span>
+  <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">tester</span>
+         <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">process</span><span class="o">-</span><span class="n">run</span><span class="o">-</span><span class="n">function</span> <span class="s2">&quot;Test writing entries to file&quot;</span> <span class="p">()</span>
+                                  <span class="s1">&#39;flush-entries-to-file</span>
+                                  <span class="s1">&#39;*test-entries*</span>
+                                  <span class="mi">10</span>
+                                  <span class="o">*</span><span class="n">test</span><span class="o">-</span><span class="n">file</span><span class="o">*</span><span class="p">)))</span>
+    <span class="p">(</span><span class="n">dotimes</span> <span class="p">(</span><span class="n">i</span> <span class="mi">100</span><span class="p">)</span>
+      <span class="p">(</span><span class="n">push</span> <span class="n">i</span> <span class="o">*</span><span class="n">test</span><span class="o">-</span><span class="n">entries</span><span class="o">*</span><span class="p">)</span>
+      <span class="p">;;</span> <span class="n">Without</span> <span class="n">the</span> <span class="n">delay</span> <span class="n">introduced</span> <span class="n">by</span> <span class="n">sleep</span><span class="p">,</span> <span class="nb">all</span> <span class="mi">100</span> <span class="n">entries</span> <span class="n">are</span>
+      <span class="p">;;</span> <span class="n">generated</span> <span class="n">before</span> <span class="n">the</span> <span class="n">flusher</span> <span class="n">has</span> <span class="n">a</span> <span class="n">chance</span> <span class="n">to</span> <span class="n">wake</span> <span class="n">up</span><span class="o">.</span>
+      <span class="p">(</span><span class="n">sleep</span> <span class="mf">0.1</span><span class="p">))</span>
+    <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">process</span><span class="o">-</span><span class="n">kill</span> <span class="n">tester</span><span class="p">)))</span>
+</pre></div>
+</div>
+<p>... or external state...</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">defun</span> <span class="n">flush</span><span class="o">-</span><span class="n">entries</span><span class="o">-</span><span class="n">from</span><span class="o">-</span><span class="n">file</span> <span class="p">(</span><span class="n">file</span> <span class="n">reporting</span><span class="o">-</span><span class="n">stream</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">loop</span>
+     <span class="p">;;</span> <span class="n">Wait</span> <span class="k">for</span> <span class="n">given</span> <span class="n">file</span> <span class="n">to</span> <span class="n">exist</span> <span class="n">on</span> <span class="n">disk</span><span class="o">.</span>
+     <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">process</span><span class="o">-</span><span class="n">wait</span> <span class="p">(</span><span class="nb">format</span> <span class="n">nil</span> <span class="s2">&quot;Waiting for ~a&quot;</span> <span class="n">file</span><span class="p">)</span>
+                      <span class="s1">&#39;probe-file file)</span>
+     <span class="p">;;</span> <span class="n">Empty</span> <span class="n">the</span> <span class="n">file</span> <span class="n">to</span> <span class="n">the</span> <span class="n">reporting</span><span class="o">-</span><span class="n">stream</span><span class="p">,</span> <span class="n">being</span> <span class="n">careful</span> <span class="n">to</span>
+     <span class="p">;;</span> <span class="n">allow</span> <span class="n">more</span> <span class="n">contents</span> <span class="n">to</span> <span class="n">accumulate</span> <span class="k">while</span> <span class="n">this</span> <span class="ow">is</span> <span class="n">happening</span><span class="o">.</span>
+     <span class="p">(</span><span class="nb">format</span> <span class="n">reporting</span><span class="o">-</span><span class="n">stream</span> <span class="s2">&quot;~&amp;Reading ~a:~%&quot;</span> <span class="n">file</span><span class="p">)</span>
+     <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">temp</span><span class="o">-</span><span class="n">file</span> <span class="p">(</span><span class="nb">format</span> <span class="n">nil</span> <span class="s2">&quot;~a.temp&quot;</span> <span class="n">file</span><span class="p">)))</span>
+       <span class="p">(</span><span class="n">rename</span><span class="o">-</span><span class="n">file</span> <span class="n">file</span> <span class="n">temp</span><span class="o">-</span><span class="n">file</span><span class="p">)</span>
+       <span class="p">(</span><span class="k">with</span><span class="o">-</span><span class="nb">open</span><span class="o">-</span><span class="n">file</span> <span class="p">(</span><span class="n">istream</span> <span class="n">temp</span><span class="o">-</span><span class="n">file</span><span class="p">)</span>
+         <span class="p">(</span><span class="n">loop</span> <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">line</span> <span class="p">(</span><span class="n">read</span><span class="o">-</span><span class="n">line</span> <span class="n">istream</span> <span class="n">nil</span><span class="p">)))</span>
+                 <span class="p">(</span><span class="n">unless</span> <span class="n">line</span>
+                   <span class="p">(</span><span class="k">return</span><span class="p">))</span>
+                 <span class="p">(</span><span class="n">write</span><span class="o">-</span><span class="n">line</span> <span class="n">line</span> <span class="n">reporting</span><span class="o">-</span><span class="n">stream</span><span class="p">))))</span>
+       <span class="p">(</span><span class="n">delete</span><span class="o">-</span><span class="n">file</span> <span class="n">temp</span><span class="o">-</span><span class="n">file</span><span class="p">))))</span>
+
+<span class="p">(</span><span class="n">defun</span> <span class="n">test</span><span class="o">-</span><span class="n">flush</span><span class="o">-</span><span class="n">entries</span><span class="o">-</span><span class="n">from</span><span class="o">-</span><span class="n">file</span> <span class="p">()</span>
+  <span class="p">(</span><span class="n">delete</span><span class="o">-</span><span class="n">file</span> <span class="o">*</span><span class="n">test</span><span class="o">-</span><span class="n">file</span><span class="o">*</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">tester</span>
+         <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">process</span><span class="o">-</span><span class="n">run</span><span class="o">-</span><span class="n">function</span> <span class="s2">&quot;Test reading entries from file&quot;</span> <span class="p">()</span>
+                                  <span class="s1">&#39;flush-entries-from-file</span>
+                                  <span class="o">*</span><span class="n">test</span><span class="o">-</span><span class="n">file</span><span class="o">*</span>
+                                  <span class="o">*</span><span class="n">standard</span><span class="o">-</span><span class="n">output</span><span class="o">*</span><span class="p">)))</span>
+    <span class="p">;;</span> <span class="n">Use</span> <span class="n">the</span> <span class="n">previous</span> <span class="n">example</span> <span class="n">to</span> <span class="n">create</span> <span class="n">test</span> <span class="n">data</span> <span class="k">for</span> <span class="n">this</span> <span class="n">test</span><span class="o">.</span>
+    <span class="p">(</span><span class="n">test</span><span class="o">-</span><span class="n">flush</span><span class="o">-</span><span class="n">entries</span><span class="o">-</span><span class="n">to</span><span class="o">-</span><span class="n">log</span><span class="o">-</span><span class="n">file</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">process</span><span class="o">-</span><span class="n">kill</span> <span class="n">tester</span><span class="p">)))</span>
+</pre></div>
+</div>
+<p>Although both of these examples were somewhat contrived, note their
+intentions to preserve their data from external modification once the
+waiting threads have woken up. In the first example, <code class="docutils literal"><span class="pre">shiftf</span></code> is used
+to atomically retrieve a symbol-value and reset it. In the above
+examples, this level of care didn&#8217;t particularly matter, but in some
+applications it may be important to keep threads from trampling on each
+other&#8217;s data.</p>
+<p>Note also the use of <code class="docutils literal"><span class="pre">mp:process-kill</span></code> to terminate unwanted threads
+when each test is complete.</p>
+<p><strong>Exercise:</strong> Create and test a thread which will wait until the symbol
+<code class="docutils literal"><span class="pre">foo</span></code> is <code class="docutils literal"><span class="pre">boundp</span></code> and then announce the fact.</p>
+</div>
+<div class="section" id="per-thread-state">
+<h2>Per-thread state<a class="headerlink" href="#per-thread-state" title="Permalink to this headline">¶</a></h2>
+<p>Every thread in your lisp system has its own execution stack and hence
+its own private state. The following aspects of state will therefore
+vary between different threads:</p>
+<ul class="simple">
+<li>bindings of dynamic variables;</li>
+<li><code class="docutils literal"><span class="pre">catch</span></code> tags;</li>
+<li>condition handlers, <code class="docutils literal"><span class="pre">unwind-protect</span></code>, etc.;</li>
+</ul>
+<p>On the other hand, the following are globally <strong>set</strong> rather than
+<strong>bound</strong> in a lisp system and so will not vary between threads:</p>
+<ul class="simple">
+<li>definitions of functions, methods, classes, conditions, packages;</li>
+<li>contents of any &#8220;compound&#8221; objects: cons cells, arrays, structure
+objects, CLOS objects, hash-tables;</li>
+<li>values of lexical variables in shared closures;</li>
+<li>state of any stream;</li>
+<li>symbol property-lists.</li>
+</ul>
+<p>To see how per-thread variable bindings can lead you astray, consider
+the following examples:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">34</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">defvar</span> <span class="o">*</span><span class="n">foo</span><span class="o">*</span> <span class="n">nil</span><span class="p">)</span>
+<span class="o">*</span><span class="n">FOO</span><span class="o">*</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">35</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">process</span><span class="o">-</span><span class="n">run</span><span class="o">-</span><span class="n">function</span> <span class="s2">&quot;&quot;</span> <span class="p">()</span> <span class="p">(</span><span class="k">lambda</span> <span class="p">()</span> <span class="p">(</span><span class="n">setf</span> <span class="o">*</span><span class="n">foo</span><span class="o">*</span> <span class="mi">1</span><span class="p">)))</span>
+<span class="c1">#&lt;MP:PROCESS Name &quot;&quot; Priority 850000 State &quot;Running&quot;&gt;</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">36</span> <span class="o">&gt;</span> <span class="o">*</span><span class="n">foo</span><span class="o">*</span>
+<span class="mi">1</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">37</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">process</span><span class="o">-</span><span class="n">run</span><span class="o">-</span><span class="n">function</span>
+              <span class="s2">&quot;Bind in new thread, can&#39;t see elsewhere.&quot;</span> <span class="p">()</span>
+              <span class="p">(</span><span class="k">lambda</span> <span class="p">()</span>
+                <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="o">*</span><span class="n">foo</span><span class="o">*</span> <span class="mi">2</span><span class="p">))</span>
+                  <span class="p">(</span><span class="n">sleep</span> <span class="mi">5</span><span class="p">)</span>
+                  <span class="p">(</span><span class="n">setf</span> <span class="o">*</span><span class="n">foo</span><span class="o">*</span> <span class="mi">3</span><span class="p">)</span>
+                  <span class="p">(</span><span class="nb">print</span> <span class="s1">&#39;done #.*standard-output*))))</span>
+<span class="c1">#&lt;MP:PROCESS Name &quot;&quot; Priority 850000 State &quot;Running&quot;&gt;</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">38</span> <span class="o">&gt;</span> <span class="o">*</span><span class="n">foo</span><span class="o">*</span>
+<span class="mi">1</span>
+
+<span class="n">DONE</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">39</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="o">*</span><span class="n">foo</span><span class="o">*</span> <span class="mi">4</span><span class="p">))</span>
+               <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">process</span><span class="o">-</span><span class="n">run</span><span class="o">-</span><span class="n">function</span>
+                <span class="s2">&quot;Bind in old thread, can&#39;t see elsewhere.&quot;</span> <span class="p">()</span>
+                <span class="p">(</span><span class="k">lambda</span> <span class="p">()</span> <span class="p">(</span><span class="nb">print</span> <span class="o">*</span><span class="n">foo</span><span class="o">*</span> <span class="c1">#.*standard-output*))))</span>
+<span class="c1">#&lt;MP:PROCESS Name &quot;&quot; Priority 850000 State &quot;Running&quot;&gt;</span>
+
+<span class="mi">1</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">40</span> <span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>In both lines 34 and 35, <code class="docutils literal"><span class="pre">*foo*</span></code> is globally <strong>set</strong>. This means that
+every thread shares the symbol&#8217;s value. In line 37, <code class="docutils literal"><span class="pre">*foo*</span></code> is
+<strong>bound</strong> only within the new thread; the original thread (i.e. the
+listener) does not see this binding or the result of a <code class="docutils literal"><span class="pre">setf</span></code> within
+the binding. Similarly, in line 39 the <strong>binding</strong> is present only in
+the original thread. To create a binding in a new thread, use
+<code class="docutils literal"><span class="pre">mp:*process-initial-bindings*</span></code>:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">40</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">mp</span><span class="p">:</span><span class="o">*</span><span class="n">process</span><span class="o">-</span><span class="n">initial</span><span class="o">-</span><span class="n">bindings</span><span class="o">*</span>
+                    <span class="p">;;</span> <span class="n">Note</span> <span class="n">the</span> <span class="s2">&quot;dotted list&quot;</span> <span class="nb">format</span> <span class="o">-</span> <span class="n">an</span> <span class="n">unpleasant</span> <span class="n">trap</span>
+                    <span class="p">;;</span> <span class="k">for</span> <span class="n">the</span> <span class="n">unwary</span><span class="o">.</span> <span class="n">Note</span> <span class="n">also</span> <span class="n">that</span> <span class="n">new</span> <span class="n">value</span> <span class="ow">is</span> <span class="n">pushed</span>
+                    <span class="p">;;</span> <span class="n">onto</span> <span class="n">existing</span> <span class="nb">list</span> <span class="n">so</span> <span class="n">that</span> <span class="n">system</span> <span class="n">defaults</span> <span class="n">aren</span><span class="s1">&#39;t lost.</span>
+                    <span class="p">(</span><span class="n">cons</span> <span class="s1">&#39;(*foo* . 5) mp:*process-initial-bindings*)))</span>
+               <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">process</span><span class="o">-</span><span class="n">run</span><span class="o">-</span><span class="n">function</span>
+                <span class="s2">&quot;Bind around new thread.&quot;</span> <span class="p">()</span>
+                <span class="p">(</span><span class="k">lambda</span> <span class="p">()</span>
+                  <span class="p">(</span><span class="nb">print</span> <span class="o">*</span><span class="n">foo</span><span class="o">*</span> <span class="c1">#.*standard-output*))))</span>
+<span class="c1">#&lt;MP:PROCESS Name &quot;Bind around new thread.&quot; Priority 850000 State &quot;Running&quot;&gt;</span>
+
+<span class="mi">5</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">41</span> <span class="o">&gt;</span>
+</pre></div>
+</div>
+<p><strong>Exercise:</strong> Explain from examination of
+<code class="docutils literal"><span class="pre">mp:*process-initial-bindings*</span></code> why calling <code class="docutils literal"><span class="pre">in-package</span></code> in one
+listener does not affect the package in another.</p>
+</div>
+<div class="section" id="mailboxes">
+<h2>Mailboxes<a class="headerlink" href="#mailboxes" title="Permalink to this headline">¶</a></h2>
+<p>The mailbox is a structure designed to facilitate the transfer of data
+between threads. A number of operations are defined on mailboxes and are
+guaranteed to be <em>thread safe</em> - that is, different threads can invoke
+any number of these operations &#8220;at the same time&#8221; without corrupting the
+mailbox structure.</p>
+<p>The following example uses mailboxes to transfer &#8220;data&#8221; from ten
+&#8220;generating&#8221; threads to one &#8220;processing&#8221; thread. The function
+<code class="docutils literal"><span class="pre">mp:mailbox-send</span></code> takes a mailbox and an arbitrary lisp object as its
+arguments. Objects sent to the mailbox are queued in <em>FIFO</em> (first in,
+first out) order, and are retrieved by calling <code class="docutils literal"><span class="pre">mp:mailbox-read</span></code>. Note
+that this this function will hang if the mailbox is empty when it is
+invoked; the wait reason and timeout are optional arguments. Note also
+how the timeout is used here to terminate the &#8220;processing&#8221; thread after
+the data have stopped arriving.</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="ow">in</span><span class="o">-</span><span class="n">package</span> <span class="s2">&quot;CL-USER&quot;</span><span class="p">)</span>
+
+<span class="p">;;</span> <span class="n">process</span><span class="o">-</span><span class="n">data</span> <span class="n">creates</span> <span class="n">a</span> <span class="n">thread</span> <span class="n">which</span> <span class="n">watches</span> <span class="k">for</span> <span class="n">data</span> <span class="n">being</span>
+<span class="p">;;</span> <span class="n">sent</span> <span class="n">to</span> <span class="n">its</span> <span class="n">mailbox</span> <span class="ow">and</span> <span class="n">then</span> <span class="s2">&quot;processes&quot;</span> <span class="n">them</span><span class="o">.</span>
+<span class="p">(</span><span class="n">defun</span> <span class="n">process</span><span class="o">-</span><span class="n">data</span> <span class="p">(</span><span class="n">ostream</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">mailbox</span><span class="p">))</span>
+    <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">process</span><span class="o">-</span><span class="n">run</span><span class="o">-</span><span class="n">function</span>
+     <span class="s2">&quot;Process data&quot;</span> <span class="p">()</span>
+     <span class="p">(</span><span class="k">lambda</span> <span class="p">()</span>
+       <span class="p">;;</span> <span class="n">Create</span> <span class="n">a</span> <span class="n">mailbox</span>
+       <span class="p">(</span><span class="n">setf</span> <span class="n">mailbox</span> <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">make</span><span class="o">-</span><span class="n">mailbox</span><span class="p">))</span>
+       <span class="p">(</span><span class="n">loop</span>
+          <span class="p">;;</span> <span class="n">Wait</span> <span class="k">for</span> <span class="n">someone</span> <span class="n">to</span> <span class="n">write</span> <span class="n">to</span> <span class="n">the</span> <span class="n">mailbox</span>
+          <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">datum</span> <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">mailbox</span><span class="o">-</span><span class="n">read</span> <span class="n">mailbox</span>
+                                        <span class="s2">&quot;Waiting for data to process&quot;</span>
+                                        <span class="mi">5</span><span class="p">)))</span>
+            <span class="p">;;</span> <span class="s2">&quot;Process&quot;</span> <span class="n">the</span> <span class="n">result</span>
+            <span class="p">(</span><span class="k">if</span> <span class="n">datum</span>
+                <span class="p">(</span><span class="nb">format</span> <span class="n">ostream</span> <span class="s2">&quot;~&amp;Processing ~a.~%&quot;</span> <span class="n">datum</span><span class="p">)</span>
+                <span class="p">;;</span> <span class="n">Looks</span> <span class="n">like</span> <span class="n">everyone</span> <span class="k">else</span> <span class="n">went</span> <span class="n">away</span><span class="o">.</span> <span class="n">Terminate</span> <span class="bp">self</span><span class="o">.</span>
+                <span class="p">(</span><span class="k">return</span><span class="p">))))))</span>
+    <span class="p">;;</span> <span class="n">See</span> <span class="n">the</span> <span class="n">Slightly</span> <span class="n">Tougher</span> <span class="n">Exercise</span> <span class="n">below</span><span class="o">...</span>
+    <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">process</span><span class="o">-</span><span class="n">wait</span> <span class="s2">&quot;Waiting for mailbox to exist.&quot;</span>
+                     <span class="p">(</span><span class="k">lambda</span> <span class="p">()</span> <span class="n">mailbox</span><span class="p">))</span>
+    <span class="p">;;</span> <span class="n">Return</span> <span class="n">mailbox</span> <span class="n">so</span> <span class="n">that</span> <span class="n">others</span> <span class="n">can</span> <span class="n">share</span> <span class="n">it</span><span class="o">.</span>
+    <span class="n">mailbox</span><span class="p">))</span>
+
+<span class="p">;;</span> <span class="n">generate</span><span class="o">-</span><span class="n">data</span> <span class="ow">is</span> <span class="n">called</span> <span class="n">by</span> <span class="n">each</span> <span class="s2">&quot;generator&quot;</span> <span class="n">thread</span><span class="p">,</span> <span class="n">to</span> <span class="n">send</span>
+<span class="p">;;</span> <span class="mi">100</span> <span class="n">data</span> <span class="n">to</span> <span class="n">the</span> <span class="n">mailbox</span><span class="o">.</span> <span class="n">Each</span> <span class="n">thread</span> <span class="n">will</span> <span class="n">die</span> <span class="n">when</span> <span class="n">its</span> <span class="n">call</span> <span class="n">to</span> <span class="n">this</span>
+<span class="p">;;</span> <span class="n">function</span> <span class="n">returns</span><span class="o">.</span>
+<span class="p">(</span><span class="n">defun</span> <span class="n">generate</span><span class="o">-</span><span class="n">data</span> <span class="p">(</span><span class="nb">id</span> <span class="n">mailbox</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">loop</span> <span class="k">for</span> <span class="n">count</span> <span class="n">to</span> <span class="mi">100</span> <span class="n">do</span>
+       <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">datum</span> <span class="p">(</span><span class="n">cons</span> <span class="nb">id</span> <span class="n">count</span><span class="p">)))</span>
+         <span class="p">(</span><span class="n">sleep</span> <span class="p">(</span><span class="n">random</span> <span class="mf">1.0</span><span class="p">))</span>
+         <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">mailbox</span><span class="o">-</span><span class="n">send</span> <span class="n">mailbox</span> <span class="n">datum</span><span class="p">))))</span>
+
+<span class="p">;;</span> <span class="n">Pass</span> <span class="n">mailbox</span> <span class="kn">from</span> <span class="s2">&quot;processor&quot;</span> <span class="n">to</span> <span class="n">various</span> <span class="s2">&quot;generators&quot;</span><span class="o">.</span>
+<span class="p">(</span><span class="n">defun</span> <span class="n">mailbox</span><span class="o">-</span><span class="n">demo</span> <span class="p">()</span>
+  <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">mailbox</span> <span class="p">(</span><span class="n">process</span><span class="o">-</span><span class="n">data</span> <span class="o">*</span><span class="n">standard</span><span class="o">-</span><span class="n">output</span><span class="o">*</span><span class="p">)))</span>
+    <span class="p">(</span><span class="n">loop</span> <span class="k">for</span> <span class="nb">id</span> <span class="n">to</span> <span class="mi">10</span> <span class="n">do</span>
+         <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">process</span><span class="o">-</span><span class="n">run</span><span class="o">-</span><span class="n">function</span>
+          <span class="p">(</span><span class="nb">format</span> <span class="n">nil</span> <span class="s2">&quot;Generator ~d.&quot;</span> <span class="nb">id</span><span class="p">)</span> <span class="p">()</span>
+          <span class="s1">&#39;generate-data</span>
+          <span class="nb">id</span>
+          <span class="n">mailbox</span><span class="p">))))</span>
+</pre></div>
+</div>
+<p><strong>Slightly Tougher Exercise:</strong> Consider the call to <code class="docutils literal"><span class="pre">mp:process-wait</span></code>
+in the example above. Explain what will happen &#8211; and why &#8211; if (a) the
+call is removed and (b) the call is replaced by:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">process</span><span class="o">-</span><span class="n">wait</span> <span class="s2">&quot;Waiting for mailbox to exist.&quot;</span>
+                 <span class="s1">&#39;identity</span>
+                 <span class="n">mailbox</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="interrupts">
+<h2>Interrupts<a class="headerlink" href="#interrupts" title="Permalink to this headline">¶</a></h2>
+<p>The above sections have dealt with ways of using <strong>data</strong> to communicate
+between threads. Another important mode of communication is the
+<em>interrupt</em>: a message sent by one thread to another, to tell that
+thread to stop whatever it was doing and get on with something else
+instead. This might come in handy if:</p>
+<ul class="simple">
+<li>you need certain actions to be performed synchronously - for example
+you need your web server to flush some cache before it accepts any
+further connections; or</li>
+<li>you need actions to be performed in the dynamic context of another
+thread.</li>
+</ul>
+<p>To interrupt a thread, use the function <code class="docutils literal"><span class="pre">mp:process-interrupt</span></code>. This
+takes a thread as its first argument, followed by a function and
+optionally arguments to that function. As elsewhere, you can use
+<code class="docutils literal"><span class="pre">mp:find-process-from-name</span></code> to locate the thread object corresponding
+to a given name. For example:</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">defun</span> <span class="n">flush</span><span class="o">-</span><span class="n">cache</span> <span class="p">(</span><span class="n">cache</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">tcp</span><span class="o">-</span><span class="n">server</span> <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">find</span><span class="o">-</span><span class="n">process</span><span class="o">-</span><span class="n">from</span><span class="o">-</span><span class="n">name</span> <span class="s2">&quot;Port 80 server&quot;</span><span class="p">)))</span>
+    <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">process</span><span class="o">-</span><span class="n">interrupt</span> <span class="n">tcp</span><span class="o">-</span><span class="n">server</span>
+                          <span class="s1">&#39;flush-data-cache</span>
+                          <span class="n">cache</span><span class="p">)))</span>
+</pre></div>
+</div>
+<p>A related utility is <code class="docutils literal"><span class="pre">mp:process-interrupt-list</span></code>, which takes just
+three arguments: a thread, a function, a list of arguments to that
+function.</p>
+<p><strong>Exercise:</strong> Use <code class="docutils literal"><span class="pre">mp:*process-initial-bindings*</span></code> to create a thread
+whose <code class="docutils literal"><span class="pre">*standard-output*</span></code> is the listener you&#8217;re working in. Set this
+thread to sleeping for a long time (1000 seconds will do). Now create a
+second thread without the redirected <code class="docutils literal"><span class="pre">*standard-output*</span></code>, and have it
+ask the sleeper to print something for it.</p>
+</div>
+<div class="section" id="threads-and-the-capi-windowing-system">
+<h2>Threads and the CAPI windowing system<a class="headerlink" href="#threads-and-the-capi-windowing-system" title="Permalink to this headline">¶</a></h2>
+<p>By default, every CAPI interface runs in its own thread. This thread
+will be used by the lisp system for actions such as redisplay and
+invocation of callbacks. If you need to act programmatically on a CAPI
+interface, you are <strong>strongly recommended</strong> to work in the appropriate
+thread.</p>
+<p>The utility <code class="docutils literal"><span class="pre">capi:execute-with-interface</span></code> will help you out here. This
+takes as its first argument a <em>CAPI interface</em>; subsequent arguments are
+a function followed by optional arguments to that function. The function
+will be invoked in the thread belonging to that interface. To get from
+any CAPI element to its interface, use the reader
+<code class="docutils literal"><span class="pre">capi:element-interface</span></code>, as in the following example.</p>
+<p>In this example, the <code class="docutils literal"><span class="pre">only</span></code> way to get <code class="docutils literal"><span class="pre">*switchable*</span></code> to switch is
+to execute the request in <code class="docutils literal"><span class="pre">*switchable*</span></code>&#8216;s thread.</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">;;</span> <span class="n">Create</span> <span class="ow">and</span> <span class="n">display</span> <span class="n">a</span> <span class="n">window</span> <span class="n">which</span> <span class="n">can</span> <span class="n">switch</span> <span class="n">between</span>
+<span class="p">;;</span> <span class="n">two</span> <span class="n">children</span><span class="o">.</span> <span class="n">These</span> <span class="n">have</span> <span class="n">different</span> <span class="n">coloured</span> <span class="n">backgrounds</span><span class="o">.</span>
+<span class="p">;;</span> <span class="n">Red</span> <span class="n">was</span> <span class="n">listed</span> <span class="n">first</span> <span class="ow">and</span> <span class="n">so</span> <span class="n">by</span> <span class="n">default</span> <span class="ow">is</span> <span class="n">visible</span> <span class="n">initially</span><span class="o">.</span>
+<span class="p">(</span><span class="n">defvar</span> <span class="o">*</span><span class="n">switchable</span><span class="o">*</span>
+  <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">red</span><span class="o">-</span><span class="n">pane</span> <span class="p">(</span><span class="n">make</span><span class="o">-</span><span class="n">instance</span> <span class="s1">&#39;capi:output-pane</span>
+                                 <span class="p">:</span><span class="n">name</span> <span class="s1">&#39;red</span>
+                                 <span class="p">:</span><span class="n">background</span> <span class="p">:</span><span class="n">red</span><span class="p">))</span>
+        <span class="p">(</span><span class="n">green</span><span class="o">-</span><span class="n">pane</span> <span class="p">(</span><span class="n">make</span><span class="o">-</span><span class="n">instance</span> <span class="s1">&#39;capi:output-pane</span>
+                                   <span class="p">:</span><span class="n">name</span> <span class="s1">&#39;green</span>
+                                   <span class="p">:</span><span class="n">background</span> <span class="p">:</span><span class="n">green</span><span class="p">)))</span>
+    <span class="p">(</span><span class="n">capi</span><span class="p">:</span><span class="n">contain</span>
+     <span class="p">(</span><span class="n">make</span><span class="o">-</span><span class="n">instance</span> <span class="s1">&#39;capi:switchable-layout</span>
+                    <span class="p">:</span><span class="n">description</span> <span class="p">(</span><span class="nb">list</span> <span class="n">red</span><span class="o">-</span><span class="n">pane</span> <span class="n">green</span><span class="o">-</span><span class="n">pane</span><span class="p">)))))</span>
+
+<span class="p">;;</span> <span class="n">Utility</span> <span class="n">to</span> <span class="k">return</span> <span class="n">the</span> <span class="n">green</span> <span class="n">child</span><span class="o">.</span>
+<span class="p">(</span><span class="n">defun</span> <span class="n">green</span><span class="o">-</span><span class="n">pane</span> <span class="p">(</span><span class="n">switchable</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">find</span> <span class="s1">&#39;green (capi:switchable-layout-switchable-children</span>
+                <span class="n">switchable</span><span class="p">)</span>
+        <span class="p">:</span><span class="n">key</span> <span class="s1">&#39;capi:capi-object-name))</span>
+
+<span class="p">;;</span> <span class="n">If</span> <span class="n">you</span> <span class="k">try</span> <span class="n">this</span> <span class="n">then</span> <span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="n">you</span><span class="s1">&#39;ll get an error and (b) calling</span>
+<span class="p">;;</span> <span class="p">(</span><span class="n">right</span> <span class="o">*</span><span class="n">switchable</span><span class="o">*</span><span class="p">)</span> <span class="n">won</span><span class="s1">&#39;t help - that window&#39;</span><span class="n">s</span> <span class="n">state</span> <span class="ow">is</span> <span class="n">broken</span>
+<span class="p">;;</span> <span class="ow">and</span> <span class="n">you</span><span class="s1">&#39;ll have to create a new one.</span>
+<span class="p">(</span><span class="n">defun</span> <span class="n">wrong</span> <span class="p">(</span><span class="n">switchable</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">setf</span> <span class="p">(</span><span class="n">capi</span><span class="p">:</span><span class="n">switchable</span><span class="o">-</span><span class="n">layout</span><span class="o">-</span><span class="n">visible</span><span class="o">-</span><span class="n">child</span> <span class="n">switchable</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">green</span><span class="o">-</span><span class="n">pane</span> <span class="n">switchable</span><span class="p">)))</span>
+
+<span class="p">(</span><span class="n">defun</span> <span class="n">right</span> <span class="p">(</span><span class="n">switchable</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">capi</span><span class="p">:</span><span class="n">execute</span><span class="o">-</span><span class="k">with</span><span class="o">-</span><span class="n">interface</span>
+   <span class="p">(</span><span class="n">capi</span><span class="p">:</span><span class="n">element</span><span class="o">-</span><span class="n">interface</span> <span class="n">switchable</span><span class="p">)</span>
+   <span class="p">(</span><span class="k">lambda</span> <span class="p">(</span><span class="n">switchable</span><span class="p">)</span>
+     <span class="p">(</span><span class="n">setf</span> <span class="p">(</span><span class="n">capi</span><span class="p">:</span><span class="n">switchable</span><span class="o">-</span><span class="n">layout</span><span class="o">-</span><span class="n">visible</span><span class="o">-</span><span class="n">child</span> <span class="n">switchable</span><span class="p">)</span>
+           <span class="p">(</span><span class="n">green</span><span class="o">-</span><span class="n">pane</span> <span class="n">switchable</span><span class="p">)))</span>
+   <span class="n">switchable</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="locks">
+<h2>Locks<a class="headerlink" href="#locks" title="Permalink to this headline">¶</a></h2>
+<p>Sometimes it&#8217;s important to control access to some resource, so that
+only one thread is operating on it at a time. One method of effecting
+this is to restrict access from your code to that resource to one (or
+more) specialised threads, and to have other threads write to a mailbox
+when they want the specialised threads to access the resource on their
+behalf. However there are two potential drawbacks to this approach.</p>
+<ul class="simple">
+<li>Frequently you&#8217;ll need to wait in the invoking thread until the
+operation on the resource is complete.</li>
+<li>This is becoming a somewhat heavyweight mechanism for handling what
+should be a fairly simple operation.</li>
+</ul>
+<p>A <em>lock</em> is a simple lisp object, which can be <em>held</em> by no more than
+one thread at a time. A thread attempting to hold a lock which is
+already in use will hang (i.e. be forced to wait) until the lock is
+freed. In the following example, the locking mechanism is reduced to its
+most minimal form.</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">;;</span> <span class="n">Create</span> <span class="n">a</span> <span class="n">lock</span> <span class="ow">and</span> <span class="n">remember</span> <span class="n">it</span><span class="o">.</span>
+<span class="p">(</span><span class="n">defvar</span> <span class="o">*</span><span class="n">lock</span><span class="o">*</span> <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">make</span><span class="o">-</span><span class="n">lock</span><span class="p">))</span>
+
+<span class="p">(</span><span class="n">defun</span> <span class="n">use</span><span class="o">-</span><span class="n">resource</span><span class="o">-</span><span class="n">when</span><span class="o">-</span><span class="n">free</span> <span class="p">(</span><span class="nb">id</span> <span class="n">stream</span><span class="p">)</span>
+  <span class="p">;;</span> <span class="n">Callers</span> <span class="n">must</span> <span class="n">wait</span> <span class="n">at</span> <span class="n">this</span> <span class="n">point</span> <span class="k">for</span> <span class="n">the</span> <span class="n">lock</span> <span class="n">to</span>
+  <span class="p">;;</span> <span class="n">be</span> <span class="n">freed</span><span class="p">,</span> <span class="n">before</span> <span class="n">they</span> <span class="n">can</span> <span class="n">proceed</span> <span class="k">with</span> <span class="n">the</span> <span class="n">body</span> <span class="n">of</span>
+  <span class="p">;;</span> <span class="n">this</span> <span class="n">form</span><span class="o">.</span>
+  <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="k">with</span><span class="o">-</span><span class="n">lock</span> <span class="p">(</span><span class="o">*</span><span class="n">lock</span><span class="o">*</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">use</span><span class="o">-</span><span class="n">resource</span><span class="o">-</span><span class="n">anyway</span> <span class="nb">id</span> <span class="n">stream</span><span class="p">)</span>
+    <span class="p">;;</span> <span class="n">When</span> <span class="n">we</span> <span class="n">exit</span> <span class="n">the</span> <span class="n">form</span><span class="p">,</span> <span class="n">the</span> <span class="n">lock</span> <span class="ow">is</span> <span class="n">freed</span> <span class="n">automatically</span>
+    <span class="p">;;</span> <span class="ow">and</span> <span class="n">some</span> <span class="n">other</span> <span class="n">thread</span> <span class="n">will</span> <span class="n">be</span> <span class="n">allowed</span> <span class="n">to</span> <span class="n">claim</span> <span class="n">it</span><span class="o">.</span>
+    <span class="p">))</span>
+
+<span class="p">(</span><span class="n">defun</span> <span class="n">use</span><span class="o">-</span><span class="n">resource</span><span class="o">-</span><span class="n">anyway</span> <span class="p">(</span><span class="nb">id</span> <span class="n">stream</span><span class="p">)</span>
+  <span class="p">(</span><span class="nb">format</span> <span class="n">stream</span> <span class="s2">&quot;~&amp;Starting ~a.&quot;</span> <span class="nb">id</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">sleep</span> <span class="mi">1</span><span class="p">)</span>
+  <span class="p">(</span><span class="nb">format</span> <span class="n">stream</span> <span class="s2">&quot;~&amp;Ending ~a.&quot;</span> <span class="nb">id</span><span class="p">))</span>
+
+<span class="p">(</span><span class="n">defun</span> <span class="n">test</span> <span class="p">(</span><span class="n">lock</span><span class="o">-</span><span class="n">p</span><span class="p">)</span>
+  <span class="p">(</span><span class="n">let</span> <span class="p">((</span><span class="n">run</span><span class="o">-</span><span class="n">function</span> <span class="p">(</span><span class="k">if</span> <span class="n">lock</span><span class="o">-</span><span class="n">p</span>
+                          <span class="s1">&#39;use-resource-when-free</span>
+                          <span class="s1">&#39;use-resource-anyway)))</span>
+    <span class="p">(</span><span class="n">dotimes</span> <span class="p">(</span><span class="nb">id</span> <span class="mi">3</span><span class="p">)</span>
+      <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">process</span><span class="o">-</span><span class="n">run</span><span class="o">-</span><span class="n">function</span>
+       <span class="p">(</span><span class="nb">format</span> <span class="n">nil</span> <span class="s2">&quot;Competing thread ~a&quot;</span> <span class="nb">id</span><span class="p">)</span> <span class="n">nil</span>
+       <span class="n">run</span><span class="o">-</span><span class="n">function</span> <span class="nb">id</span> <span class="o">*</span><span class="n">standard</span><span class="o">-</span><span class="n">output</span><span class="o">*</span><span class="p">))))</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="a-brief-warning-about-timers">
+<h2>A brief warning about timers<a class="headerlink" href="#a-brief-warning-about-timers" title="Permalink to this headline">¶</a></h2>
+<p>Timers are a handy way of notifying your application that some period of
+time has elapsed. You should however be aware of the following vital
+piece of information: <strong>TIMERS RUN IN WHATEVER PROCESS IS RUNNING WHEN
+THE TIME IS REACHED, WHICH IS LIKELY TO BE THE IDLE PROCESS IN CASES
+WHERE LISPWORKS IS SLEEPING</strong>...</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">62</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">defun</span> <span class="n">foo</span> <span class="p">()</span> <span class="p">(</span><span class="nb">print</span> <span class="n">mp</span><span class="p">:</span><span class="o">*</span><span class="n">current</span><span class="o">-</span><span class="n">process</span><span class="o">*</span>
+                                  <span class="c1">#.*standard-output*))</span>
+<span class="n">FOO</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">63</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">setf</span> <span class="o">*</span><span class="n">timer</span><span class="o">*</span> <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">make</span><span class="o">-</span><span class="n">timer</span> <span class="s1">&#39;foo))</span>
+<span class="c1">#&lt;Time Event : FOO&gt;</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">64</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">schedule</span><span class="o">-</span><span class="n">timer</span><span class="o">-</span><span class="n">relative</span> <span class="o">*</span><span class="n">timer</span><span class="o">*</span> <span class="mi">1</span> <span class="mi">1</span><span class="p">)</span>
+<span class="c1">#&lt;Time Event : FOO&gt;</span>
+
+<span class="c1">#&lt;MP:PROCESS Name &quot;The idle process&quot; Priority -8388608 State &quot;Running&quot;&gt;</span>
+<span class="c1">#&lt;MP:PROCESS Name &quot;The idle process&quot; Priority -8388608 State &quot;Running&quot;&gt;</span>
+<span class="c1">#&lt;MP:PROCESS Name &quot;The idle process&quot; Priority -8388608 State &quot;Running&quot;&gt;</span>
+<span class="c1">#&lt;MP:PROCESS Name &quot;The idle process&quot; Priority -8388608 State &quot;Running&quot;&gt;</span>
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">65</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">unschedule</span><span class="o">-</span><span class="n">timer</span> <span class="o">*</span><span class="n">timer</span><span class="o">*</span><span class="p">)</span>
+<span class="c1">#&lt;Time Event : FOO&gt;</span>
+
+<span class="n">CL</span><span class="o">-</span><span class="n">USER</span> <span class="mi">66</span> <span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>A consequence of this is that any errors you get in a timer are errors
+in the idle process, which is the manager for multiprocessing and
+generally a Bad Place to Get Errors. This was potentially a more serious
+problem in LispWorks 4.1; it looks safer (i.e. non fatal) in more recent
+editions of LispWorks. In any case, you are advised always to switch to
+another process to run the contents of your timer.</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">defvar</span> <span class="o">*</span><span class="n">timer</span><span class="o">*</span><span class="p">)</span>
+<span class="p">(</span><span class="n">defparameter</span> <span class="o">*</span><span class="n">housekeeping</span><span class="o">-</span><span class="n">interval</span><span class="o">*</span> <span class="mi">3600</span><span class="p">)</span>      <span class="p">;</span> <span class="n">once</span> <span class="n">per</span> <span class="n">hour</span>
+
+<span class="p">;;</span> <span class="n">Create</span> <span class="n">a</span> <span class="n">timer</span><span class="p">,</span> <span class="nb">set</span> <span class="n">it</span> <span class="n">to</span> <span class="s2">&quot;expire&quot;</span> <span class="ow">in</span> <span class="n">one</span> <span class="n">hour</span><span class="p">,</span> <span class="ow">and</span> <span class="n">subsequently</span> <span class="n">at</span>
+<span class="p">;;</span> <span class="n">hourly</span> <span class="n">intervals</span><span class="o">.</span>
+<span class="p">(</span><span class="n">defun</span> <span class="n">start</span><span class="o">-</span><span class="n">timer</span> <span class="p">()</span>
+  <span class="p">(</span><span class="n">setf</span> <span class="o">*</span><span class="n">timer</span><span class="o">*</span> <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">make</span><span class="o">-</span><span class="n">timer</span> <span class="s1">&#39;safe-housekeeping))</span>
+  <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">schedule</span><span class="o">-</span><span class="n">timer</span><span class="o">-</span><span class="n">relative</span> <span class="o">*</span><span class="n">timer</span><span class="o">*</span>
+                              <span class="o">*</span><span class="n">housekeeping</span><span class="o">-</span><span class="n">interval</span><span class="o">*</span>
+                              <span class="o">*</span><span class="n">housekeeping</span><span class="o">-</span><span class="n">interval</span><span class="o">*</span><span class="p">))</span>
+
+<span class="p">;</span> <span class="n">Switch</span> <span class="n">thread</span><span class="p">,</span> <span class="n">so</span> <span class="n">we</span> <span class="n">can</span><span class="s1">&#39;t possibly get errors in the idle process ;-(</span>
+<span class="p">(</span><span class="n">defun</span> <span class="n">safe</span><span class="o">-</span><span class="n">housekeeping</span> <span class="p">()</span>
+  <span class="p">(</span><span class="n">mp</span><span class="p">:</span><span class="n">process</span><span class="o">-</span><span class="n">run</span><span class="o">-</span><span class="n">function</span> <span class="s2">&quot;Housekeeping&quot;</span> <span class="n">nil</span>
+                           <span class="s1">&#39;housekeeping))</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="initializing-multithreading">
+<h2>Initializing multithreading<a class="headerlink" href="#initializing-multithreading" title="Permalink to this headline">¶</a></h2>
+<p>As noted previously, multithreading is &#8220;always&#8221; running in the LispWorks
+for Windows environment. However, while the image is initializing itself
+(loading your &#8221;.lispworks&#8221; file, for example, or running a
+<code class="docutils literal"><span class="pre">:restart-function</span></code> supplied to <code class="docutils literal"><span class="pre">save-image</span></code>), multithreading has
+not yet started and so &#8220;inter-thread&#8221; functions such as
+<code class="docutils literal"><span class="pre">mp:process-run-function</span></code> and <code class="docutils literal"><span class="pre">mp:process-wait</span></code> cannot be called.</p>
+<p>There are circumstances in which you will want to start multithreading
+yourself:</p>
+<ul class="simple">
+<li>on platforms where you must explicitly call
+<code class="docutils literal"><span class="pre">(env:start-environment)</span></code> to launch the CAPI development
+environment - this function will start multithreading if that hasn&#8217;t
+already happened;</li>
+<li>you might want access to multithreading functionality from the
+non-windowing listener;</li>
+<li>you might want a resaved image to execute code which requires
+multithreading.</li>
+</ul>
+<p>If in doubt, you can tell whether multithreading has started yet by
+examining either <code class="docutils literal"><span class="pre">mp:*current-process*</span></code> or
+<code class="docutils literal"><span class="pre">(mp:list-all-processes)</span></code>. If either of these is null, multithreading
+hasn&#8217;t started.</p>
+<p>To start multithreading, call <code class="docutils literal"><span class="pre">(mp:initialize-multiprocessing)</span></code>.
+Specify the threads that should run on startup of multithreading via the
+variable <code class="docutils literal"><span class="pre">mp:*initial-processes*</span></code>. This is a list whose members are
+themselves lists to which <code class="docutils literal"><span class="pre">mp:process-run-function</span></code> can be applied.
+<strong>Warning:</strong> do not remove any entries which the implementation has
+placed on <code class="docutils literal"><span class="pre">mp:*initial-processes*</span></code>.</p>
+<p>Note that <code class="docutils literal"><span class="pre">(mp:initialize-multiprocessing)</span></code> does not return until all
+threads have run to completion, at which point multithreading itself
+halts. If you call it from the non-windowing listener without specifying
+any threads to run, <code class="docutils literal"><span class="pre">(mp:initialize-multiprocessing)</span></code> will appear to
+return no values immediately, but appearances can be deceptive - what
+actually happens is that LispWorks is designed to spot that
+multithreading has been started without any threads to run, and so to
+give you a &#8220;default listener&#8221; (in its own thread) rather than leaving
+you with a hung lisp.</p>
+<p>The above ideas are illustrated by the following example. To run this on
+Windows or Linux, you will need to resave the image to run in the TTY
+(without multithreading on startup), by passing the keyword argument
+<code class="docutils literal"><span class="pre">:environment</span> <span class="pre">nil</span></code> to <code class="docutils literal"><span class="pre">save-image</span></code>.</p>
+<div class="code lisp highlight-default"><div class="highlight"><pre><span></span>/cygdrive/c/Program Files/Xanalys/LispWorks $ ./console-test.exe
+LispWorks(R) (for the Windows(R) operating system)
+Copyright (C) 1987-2002 Xanalys Inc.  All rights reserved.
+Version 4.2.6
+Saved by nick as console-test, at 28 Jun 2002 15:25
+User nick on GANNET
+; Loading text file c:\Program Files\Xanalys\LispWorks\lib\4-2-0-0\config\siteinit.lisp
+;  Loading text file c:\Program Files\Xanalys\LispWorks\lib\4-2-0-0\private-patches\load.lisp
+; Loading text file e:\.lispworks
+
+CL-USER 1 &gt; mp:*current-process*
+
+NIL
+
+CL-USER 2 &gt; (push (list &quot;My only thread&quot; ()
+                        (lambda ()
+                          (print (mp:list-all-processes) *terminal-io*)
+                          (sleep 5)))
+                  mp:*initial-processes*)
+
+((&quot;My only thread&quot; NIL #&#39;(LAMBDA NIL (PRINT (MP:LIST-ALL-PROCESSES) *TERMINAL-IO*) (SLEEP 5)))
+ (&quot;The idle process&quot; (:PRIORITY -8388608 :RESTART-ACTION :CONTINUE) MP::PROCESS-IDLE-FUNCTION))
+
+CL-USER 3 &gt; (mp:initialize-multiprocessing)
+
+(#&lt;MP:PROCESS Name &quot;My only thread&quot; Priority 0 State &quot;Running&quot;&gt;
+              #&lt;MP:PROCESS Name &quot;The idle process&quot; Priority -8388608 State &quot;Running&quot;&gt;)
+NIL
+
+CL-USER 4 &gt; (mp:list-all-processes)
+
+NIL
+
+CL-USER 5 &gt; (pop mp:*initial-processes*)
+
+(&quot;My only thread&quot; NIL #&#39;(LAMBDA NIL (PRINT (MP:LIST-ALL-PROCESSES) *TERMINAL-IO*) (SLEEP 5)))
+
+CL-USER 6 &gt; (mp:initialize-multiprocessing)
+
+CL-USER 7 &gt; (mp:list-all-processes)
+
+(#&lt;MP:PROCESS Name &quot;default listener process&quot; Priority 600000 State &quot;Running&quot;&gt;
+              #&lt;MP:PROCESS Name &quot;The idle process&quot; Priority -8388608 State &quot;Running&quot;&gt;)
+
+CL-USER 8 &gt; (quit)
+/cygdrive/c/Program Files/Xanalys/LispWorks $
+</pre></div>
+</div>
+<p><strong>Exercise:</strong> Resave a lisp image which will restart with a &#8220;TTY&#8221;
+listener running in multithread mode.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Threads</a><ul>
+<li><a class="reference internal" href="#introduction">Introduction</a></li>
+<li><a class="reference internal" href="#why-bother">Why bother?</a></li>
+<li><a class="reference internal" href="#emergency-exits">Emergency exits</a></li>
+<li><a class="reference internal" href="#basics">Basics</a></li>
+<li><a class="reference internal" href="#where-s-my-output">Where&#8217;s my output?</a></li>
+<li><a class="reference internal" href="#waiting">Waiting</a></li>
+<li><a class="reference internal" href="#per-thread-state">Per-thread state</a></li>
+<li><a class="reference internal" href="#mailboxes">Mailboxes</a></li>
+<li><a class="reference internal" href="#interrupts">Interrupts</a></li>
+<li><a class="reference internal" href="#threads-and-the-capi-windowing-system">Threads and the CAPI windowing system</a></li>
+<li><a class="reference internal" href="#locks">Locks</a></li>
+<li><a class="reference internal" href="#a-brief-warning-about-timers">A brief warning about timers</a></li>
+<li><a class="reference internal" href="#initializing-multithreading">Initializing multithreading</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Chapters</a><ul>
+      <li>Previous: <a href="ffi.html" title="previous chapter">Foreign Function Interfaces</a></li>
+      <li>Next: <a href="systems.html" title="next chapter">Defining Systems</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/chapters/process.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, cl-cookbook contributors.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="../_sources/chapters/process.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
