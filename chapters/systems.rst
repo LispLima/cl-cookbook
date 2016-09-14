@@ -1,7 +1,6 @@
---------------
-
-title: Defining Systems
------------------------
+================
+Defining Systems
+================
 
 A **system** is a collection of Lisp files that together constitute an
 application or a library, and that should therefore be managed as a

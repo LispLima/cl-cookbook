@@ -1,7 +1,6 @@
---------------
-
-title: Input/Output
--------------------
+============
+Input/Output
+============
 
 Redirecting the Standard Output of your Program
 ===============================================

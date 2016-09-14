@@ -1,7 +1,6 @@
---------------
-
-title: Sockets
---------------
+=======
+Sockets
+=======
 
 | ANSI Common Lisp does not provide standard functions to operate on
   sockets, but

@@ -1,7 +1,6 @@
---------------
-
-title: Functions
-----------------
+=========
+Functions
+=========
 
 Functions that return functions
 -------------------------------

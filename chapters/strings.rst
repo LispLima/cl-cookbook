@@ -1,7 +1,6 @@
---------------
-
-title: Strings
---------------
+=======
+Strings
+=======
 
 | The most important thing to know about strings in Common Lisp is
   probably that

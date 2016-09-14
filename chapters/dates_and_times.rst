@@ -1,7 +1,6 @@
---------------
-
-title: Dates and Times
-----------------------
+===============
+Dates and Times
+===============
 
 | Common Lisp provides two different ways of looking at time: universal
   time,

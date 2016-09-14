@@ -1,7 +1,6 @@
---------------
-
-title: Miscellaneous
---------------------
+=============
+Miscellaneous
+=============
 
 Re-using complex data structures
 --------------------------------

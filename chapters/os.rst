@@ -1,7 +1,6 @@
---------------
-
-title: Interfacing with your OS
--------------------------------
+========================
+Interfacing with your OS
+========================
 
 The ANSI Common Lisp standard doesn't mention this topic. (Keep in mind
 that it was written at a time where `Lisp

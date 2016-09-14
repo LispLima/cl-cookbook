@@ -1,7 +1,6 @@
---------------
-
-title: Files and Directories
-----------------------------
+=====================
+Files and Directories
+=====================
 
 | Note: In this chapter, we use mainly
 | `namestrings <http://www.lispworks.com/documentation/HyperSpec/Body/19_aa.htm>`__

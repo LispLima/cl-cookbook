@@ -1,7 +1,6 @@
---------------
-
-title: Pattern Matching & Regular Expressions
----------------------------------------------
+======================================
+Pattern Matching & Regular Expressions
+======================================
 
 The `ANSI Common Lisp
 standard <http://www.lispworks.com/documentation/HyperSpec/index.html>`__

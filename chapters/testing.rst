@@ -1,7 +1,6 @@
---------------
-
-title: Testing
---------------
+=======
+Testing
+=======
 
 So you want to easily test the code your writing? The following recipes
 cover how to write automated tests. We will use an established and
