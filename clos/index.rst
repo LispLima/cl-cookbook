@@ -21,8 +21,8 @@ Limited <http://www.ravenbrook.com/>`__, 2003-07-15
 
    </div>
 
-`1. Introduction <>`__
-----------------------
+Introduction
+============
 
 This document was written for presentation during a tutorial session at
 the `International Lisp
@@ -61,8 +61,8 @@ during the tutorial.
 This document is not confidential. It is available on the web, at
 http://www.ravenbrook.com/doc/2003/07/15/clos-fundamentals/.
 
-`2. Background <>`__
---------------------
+Background
+==========
 
 CLOS (either one syllable rhyming with "dross", or two syllables as in
 "see-loss") is the "Common Lisp Object System". The functionality
@@ -99,8 +99,8 @@ when you come to use them yourself you'll find that in an application
 the relation is not so strong, and you can pick and choose what's useful
 to you and leave alone what isn't.
 
-`2.1. References <>`__
-~~~~~~~~~~~~~~~~~~~~~~
+References
+----------
 
 These are listed in `appendix A <#section-A>`__ at the end of this
 document. [Keene 1989] is a very easy introduction and more thorough
@@ -113,8 +113,8 @@ appendix C in [Graham 1995). A (note: not "the") metaobject protocol,
 described in [Kiczales et al 1991, otherwise known as "AMOP"], gives
 many hints about configuration and implementation.
 
-`2.2. Getting started <>`__
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Getting started
+---------------
 
 Theoretically this should not be an issue in any fully enabled Common
 Lisp, because CLOS is part of the language. However, some
@@ -127,11 +127,11 @@ implementation. The exceptions are marked as such. I have tested the
 examples in LispWorks (version 4.2.7, used to generate all the examples
 below) and Allegro CL (version 6.2).
 
-`3. Classes and instances <>`__
--------------------------------
+Classes and instances
+=====================
 
-`3.1. Review - the non-OO approach <>`__
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Review - the non-OO approach
+----------------------------
 
 Before we introduce the first of our two defining macros, let's review
 its non object-oriented equivalent: ``defstruct``. The language provides
@@ -225,8 +225,8 @@ default, and which can be parsed by the lisp reader.
 cover here), for describing inheritance, printing behaviour, slot types
 and defaults, and so on.
 
-`3.2. Introducing the macro ``defclass`` <>`__
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Introducing the macro ``defclass``
+----------------------------------
 
 The macro used for defining new data types in CLOS is ``defclass``. An
 example:
@@ -332,8 +332,8 @@ be replaced by the pair (variable-name slot-name).
 get tedious, in which case convince yourself that you know what you're
 doing and then stop.
 
-`3.3. Classes are instances too <>`__
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Classes are instances too
+-------------------------
 
 Compare the values returned from the example calls to ``defstruct``
 (line 1 above) and ``defclass`` (line 13). The former doesn't return
@@ -376,8 +376,8 @@ the class) of ``my-point``.
 reading. When we refer to "the class ``standard-class``" or even to
 ``standard-class``, we generally mean the class named by that symbol.
 
-`3.4. You don't need CLOS objects to use CLOS <>`__
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+You don't need CLOS objects to use CLOS
+---------------------------------------
 
 Generously, the functions introduced in the last section also work on
 lisp objects which are not CLOS instances:
@@ -478,8 +478,8 @@ metaclass of a "traditional" lisp object is ``standard-class`` (as in
 | ``standard-class``    | None of these restrictions.                                                                                                                                                                                                                                          |
 +-----------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
-`3.5. Slots <>`__
-~~~~~~~~~~~~~~~~~
+Slots
+-----
 
 The full syntax for ``defclass`` is:
 
@@ -601,8 +601,8 @@ In the following example, **note** the following:
 **Exercise:** Find a ``defstruct`` form and "port to CLOS" one of its
 slot options (or more if they're interesting).
 
-`3.6. Subclasses and inheritance <>`__
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Subclasses and inheritance
+--------------------------
 
 Suppose we want two classes to share behaviour, in the sense that one of
 them (the subclass) is defined in terms of the other (the superclass).
@@ -843,8 +843,8 @@ using ``defclass``, and get it working again.
 **Exercise:** Use your lisp implementation, to take a look at the
 ``class-precedence-list`` of (the class of) ``nil``.
 
-`3.7. Changing a class <>`__
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Changing a class
+----------------
 
 This section briefly covers two topics: redefinition of an existing
 class, and changing an instance of one class into an instance of
@@ -911,8 +911,8 @@ cruelty <http://ww.telent.net/diary/2002/10/#28.4949>`__, this is a
 powerful feature of CLOS although probably one which you won't use very
 often.
 
-`3.8. Implementation notes: object wrappers <>`__
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Implementation notes: object wrappers
+-------------------------------------
 
 We'll conclude this part of the tutorial by looking at a possible
 implementation for instances, covering:
@@ -1072,11 +1072,11 @@ wrapper.
    permits dynamic lookup of slot names, ``EQ``\ ness through dynamic
    redefinition, and lazy modification, all at a low overhead.
 
-`4. Methods <>`__
------------------
+Methods
+=======
 
-`4.1. Review - the non-OO approach <>`__
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Review - the non-OO approach
+----------------------------
 
 The step up from functions to methods parallels the move from structures
 to instances.
@@ -1155,8 +1155,8 @@ There are a number of problems with this:
    longer. (Suppose we discriminate on three values, or four...) The
    code rapidly gets less readable.
 
-`4.2. Introducing the macro ``defmethod`` <>`__
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Introducing the macro ``defmethod``
+-----------------------------------
 
 The defining macro for controlling type-based discrimination in CLOS is
 ``defmethod``. An example:
@@ -1295,8 +1295,8 @@ to eliminate either of the tests in the method body.
                 (frob (setf baz (bar baz)))))))
             
 
-`4.3. Generic functions and next methods <>`__
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Generic functions and next methods
+----------------------------------
 
 A generic function is a lisp function which is associated with a set of
 methods and dispatches them when it's invoked. All the methods with the
@@ -1410,8 +1410,8 @@ always come from Africa. (This isn't true, but it's an improvement.)
 **Exercise:** Experiment with the indefinite extent of
 ``call-next-method``.
 
-`4.4. In OO languages the functionality lives in the object <>`__
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In OO languages the functionality lives in the object
+-----------------------------------------------------
 
 This preposterous claim is the product of a diseased imagination.
 However many OO systems feel obliged to try and enforce it. Try to avoid
@@ -1480,8 +1480,8 @@ are the issues?
 **Exercise:** Find some excuse to specialize a method on its second
 argument, or on more than one argument.
 
-`4.5. Other specializers (you still don't need CLOS objects to use CLOS) <>`__
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Other specializers (you still don't need CLOS objects to use CLOS)
+------------------------------------------------------------------
 
 The examples of methods shown so far all specialize on
 ``standard-class``\ es. That isn't necessary. You can specialize on any
@@ -1546,8 +1546,8 @@ An eql method is more specific than one specializing on classes.
 antelope. Change the ``class-of Eric``. Do you expect your method to
 still be applicable?
 
-`4.6. Qualifiers and method combination <>`__
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Qualifiers and method combination
+---------------------------------
 
 Let's start with a word of warning. Reckless use of method combination
 can - like an unfettered hand with multiple inheritance -
@@ -1673,8 +1673,8 @@ make all aardvarks come from Cambridge, England. Add another method
 souped-up analogue of the constructors offered by other OO systems. But
 CLOS doesn't offer a destructor. Should this matter?
 
-`4.7. Implementation notes: generic function dispatch <>`__
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Implementation notes: generic function dispatch
+-----------------------------------------------
 
 Computing, sorting and executing a list of applicable methods are
 time-consuming operations. An implementation will typically want to
@@ -1768,8 +1768,8 @@ are incorrect.
 **To discuss over dinner:** How might the above be modified to take
 account of ``eql`` methods?
 
-`A. References <>`__
---------------------
+References
+==========
 
 +-------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | [Graham 1995]           | "ANSI Common Lisp"; `Paul Graham <mailto:pg@paulgraham.com>`__; Prentice Hall; 1995; ISBN 0133708756. See http://www.paulgraham.com/acl.html                                   |
@@ -1783,8 +1783,8 @@ account of ``eql`` methods?
 | [Steele 1990]           | "Common Lisp the Language, 2nd edition"; Guy L. Steele Jr.; Digital Press; 1990; ISBN 1555580416. Available online at http://www-2.cs.cmu.edu/Groups/AI/html/cltl/cltl2.html   |
 +-------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
-`B. Document History <>`__
---------------------------
+Document History
+================
 
 +--------------+---------------------------------------+---------------------------------+
 | 2003-07-15   | `NDL <mailto:ndl@ravenbrook.com>`__   | Placeholder document created.   |
@@ -1796,8 +1796,8 @@ account of ``eql`` methods?
 | 2003-09-01   | `NDL <mailto:ndl@ravenbrook.com>`__   | Corrections following review.   |
 +--------------+---------------------------------------+---------------------------------+
 
-`C. Partial class hierarchy <>`__
----------------------------------
+Partial class hierarchy
+=======================
 
 .. raw:: html
 

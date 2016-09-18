@@ -39,7 +39,7 @@ Contents
    :maxdepth: 2
 
    chapters/index
-   clos-tutorial/index
+   clos/index
    contributors
 
 Other CL Resources
